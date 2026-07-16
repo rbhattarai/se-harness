@@ -1,4 +1,4 @@
-# software-engineering-ai-agents-bootstrap
+# se-harness :: software-engineering-ai-agents-bootstrap
 
 [![release](https://img.shields.io/github/v/release/rbhattarai/software-engineering-ai-agents-bootstrap?label=release&color=2ea44f)](https://github.com/rbhattarai/software-engineering-ai-agents-bootstrap/releases)
 [![license](https://img.shields.io/github/license/rbhattarai/software-engineering-ai-agents-bootstrap?label=license&color=97ca00)](./LICENSE)
