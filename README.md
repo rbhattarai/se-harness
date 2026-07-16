@@ -1,5 +1,14 @@
 # software-engineering-ai-agents-bootstrap
 
+[![release](https://img.shields.io/github/v/release/rbhattarai/software-engineering-ai-agents-bootstrap?label=release&color=2ea44f)](https://github.com/rbhattarai/software-engineering-ai-agents-bootstrap/releases)
+[![license](https://img.shields.io/github/license/rbhattarai/software-engineering-ai-agents-bootstrap?label=license&color=97ca00)](./LICENSE)
+[![Claude Code](https://img.shields.io/badge/Claude_Code-se--harness-D97757?logo=claude&logoColor=white)](./docs/setup-guide-claude.md)
+[![Copilot CLI](https://img.shields.io/badge/Copilot_CLI-se--harness--copilot-8957e5?logo=githubcopilot&logoColor=white)](./docs/setup-guide-copilot.md)
+[![agents](https://img.shields.io/badge/SDLC_agents-11-6f42c1)](./plugins/se-harness/agents)
+[![HITL gates](https://img.shields.io/badge/HITL_gates-3_hook--enforced-blue)](./plugins/se-harness/hooks)
+[![platforms](https://img.shields.io/badge/macOS_%7C_Linux_%7C_Windows-supported-555)](./docs)
+[![privacy](https://img.shields.io/badge/telemetry-none-success)](./PRIVACY.md)
+
 Bootstrap an AI-agentic SDLC harness around any software project — new or existing, any
 stack, single-repo or multi-repo. One plugin gives you: an intake interview + brownfield
 scanner that generate `AGENTS.md`/`CLAUDE.md` and a committed project profile, an 11-agent
