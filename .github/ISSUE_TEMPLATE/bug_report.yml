@@ -1,0 +1,46 @@
+name: Bug report
+description: Something in the harness doesn't work as documented
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: ecosystem
+    attributes:
+      label: Ecosystem
+      description: Which plugin were you using?
+      options:
+        - se-harness (Claude Code)
+        - se-harness-copilot (GitHub Copilot CLI)
+        - Both / marketplace itself
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Plugin version
+      description: From `/plugin` (Claude Code) or `copilot plugin list`, e.g. 0.1.1
+      placeholder: "0.1.1"
+    validations:
+      required: true
+  - type: input
+    id: host-version
+    attributes:
+      label: Claude Code / Copilot CLI version and OS
+      placeholder: "Claude Code 2.1.x on Windows 11"
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you run (command, skill, or hook involved), what did you expect, and what happened instead? Paste any error output.
+      placeholder: |
+        1. Ran `/harness-init` in a fresh repo
+        2. Expected AGENTS.md to be generated
+        3. Got: <error output>
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Project context (optional)
+      description: Anything unusual — multi-repo workspace.yaml, brownfield scan, org rules, custom templates.

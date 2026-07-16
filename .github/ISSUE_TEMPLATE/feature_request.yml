@@ -1,0 +1,35 @@
+name: Feature request
+description: Propose a new agent, skill, stack recommendation, or workflow improvement
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the gap in the current harness workflow, not just the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: What would you add or change? (new agent, skill, command, template, registry entry, ecosystem target, goal-loop gate change, …)
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - Claude Code plugin (se-harness)
+        - Copilot variant / build script
+        - Both ecosystems
+        - Templates / registry / docs
+    validations:
+      required: true
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I'm willing to open a PR for this (see CONTRIBUTING.md)
