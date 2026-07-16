@@ -32,7 +32,7 @@ cat > "$OUT/plugin.json" <<'EOF'
 {
   "name": "se-harness-copilot",
   "description": "SE Harness for GitHub Copilot CLI: SDLC agent roster, harness skills, goal-loop commands, and bundled enforcement hooks. Generated from the Claude-first se-harness plugin - do not edit by hand; regenerate with build-copilot-plugin.sh. Repo-level hooks for the coding agent/VS Code - see docs/setup-guide-copilot.md.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": { "name": "Rohan Bhattarai", "email": "rohan.bhattarai.dev@gmail.com" },
   "repository": "https://github.com/rbhattarai/software-engineering-ai-agents-bootstrap",
   "license": "MIT",
@@ -129,6 +129,9 @@ for f in "$SRC"/commands/*.md; do
 
   COUNT_C=$((COUNT_C + 1))
 done
+
+# --- license: ship the repo LICENSE with the generated plugin ---
+[ -f "$SRC/LICENSE" ] && cp "$SRC/LICENSE" "$OUT/LICENSE"
 
 # --- scripts: bundled for reference + easy vendoring (commands expect them at tools/harness/) ---
 cp "$SRC"/scripts/*.sh "$OUT/scripts/"

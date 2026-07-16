@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "se-harness",
   "displayName": "SE Harness",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "AI-agentic SDLC harness: goal loop with human-in-the-loop gates, budgeted context injection, org compose-first conventions, and requirement traceability.",
   "author": {
     "name": "Rohan Bhattarai",
