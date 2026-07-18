@@ -38,6 +38,9 @@ playwright-report/
 # se-harness per-unit generated secrets (never committed; created by /harness-init)
 .env.harness
 
+# Claude Code personal settings (machine-specific; shared settings go in .claude/settings.json)
+.claude/settings.local.json
+
 # OS cruft
 .DS_Store
 Thumbs.db
