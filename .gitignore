@@ -11,8 +11,7 @@
 node_modules/
 /package-lock.json
 /yarn.lock
-apps/loan-webapp/node_modules 
-apps/lending-webapp/node_modules
+apps/*/node_modules 
 
 # Environment files
 /.env
