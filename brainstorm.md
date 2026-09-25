@@ -184,7 +184,7 @@ workspace:
 
 ## A7. Open decisions
 - Command namespace: `/harness-*` vs `/seaa-*` vs another brand — decide before Phase 0.
-- **Tier-1 structural-memory engine**: CodeGraph vs. codebase-memory-mcp (B12) — run both on a real repo and compare index quality, query usefulness, and the team-shared-artifact workflow before committing.
+- **Tier-1 structural-memory engine**: CodeGraph vs. codebase-memory-mcp vs. Graphify (B12/B13) — run all three on a real repo and compare index quality, query usefulness, and the team-shared-artifact workflow before committing.
 - Default methodology for users who don't care (lean: OpenSpec for brownfield, Spec Kit for greenfield; BMAD when roles/stakeholders matter).
 - Whether `/harness-init` delegates analysis to Anthropic's `claude-code-setup` when present, or always uses its own scan skill.
 - Methodology contract shape (artifact types + lifecycle statuses each pack must emit) — matters most for `harness-export`.
@@ -299,3 +299,14 @@ Three things CodeGraph lacks:
 220★ (plausible), TypeScript. Stores solutions/problems/patterns/errors/fixes/workflows as graph nodes with **typed causal relationships** (`SOLVES`, `CAUSES`, `BUILDS_ON` — e.g. `[timeout_fix] → SOLVES → [memory_leak]`), 35+ commands, five backends (embedded FalkorDBLite default). Its own docs draw the right line: markdown for static rules, graph for dynamic learnings.
 
 **Ruling**: our tier-2 requirements (git-diffable, human-inspectable, zero infra, survives client switch — B7) are precisely what a graph DB gives up → markdown stays the v1 default; memory-graph joins mem0/EverMind/Kage on the optional-upgrade list. **One cheap borrow**: express its typed-relationship taxonomy as markdown link semantics (`[[timeout-fix]] solves [[memory-leak]]`) in the session log — causal chains without a database.
+
+## B13. Memory follow-up: Graphify
+
+### [Graphify-Labs/graphify](https://github.com/Graphify-Labs/graphify) — third tier-1 structural-memory candidate, skill-first not MCP-first
+CLI (`graphifyy` on PyPI, `graphify` command) plus a `/graphify` skill across 20+ agent platforms (Claude Code, Cursor, Codex, Copilot CLI, Gemini CLI, etc.), rather than a bare MCP server. Local, deterministic tree-sitter AST across ~40 languages for code (no LLM, nothing leaves the machine); docs/PDF/image/video get a semantic pass through whichever model API the host assistant already has. Every edge tagged `EXTRACTED` vs `INFERRED` — confidence provenance that matches our own wiki tier's provenance requirement (B7). Outputs three files (`graph.html`, `GRAPH_REPORT.md`, `graph.json`) plus CLI `query`/`path`/`explain` against `graph.json` — no server required for single-developer use; an optional `graphifyy[mcp]` extra exposes `query_graph`/`get_node`/`get_neighbors`/`shortest_path` over stdio or shared HTTP if MCP access is preferred.
+
+Two things neither CodeGraph nor codebase-memory-mcp have:
+1. **Hook-enforced adoption on Claude Code**: `graphify claude install --strict` installs a PreToolUse hook that *blocks* (not just nudges) the first raw source read of a session and redirects it to the graph, then reverts to nudging — directly analogous to our own gate-check hook pattern, and the closest thing we've seen to "the agent can't skip memory."
+2. **Widest platform coverage by far** (20+ assistants incl. Copilot CLI, which we already support) — sidesteps the "confirm which repo the user means" disambiguation cost that plagues the two CodeGraph namesakes.
+
+**Caution (B4/B12 lesson applied, sharper this time)**: 121k★/11.7k forks on a repo created 2026-04-03 (under 6 months old) is an order of magnitude past codebase-memory-mcp's already-flagged 31.8k★/<5-month pattern. It's YC-backed (S26) with a paid hosted product (`app.graphify.com`, early access) behind the free CLI — plausibly a funnel, which doesn't disqualify it but raises the same "star velocity ≠ adoption" flag harder. The benchmarks in its BENCHMARKS.md (LOCOMO/LongMemEval) are self-published, not third-party verified. → Added to A7 as a third bake-off candidate; run it alongside CodeGraph and codebase-memory-mcp before picking a default — don't let platform breadth or hook-blocking alone decide it.

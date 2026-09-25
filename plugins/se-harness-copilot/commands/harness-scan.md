@@ -17,8 +17,9 @@ Run the deterministic collector (read-only, bounded output):
 ```
 bash tools/harness/scan-evidence.sh ${ARGUMENTS:-.}
 ```
-If a code-graph MCP server is available (CodeGraph / codebase-memory-mcp), also index and pull
-its architecture summary — richer structure, but the scan MUST work without it.
+If a code-graph MCP server or the Graphify skill is available (CodeGraph / codebase-memory-mcp /
+Graphify), also index and pull its architecture summary (Graphify: `graphify-out/GRAPH_REPORT.md`
+or `graphify query`) — richer structure, but the scan MUST work without it.
 
 ## Step 2 — Detect (stack-detector skill)
 Reason over the evidence per the **stack-detector** skill: usage beats listing; version-aware;
