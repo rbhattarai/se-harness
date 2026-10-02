@@ -19,8 +19,8 @@ existing, any stack. Installing it gives your Copilot sessions:
   `harness-export` (compile agents for other tools).
 - **11 SDLC agents** — architect, story-writer, backend/frontend implementers, db-engineer,
   unit/integration testers, e2e planner/generator/healer, release-manager.
-- **13 skills** — stack-detector, requirement-grill, memory-keeper, wiki-ingest/query/lint,
-  context-injector conventions, plus the six commands as CLI skills.
+- **14 skills** — stack-detector, requirement-grill, memory-keeper, wiki-ingest/query/lint,
+  context-injector conventions, coding-discipline, plus the six commands as CLI skills.
 - **Enforcement hooks** — a human-in-the-loop gate that denies PR/push/deploy until a
   requirement is `approved`, org-rules validation on edits, contract-impact checking across
   repos, and automatic memory logging of commits/PRs.
@@ -214,6 +214,14 @@ one or two interfaces that break most often.
 
 Commit `workspace.yaml` to a small internal meta-repo (e.g. `acme-loan-platform-harness`) so teammates
 get it via clone; until then it can live uncommitted in the `acme-loan-platform/` folder.
+
+**Finer-grained than one unit per repo?** If a unit is itself a monorepo or modulith and you need
+to model components *inside* it (not just the repo as a whole), `workspace.yaml` supports an
+optional, additive `schemaVersion: 2` block with `components:`/`relationships:` sections — see the
+commented example at the bottom of `templates/workspace.yaml` and validate it with
+`bash se-harness/plugins/se-harness/scripts/workspace-validate.sh`. This is opt-in and only needed
+past the simple one-unit-per-repo case above; `contracts:`/`contract-check.sh` are unaffected
+either way.
 
 ---
 

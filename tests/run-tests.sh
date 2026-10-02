@@ -100,6 +100,129 @@ for f in plugins/se-harness/scripts/*.sh tests/run-tests.sh; do
   check "bash -n: $f" bash -n "$f"
 done
 
+# --- workspace-validate.sh: additive schema (phase 1 of the workspace-orchestration plan) ---
+WV_FIX=$(mktemp -d 2>/dev/null || mktemp -d -t seharness)
+
+# today's shape (no schemaVersion key) must pass untouched — the backward-compatibility bar
+cat > "$WV_FIX/today.yaml" <<'EOF'
+workspace:
+  name: acme
+  topology: multi-repo
+  units:
+    - { name: frontend, repo: <url>/frontend.git, stack: [angular] }
+contracts:
+  - name: core-api
+    file: docs/api/core-openapi.yaml
+    provider: frontend
+    consumers: []
+EOF
+check "workspace-validate: today's shape (no schemaVersion) exits 0" \
+  bash plugins/se-harness/scripts/workspace-validate.sh "$WV_FIX/today.yaml"
+
+# a well-formed additive manifest (schemaVersion + components + relationships) passes clean
+cat > "$WV_FIX/good.yaml" <<'EOF'
+schemaVersion: 2
+workspace:
+  name: acme
+  units:
+    - { name: frontend, repo: <url>/frontend.git, stack: [angular] }
+    - { name: backend-core, repo: <url>/backend-core.git, stack: [dotnet] }
+components:
+  - id: storefront-ui
+    kind: application
+    boundary:
+      type: repo
+      path: frontend
+    role: customer-ui
+  - id: cart-api
+    kind: service
+    boundary:
+      type: monorepo-package
+      path: backend-core/services/cart-api
+    role: backend-service
+relationships:
+  - from: storefront-ui
+    to: cart-api
+    type: calls
+    evidence: contracts/cart-api.yaml
+contracts:
+  - name: cart-api
+    file: contracts/cart-api.yaml
+    provider: cart-api
+    consumers: [storefront-ui]
+EOF
+check "workspace-validate: well-formed additive manifest exits 0" \
+  bash plugins/se-harness/scripts/workspace-validate.sh "$WV_FIX/good.yaml"
+WV_OUT="$WV_FIX.out"
+bash plugins/se-harness/scripts/workspace-validate.sh "$WV_FIX/good.yaml" > "$WV_OUT" 2>&1
+check "workspace-validate: well-formed additive manifest reports clean" grep -q "clean" "$WV_OUT"
+
+# violations: bad boundary.type, path outside any unit, missing evidence, unknown component id
+cat > "$WV_FIX/bad.yaml" <<'EOF'
+schemaVersion: 2
+workspace:
+  name: acme
+  units:
+    - { name: frontend, repo: <url>/frontend.git, stack: [angular] }
+components:
+  - id: ghost-service
+    kind: service
+    boundary:
+      type: made-up-type
+      path: nowhere/at/all
+    role: backend-service
+relationships:
+  - from: ghost-service
+    to: unknown-id
+    type: not-a-real-type
+EOF
+bash plugins/se-harness/scripts/workspace-validate.sh "$WV_FIX/bad.yaml" > "$WV_OUT" 2>&1
+WV_CODE=$?
+check "workspace-validate: bad manifest exits 2" test "$WV_CODE" -eq 2
+for msg in "not one of repo|monorepo-package|module" "does not resolve inside any declared unit" \
+           "is not a declared component id" "missing evidence" "not a recognized relationship type"; do
+  check "workspace-validate reports: $msg" grep -qF "$msg" "$WV_OUT"
+done
+check "workspace-validate: missing file exits 1" \
+  bash -c 'bash plugins/se-harness/scripts/workspace-validate.sh "$0" >/dev/null 2>&1; test $? -eq 1' \
+  "$WV_FIX/nope.yaml"
+rm -rf "$WV_FIX" "$WV_OUT"
+
+# --- contract-check.sh keeps working unchanged against a manifest with the additive keys ---
+CC_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/plugins/se-harness/scripts/contract-check.sh"
+WVG=$(mktemp -d 2>/dev/null || mktemp -d -t seharness)
+(
+  cd "$WVG" && git init -q && git config user.email t@t.co && git config user.name t
+  mkdir -p contracts
+  cat > workspace.yaml <<'EOF'
+schemaVersion: 2
+workspace:
+  name: acme
+  units:
+    - { name: frontend, repo: <url>/frontend.git, stack: [angular] }
+    - { name: cart-api, repo: <url>/cart-api.git, stack: [dotnet] }
+components:
+  - id: storefront-ui
+    kind: application
+    boundary: { type: repo, path: frontend }
+    role: customer-ui
+relationships: []
+contracts:
+  - name: cart-api
+    file: contracts/cart-api.yaml
+    provider: cart-api
+    consumers: [frontend]
+EOF
+  echo "v1" > contracts/cart-api.yaml
+  git add -A && git commit -q -m base
+) >/dev/null 2>&1
+check "contract-check: additive manifest, no contract change, exits 0" \
+  bash -c 'cd "$1" && bash "$0" HEAD' "$CC_SCRIPT" "$WVG"
+(cd "$WVG" && echo "v2" > contracts/cart-api.yaml && git add -A) >/dev/null 2>&1
+(cd "$WVG" && bash "$CC_SCRIPT" HEAD >/dev/null 2>&1); CC_CODE=$?
+check "contract-check: additive manifest still flags a real contract change" test "$CC_CODE" -eq 2
+rm -rf "$WVG"
+
 # --- privacy invariant: plugins make no network calls (see PRIVACY.md) ---
 check "no network calls in plugin scripts" \
   bash -c "! grep -rlE 'curl |wget |Invoke-WebRequest|Invoke-RestMethod' plugins/*/scripts/"

@@ -16,7 +16,7 @@ Installing it gives every Claude Code session:
 |---|---|
 | **6 slash commands** | `/harness-init` (intake interview → generates all per-project artifacts), `/harness-scan` (brownfield stack + org-convention detection), `/harness-bootstrap` (recommends & installs companion plugins/MCP servers from `registry/recommendations.json`), `/harness-goal` (the delivery loop: grill → refined requirement → stories/test cases → design → implement → unit/integration/e2e → PR → deploy, with **3 human-approval gates**), `/harness-sync` (four-axis drift detection & refresh), `/harness-export` (compile the harness for Copilot/Cursor) |
 | **11 SDLC agents** | architect, story-writer, implementer-backend, implementer-frontend, db-engineer, unit-tester, integration-tester, e2e-planner/generator/healer, release-manager — each with a deliberately narrow tool set |
-| **7 skills** | stack-detector, requirement-grill, memory-keeper, wiki-ingest/query/lint, context-injector — auto-activated by task relevance |
+| **8 skills** | stack-detector, requirement-grill, memory-keeper, wiki-ingest/query/lint, context-injector, coding-discipline — auto-activated by task relevance |
 | **Hooks (automatic)** | `UserPromptSubmit` injects budgeted memory context; `PreToolUse` **blocks** PR/push/deploy while no requirement is `status: approved` (the HITL gate) and blocks pushes that change a provided cross-repo contract; `PostToolUse` validates edits against your org's banned-library rules and auto-logs commits/PRs to the daily memory log |
 | **3-tier memory** | structural code index (rebuildable), append-only decision log with typed causal links, and a synthesized domain wiki — all plain files under `.harness/`, committed with your code |
 
@@ -191,7 +191,10 @@ The full acme-loan-platform example (units, `shared.org` internal libraries, `ji
 [Copilot guide, Part 3](./setup-guide-copilot.md) — the file is identical on both platforms.
 Two rules: keep the `contracts:` stanza shape exactly as templated (it's machine-read by
 `contract-check.sh`), and commit the manifest to a small meta-repo so teammates get it by
-cloning.
+cloning. Need component granularity finer than one unit per repo (a monorepo or modulith unit)?
+`workspace.yaml` supports an optional, additive `schemaVersion: 2` block for that — see the
+Copilot guide's note at the end of its Part 3, and `templates/workspace.yaml`'s commented
+example. It's opt-in; `contracts:`/`contract-check.sh` are unaffected either way.
 
 ### 3.3 Per-repo bootstrap
 

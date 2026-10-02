@@ -5,6 +5,35 @@
 #
 # NOTE: the `contracts:` section is machine-read by scripts/contract-check.sh — keep its
 # exact shape (name / file / provider / consumers on their own lines).
+#
+# OPTIONAL finer-grained model (workspace-orchestration plan, phase 1 — additive only):
+# everything above this comment is the complete v1 shape and needs nothing below it. A
+# workspace happy with "one unit = one repo/dir" should stop here. The `schemaVersion` /
+# `components:` / `relationships:` keys below exist only for monorepos/moduliths that need
+# component granularity finer than one unit — see scripts/workspace-validate.sh and
+# harness-revised-plan-workspace-support-agentic.md §3 for the full model. Omitting all three
+# keys (the default) is exactly this file's v1 shape; nothing reads them until a later phase
+# wires them into /harness-init and /harness-goal.
+#
+# schemaVersion: 2
+#
+# components:                   # one entry per component finer than a whole unit
+#   - id: cart-domain            # unique; referenced by relationships[].from/to
+#     kind: module               # application | service | module | library
+#     boundary:
+#       type: module              # repo | monorepo-package | module
+#       path: backend/packages/cart-domain   # must resolve inside a declared unit's path/repo
+#     role: business-logic
+#
+# relationships:                # one entry per KNOWN cross-component relationship
+#   - from: cart-domain
+#     to: cart-api
+#     type: calls                # calls | publishes-to | consumes-from | depends-on |
+#                                 # owns-data-for | deployed-with | tested-by
+#     evidence: contracts/cart-api.yaml   # REQUIRED — a path/URL backing the claim (API spec,
+#                                          # manifest dependency, docker-compose depends_on, or
+#                                          # "user-confirmed: <date>"). No evidence, no entry —
+#                                          # workspace-validate.sh rejects a relationship without one.
 
 workspace:
   name: ""
