@@ -114,7 +114,10 @@ Per-project artifacts it creates:
 - ✅ **Workspace manifest** (`templates/workspace.yaml` — units with `path:`/`repo:`, `shared:` block, machine-readable `contracts:` registry) wired into `/harness-init` topology step.
 - ✅ **Multi-repo tier 2 — contract-check** (`scripts/contract-check.sh`, tested): deterministic consumer-impact flagging when a provided contract changes; dual-mode (standalone `--`/base-ref + PreToolUse hook firing only on push/PR); wired into hooks.json and the goal loop's automated gate. Two real bugs caught in testing: TTY-probe stdin hang (fixed with argument-based mode detection) and fresh-repo base-ref bail (fixed to still check working-tree changes).
 - ✅ **`/harness-export`** (`commands/harness-export.md` + `scripts/export-agents.sh`, tested: 11 agents → Copilot `.github/agents/*.md` profiles and Cursor `.cursor/rules/*.mdc`, idempotent, clean-before-regenerate per B6): codex = AGENTS.md-native no-op; ends with an honest capability table. Updated 2026-07: **hooks now export to Copilot too** (coding agent + CLI) via `scripts/copilot-hook-adapter.sh` + `templates/copilot-hooks.json` (semantics translated — see B10 correction); skills remain Claude-only, so export is still a capability subset on Cursor/Codex and on VS Code Chat.
-- ⏳ Still v2+: federated service graph + workspace-level goal loop (tier 3 — pending the A7 structural-memory bake-off), web UI profile-builder, swarm orchestration (Multica-style backend), video/NAS ingestion (transcription/OCR infra).
+- ⏳ Still v2+: federated service graph + workspace-level goal loop (tier 3 — see A7 and
+  [`docs/workspace-orchestration-plan.md`](./docs/workspace-orchestration-plan.md); phase 1 of 9
+  implemented), web UI profile-builder, swarm orchestration (Multica-style backend), video/NAS
+  ingestion (transcription/OCR infra).
 
 ### Spec → component traceability
 | Spec requirement | Delivered by |
@@ -183,6 +186,14 @@ workspace:
 - **Tier 3 (v2) — federated service graph + workspace-level goal loop.** Coordinated multi-repo PRs and orchestrated deploys via the workspace compose file. No longer purely a research problem: `codebase-memory-mcp` indexes multiple projects and links HTTP/gRPC/GraphQL routes across services (B12) — the tier-1-engine bake-off should explicitly test this as the v2 path.
 
 ## A7. Open decisions
+- **Workspace-level orchestration (tier 3 federated service graph, A6)**: a user's `finance-portal`
+  multi-repo trial exposed that `/harness-goal` runs per-repo only — there's no single command
+  that spans multiple repos for one feature yet, only `workspace.yaml`'s deterministic
+  provider/consumer impact check (A6 tier 2). Full design + phased rollout is tracked separately
+  in [`docs/workspace-orchestration-plan.md`](./docs/workspace-orchestration-plan.md) — additive
+  `workspace.yaml` extensions (`components:`/`relationships:`), a workspace orchestrator + per-repo
+  agents, and a fast path so single-repo requirements stay overhead-free. Phase 1 (additive
+  manifest model + `workspace-validate.sh`) is implemented (commit `dd17e81`); phases 2-9 are not.
 - Command namespace: `/harness-*` vs `/seaa-*` vs another brand — decide before Phase 0.
 - **Tier-1 structural-memory engine**: CodeGraph vs. codebase-memory-mcp vs. Graphify (B12/B13) — run all three on a real repo and compare index quality, query usefulness, and the team-shared-artifact workflow before committing.
 - Default methodology for users who don't care (lean: OpenSpec for brownfield, Spec Kit for greenfield; BMAD when roles/stakeholders matter).
