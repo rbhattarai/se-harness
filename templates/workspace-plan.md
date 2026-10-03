@@ -11,11 +11,19 @@ grep it with no YAML/table parser: every row starts with "- component:" and carr
 Status values: pending | in-progress | done | blocked. ALL rows must reach `done` before
 gate-check.sh allows push/PR/deploy for this REQ — approving the requirement is not approving
 incomplete cross-component work.
+
+`integration:` (phase 8, workspace-orchestration plan §5.4/§12): every row reaching `done`
+only means each component passed its OWN gate in isolation — it does not mean the pieces work
+together. gate-check.sh also requires `integration: passed` before push/PR/deploy; the
+workspace-orchestrator sets this only after running the combined check (workspace-level
+docker-compose + cross-repo contract-check + any spanning e2e) against the actual combined
+changes. Never hand-set this to `passed` without that check actually having run.
 -->
 ---
 req: REQ-000
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
+integration: pending   # pending | passed | failed — see Integration notes for detail
 ---
 
 # Workspace plan — REQ-000

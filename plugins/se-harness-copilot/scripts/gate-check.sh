@@ -10,6 +10,12 @@
 # for the row shape). If one exists, every row must reach `status: done` too — approving the
 # requirement is not approving incomplete cross-component work. A REQ with no workspace-plan.md
 # (the common single/few-component case, §5.0) is completely unaffected by this.
+#
+# Phase 8 (§5.4): every row being `done` means each component passed its OWN gate in
+# isolation — it does NOT mean the pieces work together. workspace-plan.md's frontmatter also
+# carries `integration: pending|passed|failed`, set by the workspace-orchestrator only after
+# the combined check actually ran. This gate requires `passed` too, so a feature can never be
+# described as complete solely because individual rows finished.
 
 set -u
 INPUT=$(cat)
@@ -34,6 +40,7 @@ fi
 
 INCOMPLETE=""
 N_INCOMPLETE=0
+NOT_INTEGRATED=""
 for req_file in $APPROVED; do
   req_id=$(basename "$req_file" .md)
   plan="$(dirname "$req_file")/$req_id/workspace-plan.md"
@@ -54,6 +61,13 @@ for req_file in $APPROVED; do
         ;;
     esac
   done < <(grep '^- component:' "$plan" 2>/dev/null)
+
+  # Phase 8: rows can all be `done` and the combined integration check still not have passed.
+  INTEG=$(grep -m1 "^integration:" "$plan" 2>/dev/null | sed -E 's/^integration:[[:space:]]*([^[:space:]]+).*/\1/')
+  case "$INTEG" in
+    passed) ;;
+    *) NOT_INTEGRATED="${NOT_INTEGRATED}${req_id}=${INTEG:-pending}; " ;;
+  esac
 done
 
 if [ "$N_INCOMPLETE" -gt 0 ]; then
@@ -61,6 +75,12 @@ if [ "$N_INCOMPLETE" -gt 0 ]; then
   # reason, cut to 500 chars) must not lose the instruction to make room for row detail.
   echo "BLOCKED by se-harness gate: every workspace-plan.md row must reach status: done before push/PR/deploy." >&2
   echo "Not yet done ($N_INCOMPLETE total): ${INCOMPLETE}" >&2
+  exit 2
+fi
+
+if [ -n "$NOT_INTEGRATED" ]; then
+  echo "BLOCKED by se-harness gate: workspace-plan.md's combined integration check hasn't passed yet." >&2
+  echo "Every row being done does not mean the pieces work together — see §5.4. Status: ${NOT_INTEGRATED}" >&2
   exit 2
 fi
 

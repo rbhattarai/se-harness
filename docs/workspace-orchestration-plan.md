@@ -4,7 +4,7 @@
 > from a personal working file once it started driving real implementation (phase 1 landed in
 > commit `dd17e81`). Status markers below follow `brainstorm.md`'s convention.
 
-**Status**: ✅ **Phases 1-7 implemented** — phase 1: additive `workspace.yaml` model +
+**Status**: ✅ **Phases 1-8 implemented** — phase 1: additive `workspace.yaml` model +
 `workspace-validate.sh` (commit `dd17e81`). Phase 2: workspace-level `/harness-init` entry point
 + opt-in confirmed cloning (`workspace-clone.sh`) + modulith/hybrid topology detection +
 evidence-required `components:`/`relationships:` proposals, plus `/harness-scan` scope-awareness.
@@ -24,7 +24,13 @@ the Copilot cloud coding agent's single-repo sandbox, conditional on VS Code's o
 `gate-check.sh`'s workspace-plan message was reordered and capped so Copilot's 500-char
 deny-reason truncation can never swallow the actionable instruction; confirmed no change was
 needed to `copilot-hook-adapter.sh` itself (it translates on exit code alone). `docs/
-interop-matrix.md` documents all of this. ⏳ Phases 8-9 not started.
+interop-matrix.md` documents all of this. Phase 8: `workspace-plan.md` gained an
+`integration: pending|passed|failed` frontmatter field — all rows reaching `done` means each
+passed its *own* gate in isolation, not that the pieces work together (§5.4), so
+workspace-orchestrator now runs a combined check (workspace-level compose + cross-repo
+contract-check + spanning e2e) before setting it to `passed`, putting any contradicted row
+back to `blocked` rather than leaving a false `done`. `gate-check.sh` requires `passed` too —
+a missing field defaults to blocked, never an implicit pass. ⏳ Phase 9 not started.
 
 ## 0. Revision notes (se-harness review pass)
 
@@ -572,7 +578,15 @@ as one large orchestrator-subsystem drop.
    deny-reason truncation can never cut off the instruction. Verified `copilot-hook-adapter.sh`
    needs no changes — it translates purely on exit code, agnostic to *why* a script blocked.
    `docs/interop-matrix.md` gained a row documenting all of this per platform.
-8. **Integration validation**: add cross-boundary contract, integration, and end-to-end workflows.
+8. ✅ **Integration validation** — IMPLEMENTED: `workspace-plan.md`'s frontmatter gained
+   `integration: pending|passed|failed`. Once every row is `done`/`blocked`,
+   workspace-orchestrator runs the combined check against the *actual* combined
+   changes — workspace-level `docker-compose` smoke test, `contract-check.sh` re-run in every
+   touched repo, and any e2e specs that span components — before setting `integration:
+   passed`; a contradicted row goes back to `blocked`, never stays a false `done`.
+   `gate-check.sh` requires `passed` in addition to all-rows-`done` (a missing field defaults
+   to blocked, never an implicit pass). `/harness-goal` steps 6/8 point at the same combined
+   compose rather than each writing a narrower, repo-only check.
 9. **Documentation and regression**: cover all supported topologies and retain single-repo
    behavior; update `docs/setup-guide-claude.md`/`setup-guide-copilot.md` per phase, not at the end.
 

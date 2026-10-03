@@ -97,16 +97,24 @@ sibling repo from here, it says so and falls back to the step-5 handoff: tell th
 **e2e-planner** turns `test-cases.md` into `e2e-plan.md` → **e2e-generator** writes Playwright
 specs against the live app (real selectors via Playwright MCP) → failures classified by
 **e2e-healer** (test defects healed; app regressions reported back to step 5, never papered over).
+If `workspace-plan.md` exists and the acceptance criteria span components, these specs target
+the **combined** system (`workspace.yaml`'s `run.compose`), the same one
+workspace-orchestrator's integration check (step 5, item 4) exercises — don't write a second,
+narrower e2e suite that only covers this repo's slice.
 
 ## 7. Pull request  ⛔ HITL GATE 2
 Present the evidence table: diff summary, unit/integration/e2e results, org-rule compliance,
 anything hand-rolled because no internal component fit. If `workspace-plan.md` exists, include
-its current row statuses in the evidence — `gate-check.sh` blocks the PR itself while any row
-isn't `done`, so this is worth surfacing before the user even asks. On approval: draft PR via
-GitHub MCP, titled with REQ + story key.
+its current row statuses **and** `integration:` result in the evidence — `gate-check.sh` blocks
+the PR itself while any row isn't `done` or `integration:` isn't `passed` (phase 8, §5.4: rows
+done in isolation is not the same as the pieces working together), so this is worth surfacing
+before the user even asks. On approval: draft PR via GitHub MCP, titled with REQ + story key.
 
 ## 8. Local verify
-Generate/update docker-compose; build and run the whole app locally; smoke-check the REQ's
+Generate/update docker-compose; build and run the whole app locally — if `workspace-plan.md`
+exists, this is the **same** workspace-level compose and combined system
+workspace-orchestrator's step-5 integration check already brought up, re-run here as the final
+pre-deploy confirmation, not a separate narrower check. Smoke-check the REQ's
 acceptance criteria end-to-end. Attach results to the PR.
 
 ## 9. Cloud deploy  ⛔ HITL GATE 3  *(release-manager agent)*

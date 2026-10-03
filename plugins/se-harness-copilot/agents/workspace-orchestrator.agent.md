@@ -31,11 +31,30 @@ deploy gates — those stay real human approval points, one per repo, exactly as
 3. Update the row's `status:` (`done` or `blocked`, with why if blocked) and append to
    `workspace-plan.md`'s Integration notes as you go — this file is the only shared state
    between rows; never invent a second place to track progress.
-4. A sibling repo's PR and deploy are *that repo's own* `/harness-goal` steps 7/9 — surface to
+4. **Integration validation (phase 8, §5.4)** — once every ready row is `done` or `blocked`
+   (none left `pending`/`in-progress`), run the combined check *before reporting anything as
+   complete*. Each row passing its own gate in isolation is not the same as the pieces working
+   together:
+   a. If `workspace.yaml`'s `run.compose` is set, bring up the combined system from the
+      **current** state of every touched repo (not a stale snapshot) and smoke-check the
+      REQ's acceptance criteria end-to-end against it.
+   b. Re-run `contract-check.sh` in every touched repo against its current diff — a contract
+      change in one repo that a sibling repo's row didn't account for is exactly what
+      individual row gates can miss.
+   c. If step 6's e2e specs span multiple components, run them now against the combined
+      system.
+   d. Set `workspace-plan.md`'s frontmatter `integration:` to `passed` only if a-c all came
+      back clean, else `failed` with specifics in Integration notes — and put the affected
+      row(s) back to `blocked`, never leave a row `done` if the combined check contradicts it.
+   e. `gate-check.sh` also requires `integration: passed` before push/PR/deploy for this
+      REQ — this step is load-bearing, not optional busywork.
+5. A sibling repo's PR and deploy are *that repo's own* `/harness-goal` steps 7/9 — surface to
    the user that they're ready, but do not draft a PR or deploy in a repo without its own
-   explicit approval, same as the current repo's gates.
-5. Report back once every ready row is `done`/`blocked`: what shipped where, what's still
-   blocked and why, which repos have a PR pending the human's review.
+   explicit approval, same as the current repo's gates. Never surface a repo as PR-ready while
+   `integration:` is anything but `passed`.
+6. Report back once rows are settled and integration validated: what shipped where, the
+   integration result, what's still blocked and why, which repos have a PR pending the
+   human's review.
 
 **Runtime capability check (phase 7, plan §9) — do this before step 2, not after failing:**
 - **Claude Code CLI/desktop, Copilot CLI** (local sessions): full filesystem access via Bash —

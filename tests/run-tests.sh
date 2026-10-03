@@ -345,6 +345,10 @@ check "gate-check: REQ approved, no workspace-plan.md — allowed (unchanged beh
 
 mkdir -p "$GC_FIX/.harness/requirements/REQ-001"
 cat > "$GC_FIX/.harness/requirements/REQ-001/workspace-plan.md" <<'EOF'
+---
+req: REQ-001
+integration: passed
+---
 - component: frontend | status: pending | owner: implementer-frontend | outcome: UI done | depends_on: cart-api | evidence: -
 - component: cart-api | status: done | owner: implementer-backend | outcome: API done | depends_on: - | evidence: -
 EOF
@@ -373,6 +377,45 @@ check "gate-check: many incomplete rows still exits 2" test $? -eq 2
 check "gate-check: many incomplete rows reports the true total count" grep -qF "(8 total)" "$GC_OUT"
 check "gate-check: many incomplete rows message stays well under 500 chars" \
   bash -c "[ \$(wc -c < '$GC_OUT') -lt 500 ]"
+
+# phase 8: all rows done is not enough — the combined integration check must also have passed
+rm -rf "$GC_FIX/.harness/requirements/REQ-001" "$GC_FIX/.harness/requirements/REQ-001.md"
+mkdir -p "$GC_FIX/.harness/requirements/REQ-002"
+cat > "$GC_FIX/.harness/requirements/REQ-002.md" <<'EOF'
+---
+id: REQ-002
+status: approved
+---
+EOF
+cat > "$GC_FIX/.harness/requirements/REQ-002/workspace-plan.md" <<'EOF'
+---
+req: REQ-002
+integration: pending
+---
+- component: frontend | status: done | owner: a | outcome: x | depends_on: - | evidence: -
+- component: cart-api | status: done | owner: b | outcome: x | depends_on: - | evidence: -
+EOF
+(cd "$GC_FIX" && gc_payload "git push" | bash "$GC_SCRIPT") > "$GC_OUT" 2>&1
+check "gate-check: all rows done but integration: pending — blocked" test $? -eq 2
+check "gate-check: integration-pending message cites §5.4" grep -qF "does not mean the pieces work together" "$GC_OUT"
+
+sed -i 's/integration: pending/integration: failed/' "$GC_FIX/.harness/requirements/REQ-002/workspace-plan.md" 2>/dev/null \
+  || sed -i '' 's/integration: pending/integration: failed/' "$GC_FIX/.harness/requirements/REQ-002/workspace-plan.md"
+(cd "$GC_FIX" && gc_payload "git push" | bash "$GC_SCRIPT") >/dev/null 2>&1
+check "gate-check: integration: failed — blocked" test $? -eq 2
+
+sed -i 's/integration: failed/integration: passed/' "$GC_FIX/.harness/requirements/REQ-002/workspace-plan.md" 2>/dev/null \
+  || sed -i '' 's/integration: failed/integration: passed/' "$GC_FIX/.harness/requirements/REQ-002/workspace-plan.md"
+(cd "$GC_FIX" && gc_payload "git push" | bash "$GC_SCRIPT") >/dev/null 2>&1
+check "gate-check: integration: passed, all rows done — allowed" test $? -eq 0
+
+# a workspace-plan.md with no integration: field at all (pre-phase-8 shape) defaults to not
+# passed, never to an implicit pass
+cat > "$GC_FIX/.harness/requirements/REQ-002/workspace-plan.md" <<'EOF'
+- component: frontend | status: done | owner: a | outcome: x | depends_on: - | evidence: -
+EOF
+(cd "$GC_FIX" && gc_payload "git push" | bash "$GC_SCRIPT") >/dev/null 2>&1
+check "gate-check: missing integration: field defaults to blocked, not an implicit pass" test $? -eq 2
 rm -rf "$GC_FIX" "$GC_OUT"
 
 # --- privacy invariant: plugins make no network calls (see PRIVACY.md) ---
