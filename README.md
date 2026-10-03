@@ -134,6 +134,9 @@ and run a cross-unit goal end to end.
 - **[Demo walkthroughs](./docs/demo/README.md)** — over the companion
   [demo-loan-app](https://github.com/rbhattarai/demo-loan-app) repo: multi-unit init,
   contract checking, cross-unit goal (and the README GIF recording guide)
+- **[Workspace-orchestration plan](./docs/workspace-orchestration-plan.md)** — single repo →
+  mono-repo → modulith → multi-repo → hybrid: the impact map, `workspace-plan.md`, the
+  `workspace-orchestrator` agent, and the combined integration check, phase by phase
 
 ## Status
 

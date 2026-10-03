@@ -180,17 +180,28 @@ claude
 
 What to watch for:
 
-1. **Grill:** the requirement skill interrogates the ambiguity (free text or picklist?
-   shown where exactly? required on reject only?) and writes
-   `.harness/requirements/REQ-001.md` — ⛔ **gate 1** blocks until you flip
-   `status: approved`.
-2. **Contract impact:** the change adds `rejectionReason` to the loan record →
+1. **Grill + impact map:** the requirement skill interrogates the ambiguity (free text or
+   picklist? shown where exactly? required on reject only?) while the deep-dive step builds
+   an impact map from `workspace.yaml` — this goal touches both units, so the count is 2.
+2. **Workspace plan, same gate.** Because the impact spans 2+ units, `/harness-goal` also
+   renders `.harness/requirements/REQ-001/workspace-plan.md` (one row per unit) **alongside**
+   `REQ-001.md`, not a second gate — ⛔ **gate 1** blocks until you flip `status: approved`,
+   which approves both at once.
+3. **Contract impact:** the change adds `rejectionReason` to the loan record →
    contract-check flags `loan-webapp` as an impacted consumer; the loop links a consumer
    task to the same REQ.
-3. **Implementation fan-out** in isolated worktrees, then unit/integration/e2e tests.
-4. ⛔ **Gate 2** — PR with evidence; compose-verify runs against `docker-compose.yml`
-   (both apps up, SSE sync observable in two browser tabs).
-5. ⛔ **Gate 3** — deploy approval.
+4. **workspace-orchestrator works the plan**, not manual fan-out: it implements the
+   `lending-webapp` row directly, then `cd`s into `loan-webapp` (trivial here — both units
+   are already checked out side by side in the one clone) for that row, isolated worktrees
+   and unit/integration/e2e tests either way.
+5. **Integration check before anything is "done."** Once both rows are implemented, it brings
+   up `docker-compose.yml` from the combined current state and re-checks contracts — passing
+   each unit's own tests isn't the same as the SSE sync actually working end to end. Only
+   then does `workspace-plan.md` get `integration: passed`.
+6. ⛔ **Gate 2** — PR with evidence, including each row's status and the integration result;
+   `gate-check.sh` would block the PR itself otherwise. Compose-verify re-runs against
+   `docker-compose.yml` (both apps up, SSE sync observable in two browser tabs).
+7. ⛔ **Gate 3** — deploy approval.
 
 Good smaller goals if you want a shorter take: "Add an amount-range filter to the lender
 dashboard" (single unit), "Show a live-updated count of pending loans on both dashboards"

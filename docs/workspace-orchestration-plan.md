@@ -4,33 +4,39 @@
 > from a personal working file once it started driving real implementation (phase 1 landed in
 > commit `dd17e81`). Status markers below follow `brainstorm.md`'s convention.
 
-**Status**: ✅ **Phases 1-8 implemented** — phase 1: additive `workspace.yaml` model +
-`workspace-validate.sh` (commit `dd17e81`). Phase 2: workspace-level `/harness-init` entry point
-+ opt-in confirmed cloning (`workspace-clone.sh`) + modulith/hybrid topology detection +
-evidence-required `components:`/`relationships:` proposals, plus `/harness-scan` scope-awareness.
-Phase 3: methodology and non-code sources now default to workspace scope, inherited by every
-unit unless explicitly (and visibly) overridden. Phase 4: `/harness-init` records a tier-1
-structural-memory driver choice (never installs it); `/harness-bootstrap` and `/harness-scan`
-both read it back instead of re-asking or probing generically. Phase 5: `/harness-goal` builds
-an evidence-backed impact map and only creates `workspace-plan.md` when it spans 2+ components
-(§5.0's fast path); `gate-check.sh` blocks push/PR/deploy while any row isn't `done`, same as
-it already does for an unapproved REQ. Phase 6: a `workspace-orchestrator` agent (12th in the
-roster) works `workspace-plan.md`'s rows directly, crossing into an already-cloned sibling
-repo's tree rather than handing that off to the human — still stopping at each repo's own
-PR/deploy gates, and falling back to the phase-5 handoff honestly if the runtime can't actually
-cross repos from where it's running (§9). Phase 7: the orchestrator now checks cross-repo
-capability per-surface *before* attempting it (full on local Claude Code/Copilot CLI, never on
-the Copilot cloud coding agent's single-repo sandbox, conditional on VS Code's open workspace);
-`gate-check.sh`'s workspace-plan message was reordered and capped so Copilot's 500-char
-deny-reason truncation can never swallow the actionable instruction; confirmed no change was
-needed to `copilot-hook-adapter.sh` itself (it translates on exit code alone). `docs/
-interop-matrix.md` documents all of this. Phase 8: `workspace-plan.md` gained an
-`integration: pending|passed|failed` frontmatter field — all rows reaching `done` means each
-passed its *own* gate in isolation, not that the pieces work together (§5.4), so
-workspace-orchestrator now runs a combined check (workspace-level compose + cross-repo
-contract-check + spanning e2e) before setting it to `passed`, putting any contradicted row
-back to `blocked` rather than leaving a false `done`. `gate-check.sh` requires `passed` too —
-a missing field defaults to blocked, never an implicit pass. ⏳ Phase 9 not started.
+**Status**: ✅ **All 9 phases implemented.** One-line-each summary:
+
+1. Additive `workspace.yaml` model + `workspace-validate.sh` (`dd17e81`) — a manifest with
+   none of the new keys is untouched; nothing existing breaks.
+2. Workspace-level `/harness-init` entry point, opt-in confirmed cloning
+   (`workspace-clone.sh`), modulith/hybrid detection (confirmed, never inferred silently),
+   evidence-required `components:`/`relationships:` proposals, `/harness-scan` scope-awareness.
+3. Methodology and non-code sources default to workspace scope, inherited by every unit
+   unless explicitly (and visibly, via a code comment) overridden.
+4. `/harness-init` records a tier-1 structural-memory driver choice (never installs it);
+   `/harness-bootstrap`/`/harness-scan` read it back instead of re-asking or probing.
+5. `/harness-goal` builds an evidence-backed impact map and only creates `workspace-plan.md`
+   when it spans 2+ components (§5.0's fast path); `gate-check.sh` blocks push/PR/deploy
+   while any row isn't `done`.
+6. A `workspace-orchestrator` agent (12th in the roster) works rows directly, crossing into
+   an already-cloned sibling repo's tree rather than handing that off to the human — still
+   stopping at each repo's own PR/deploy gates, falling back honestly when it can't (§9).
+7. The orchestrator checks cross-repo capability per surface *before* attempting it (full
+   locally, never on the Copilot cloud coding agent's single-repo sandbox, conditional on VS
+   Code); `gate-check.sh`'s message was reordered/capped for Copilot's 500-char deny-reason
+   truncation; `copilot-hook-adapter.sh` confirmed to need no changes. `docs/interop-matrix.md`
+   documents all of this.
+8. `workspace-plan.md` gained `integration: pending|passed|failed` — all rows `done` means
+   each passed its *own* gate in isolation, not that the pieces work together (§5.4);
+   workspace-orchestrator runs a combined check (compose + cross-repo contract-check +
+   spanning e2e) before `passed`, putting a contradicted row back to `blocked`.
+9. Documentation/regression pass: modulith + hybrid worked examples
+   ([setup guide Part 3a](./setup-guide-claude.md#part-3a--example-c-modulith-and-hybrid)),
+   the demo walkthrough revised to show the actual workspace-plan/orchestrator/integration
+   behavior on its real cross-unit goal, and the §13 acceptance criteria below re-audited
+   against evidence (two honest ⚠️ partials carried to §14, not silently claimed done).
+
+Full phase detail and the files each one touched: §12.
 
 ## 0. Revision notes (se-harness review pass)
 
@@ -587,32 +593,73 @@ as one large orchestrator-subsystem drop.
    `gate-check.sh` requires `passed` in addition to all-rows-`done` (a missing field defaults
    to blocked, never an implicit pass). `/harness-goal` steps 6/8 point at the same combined
    compose rather than each writing a narrower, repo-only check.
-9. **Documentation and regression**: cover all supported topologies and retain single-repo
-   behavior; update `docs/setup-guide-claude.md`/`setup-guide-copilot.md` per phase, not at the end.
+9. ✅ **Documentation and regression** — IMPLEMENTED: added
+   [setup guide Part 3a](./setup-guide-claude.md#part-3a--example-c-modulith-and-hybrid)
+   (modulith + hybrid worked walkthroughs — the two topologies that had schema/detection
+   support since phase 2 but no worked example anywhere). Corrected Part 3.4's stale
+   "worktree fan-out across repos" claim (worktrees only ever worked within one repo;
+   cross-repo dispatch is workspace-orchestrator crossing via `cd`, from phase 6) to describe
+   the actual impact-map → workspace-plan → orchestrator → integration-check flow. Revised
+   `docs/demo/README.md`'s real cross-unit goal walkthrough to show workspace-plan.md and the
+   integration check actually firing, not pre-phase-1 behavior. §13's acceptance criteria
+   re-audited against concrete evidence (test names, file references) rather than left as an
+   unchecked wishlist — found and recorded two genuine partial gaps (§14) instead of silently
+   marking everything done. Regenerated the Copilot variant and confirmed zero diff (phase 9
+   touched docs only); full suite still 188/188.
 
-## 13. Acceptance criteria
+## 13. Acceptance criteria (phase 9 audit — ✅ verified / ⚠️ partial, with evidence)
 
-- Existing single-repo initialization and scanning continue to work without a workspace manifest.
-- Existing multi-repo workspaces with no `schemaVersion`/`components`/`relationships` keys
-  continue to work identically to before — this is the backward-compatibility bar, verified by
-  the existing test suite plus new tests for the additive path.
-- The workspace model can represent single repo, monorepo, modulith, multi-repo, and hybrid
-  structures.
-- Topology and component relationships are evidence-backed suggestions confirmed by the user
-  where needed; a relationship with no `evidence` field is never written to the manifest.
-- Shared methodology is configured at workspace scope by default; stack and DevOps/cloud remain
-  local by default.
-- Non-code sources can be absent, workspace-wide, or scoped to selected components.
-- The structural-memory driver choice (§4.5) never implies a choice of format for tiers 2/3,
-  which stay markdown at every scope.
-- A feature request yields an inspectable impact map and dependency-aware plan before changes
-  begin, and single/few-component requirements skip orchestration overhead entirely (§5.0).
-- The orchestrator can coordinate parallel and sequential work without requiring direct
-  agent-to-agent messaging, using `workspace-plan.md` as the shared, inspectable state.
-- Cross-boundary work includes explicit contracts and integration validation.
-- Agent capabilities are adapted to the active runtime rather than assumed.
-- Setup and recovery do not destroy existing repos, user changes, or user-authored configuration;
-  repository cloning never happens without an explicit per-repo confirmation.
+- ✅ **Existing single-repo initialization and scanning continue to work without a workspace
+  manifest.** `/harness-init` Step 1 only branches on git-repo detection (unchanged path
+  inside a repo); Step 3 falls through to `single` when no markers/signals/multi-repo answer
+  apply. Every script the new steps touch (`workspace-validate.sh`, `workspace-clone.sh`)
+  early-exits with no manifest present.
+- ✅ **Existing multi-repo workspaces with no `schemaVersion`/`components`/`relationships`
+  keys continue to work identically to before.** Verified: "workspace-validate: today's shape
+  (no schemaVersion) exits 0", "contract-check: additive manifest, no contract change, exits
+  0" and "...still flags a real contract change" (`tests/run-tests.sh`, phase 1).
+- ✅ **The workspace model can represent single repo, monorepo, modulith, multi-repo, and
+  hybrid structures.** `templates/workspace.yaml`'s `topology:` comment lists all five;
+  `/harness-init` Step 3 detects/confirms each explicitly (modulith via a direct question,
+  hybrid via the combined confirmation); worked through in
+  [setup guide Part 3a](./setup-guide-claude.md#part-3a--example-c-modulith-and-hybrid).
+- ✅ **Topology and component relationships are evidence-backed suggestions confirmed by the
+  user where needed; a relationship with no `evidence` field is never written.**
+  `workspace-validate.sh` rejects an evidence-less relationship row (tested); Step 3 instructs
+  "only with the evidence attached ... never a written entry."
+- ✅ **Shared methodology is configured at workspace scope by default; stack and DevOps/cloud
+  remain local by default.** Phase 3: `shared.methodology` + Step 4's inherit-or-ask logic.
+  Stack/DevOps/cloud were never added to `workspace.yaml` — absence of change, by design.
+- ⚠️ **Non-code sources can be absent, workspace-wide, or scoped to selected components** —
+  *partial*. Absent/workspace-wide are implemented (phase 3: `shared.jira_project`/
+  `confluence_spaces`/`sharepoint_sites`). Scoping a *specific* source to only some components
+  (e.g. "this Jira project applies only to the billing module") was never built — there is no
+  schema field for it. Carried to §14 as an open decision rather than silently claimed done.
+- ✅ **The structural-memory driver choice never implies a choice of format for tiers 2/3.**
+  Phase 4: explicit "tier 1 ONLY" language in `/harness-init` Step 6 and both templates'
+  comments.
+- ✅ **A feature request yields an inspectable impact map and dependency-aware plan before
+  changes begin, and single/few-component requirements skip orchestration overhead
+  entirely.** Phase 5: `/harness-goal` Step 2 (impact map) + Step 3 (§5.0 fast path).
+- ⚠️ **The orchestrator can coordinate parallel and sequential work ... using
+  `workspace-plan.md` as the shared, inspectable state** — *partial, honestly*.
+  `workspace-plan.md` is confirmed as the sole shared state (no agent-to-agent messaging
+  anywhere — phase 6 deliberately avoided nested subagent dispatch, §9). The
+  *dependency-aware ordering* is real (`depends_on` serializes correctly). **True concurrent
+  execution of independent rows is not implemented** — one orchestrator session works rows
+  one at a time even when the dependency graph would allow parallelism; building real
+  parallelism would mean spawning concurrent sessions, which runs into the same
+  nested-dispatch reliability question phase 6 explicitly declined to assume. Carried to §14.
+- ✅ **Cross-boundary work includes explicit contracts and integration validation.** Phase 8:
+  `contract-check.sh` re-run per touched repo + combined compose smoke test +
+  `integration: passed/failed`, enforced by `gate-check.sh` (8 new fixture tests).
+- ✅ **Agent capabilities are adapted to the active runtime rather than assumed.** Phase 7:
+  explicit per-surface capability check (local full access / cloud coding agent never /
+  VS Code conditional) before attempting cross-repo work, not after failing.
+- ✅ **Setup and recovery do not destroy existing repos ...; cloning never happens without
+  explicit per-repo confirmation.** Phase 2: `workspace-clone.sh`'s plan-then-confirm,
+  never-overwrite design — collision detection and untouched-content verified by fixture
+  tests that assert the pre-existing file content is byte-identical after a blocked attempt.
 
 ## 14. Open design decisions
 
@@ -632,3 +679,15 @@ as one large orchestrator-subsystem drop.
 - Exact threshold mechanics for §5.0 — "2+ components" is the starting rule; whether it should
   also weigh contract/relationship criticality (e.g. a one-component change to a widely-consumed
   contract might still warrant orchestrator visibility) is open.
+- **Per-component scoping of non-code sources** (§13 audit, phase 9): `shared.jira_project`/
+  `confluence_spaces`/`sharepoint_sites` are workspace-wide or absent today; there's no schema
+  for "this source applies only to components X and Y." Worth a field if a real workspace
+  needs it (e.g. one Confluence space per product line within one workspace) — not built
+  speculatively ahead of that need.
+- **True parallel execution of independent `workspace-plan.md` rows** (§13 audit, phase 9):
+  dependency-aware *ordering* is real; concurrent *execution* isn't — one orchestrator session
+  works rows sequentially regardless of what the dependency graph would allow. Building real
+  parallelism means either spawning concurrent sessions (hits the same nested-dispatch
+  reliability question phase 6 declined to assume — §9) or a job-queue-style external
+  coordinator (Multica-shaped, already flagged as v2+ infrastructure in `brainstorm.md` B5/B8).
+  Not pursued here; sequential-but-correct was the acceptance bar for phases 5-8.

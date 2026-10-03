@@ -213,11 +213,24 @@ env is which) and `database-config` (object/domain layout, migration process).
   (`frontend`) until you acknowledge the impact. Standalone check any time:
   `bash "$(git rev-parse --show-toplevel)"/../se-harness/plugins/se-harness/scripts/contract-check.sh --`
   — or just ask Claude to run the contract check.
-- **Cross-repo goals.** Run `/harness-goal` from the repo that owns the primary change; the
-  supervisor reads `workspace.yaml`, sequences db → backend ∥ frontend via worktree fan-out,
-  and the story-writer files linked Jira issues per repo.
-- **Gates are per-repo but the REQ is one file** — put it in the primary repo; PRs in the
-  other repos link to it.
+- **Cross-repo goals** (workspace-orchestration plan, full detail in
+  [`docs/workspace-orchestration-plan.md`](./workspace-orchestration-plan.md)). Run
+  `/harness-goal` from the repo that owns the primary change. Step 2 builds an impact map from
+  `workspace.yaml`; if it names only this repo, everything proceeds exactly as single-repo
+  (no extra ceremony — this is the common case even in a multi-repo product). If it names 2+
+  repos, step 3 also creates `REQ-NNN/workspace-plan.md` — one row per repo, presented
+  alongside the REQ for the same approval — and step 5 hands off to the
+  **workspace-orchestrator** agent, which works each row (implementing directly in this repo,
+  crossing into an already-cloned sibling repo's tree for a row that lives there) rather than
+  you manually re-running `/harness-goal` in each one. Before anything is reported complete,
+  it also brings up the workspace-level compose and re-checks contracts across every touched
+  repo — passing in each repo individually isn't the same as the combination working, so this
+  combined check is a real gate, not a formality.
+- **Gates are per-repo, enforced per-repo.** The REQ lives in the primary repo; PRs in the
+  other repos link to it. `gate-check.sh` blocks push/PR/deploy anywhere while the REQ isn't
+  `approved`, while any `workspace-plan.md` row isn't `done`, or while its combined
+  `integration:` check hasn't `passed` — approving the requirement is not approving incomplete
+  or unverified cross-repo work.
 
 ### 3.5 Verify the workspace
 
@@ -226,6 +239,54 @@ env is which) and `database-config` (object/domain layout, migration process).
 2. With no approved REQ, ask Claude to open a PR — expect the gate denial.
 3. Ask in `frontend`: *"Which backend contract does this repo consume and where is it
    defined?"* — the answer should come from `workspace.yaml`.
+
+---
+
+## Part 3a — Example C: modulith and hybrid
+
+Two more topologies `workspace.yaml` models (same file, same commands — no separate
+machinery). Short, schema-focused walkthroughs; see
+[`docs/workspace-orchestration-plan.md`](./workspace-orchestration-plan.md) §3 for the full
+model if you want it.
+
+### Modulith: one deployable repo, internal module boundaries
+
+Scenario: a single Spring Modulith service (one deployable JAR) organized into
+`billing`/`shipping`/`inventory` packages, each with its own clear boundary but no separate
+deployment.
+
+Run `/harness-init` as usual. Step 3 checks for workspace markers (mono-repo signals) first;
+finding none, it looks for internal-module signals instead — `spring-modulith` on the
+classpath, `@ApplicationModule`-annotated packages, a `src/modules/`-style convention. A
+directory layout is a **clue, never a silent conclusion**: it asks you to confirm before
+writing anything —
+
+> *"This looks like it's organized into internal modules (evidence: `spring-modulith`
+> dependency, `@ApplicationModule` on `billing`/`shipping`/`inventory`). Is this one
+> deployable app with internal module boundaries, or should I treat it as a plain single
+> repo?"*
+
+Confirm, and it writes `workspace.yaml` with `topology: modulith`, a single unit (`path: .`
+— the whole repo is the one deployable thing), and a `components:` entry per module
+(`kind: module`), plus any evidenced `relationships:` between them (e.g. `billing` calling
+`shipping`'s client, cited by the actual import). Validated with `workspace-validate.sh`
+before it reports success. A goal whose impact map stays inside one module runs exactly like
+single-repo; one spanning two modules gets the same `workspace-plan.md` treatment multi-repo
+gets — the mechanism doesn't care whether "components" means repos or internal packages.
+
+### Hybrid: a repo with its own internal structure, and also part of a bigger product
+
+Scenario: `backend-core` from Part 3's acme-loan-platform example turns out to itself be a
+modulith (`billing`/`shipping`/`inventory` modules) **and** a multi-repo unit alongside
+`frontend`/`backend-integration`/etc.
+
+Confirm both halves when `/harness-init` asks (the mono-repo/modulith question from above,
+*and* "is this repo part of a multi-repo product?" from Part 3). `topology:` becomes
+`hybrid`, not `mono-repo` or `multi-repo` alone — the manifest carries both the internal
+`components:`/`relationships:` *and* the external `contracts:` registry, at the same time, in
+the same file. Nothing else changes: the same impact map, the same fast path, the same
+workspace-orchestrator for anything spanning 2+ components whether those components are
+internal modules, sibling repos, or a mix of both.
 
 ---
 
