@@ -87,6 +87,10 @@ done
 maybe_none
 
 section "SECRETS SWEEP (file:line only — content never echoed)"
+# These literal strings (ghp_, api_key, password, ...) are SEARCH TARGETS for a local grep
+# over this project's own committed wiki/*.md pages — not credentials this script reads.
+# It never touches env vars, keychains, .netrc, or any system credential store, and it never
+# makes a network call (see PRIVACY.md + the "no network calls" test in tests/run-tests.sh).
 SECRET_RE='AKIA[0-9A-Z]{16}|aws_secret_access_key|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]+|api[_-]?key[[:space:]]*[:=][[:space:]]*['\''"][^'\''"]+|password[[:space:]]*[:=][[:space:]]*['\''"][^'\''"]+'
 while IFS= read -r loc; do
   [ -n "$loc" ] && hit "SECRET-HIT: $loc"
