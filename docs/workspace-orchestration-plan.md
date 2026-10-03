@@ -4,7 +4,7 @@
 > from a personal working file once it started driving real implementation (phase 1 landed in
 > commit `dd17e81`). Status markers below follow `brainstorm.md`'s convention.
 
-**Status**: ✅ **Phases 1-5 implemented** — phase 1: additive `workspace.yaml` model +
+**Status**: ✅ **Phases 1-6 implemented** — phase 1: additive `workspace.yaml` model +
 `workspace-validate.sh` (commit `dd17e81`). Phase 2: workspace-level `/harness-init` entry point
 + opt-in confirmed cloning (`workspace-clone.sh`) + modulith/hybrid topology detection +
 evidence-required `components:`/`relationships:` proposals, plus `/harness-scan` scope-awareness.
@@ -14,8 +14,11 @@ structural-memory driver choice (never installs it); `/harness-bootstrap` and `/
 both read it back instead of re-asking or probing generically. Phase 5: `/harness-goal` builds
 an evidence-backed impact map and only creates `workspace-plan.md` when it spans 2+ components
 (§5.0's fast path); `gate-check.sh` blocks push/PR/deploy while any row isn't `done`, same as
-it already does for an unapproved REQ. Cross-repo dispatch is still manual (phases 6-7).
-⏳ Phases 6-9 not started.
+it already does for an unapproved REQ. Phase 6: a `workspace-orchestrator` agent (12th in the
+roster) works `workspace-plan.md`'s rows directly, crossing into an already-cloned sibling
+repo's tree rather than handing that off to the human — still stopping at each repo's own
+PR/deploy gates, and falling back to the phase-5 handoff honestly if the runtime can't actually
+cross repos from where it's running (§9). ⏳ Phases 7-9 not started.
 
 ## 0. Revision notes (se-harness review pass)
 
@@ -545,8 +548,14 @@ as one large orchestrator-subsystem drop.
    completely unaffected (verified by regression tests). Cross-repo rows in step 5 are handed
    off as "run `/harness-goal` in that repo, referencing this REQ id" — honest about there
    being no automated dispatch yet (phases 6-7).
-6. **Agent scaffolding**: generate the workspace orchestrator and repo/component agents from
-   confirmed boundaries, only once a workspace actually needs the orchestrator (§5.0).
+6. ✅ **Agent scaffolding** — IMPLEMENTED: `agents/workspace-orchestrator.md` ships with the
+   plugin (12th in the roster, like every other agent — not dynamically generated per
+   workspace) and is only *invoked* when `workspace-plan.md` exists (§5.0). Repo/component
+   agents are the existing roster, unchanged — no new agent type per repo, per §6's own
+   guidance. It does cross-repo rows' work directly (Bash `cd` into an already-cloned sibling
+   tree) rather than nested subagent dispatch, since that capability isn't reliably available
+   across runtimes (§9) — it never claims a row is in progress if it can't actually act on it,
+   falling back to the phase-5 handoff instead. It never bypasses a repo's own PR/deploy gates.
 7. **Runtime adapters**: add supported agent-client integrations and sequential fallback.
 8. **Integration validation**: add cross-boundary contract, integration, and end-to-end workflows.
 9. **Documentation and regression**: cover all supported topologies and retain single-repo

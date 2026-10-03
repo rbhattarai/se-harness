@@ -17,8 +17,9 @@ existing, any stack. Installing it gives your Copilot sessions:
   `harness-goal` (the delivery loop: grill → requirement → stories → implement → test →
   PR → deploy, with 3 human-approval gates), `harness-sync` (drift detection & refresh),
   `harness-export` (compile agents for other tools).
-- **11 SDLC agents** — architect, story-writer, backend/frontend implementers, db-engineer,
-  unit/integration testers, e2e planner/generator/healer, release-manager.
+- **12 SDLC agents** — architect, story-writer, backend/frontend implementers, db-engineer,
+  unit/integration testers, e2e planner/generator/healer, release-manager, and a
+  workspace-orchestrator for multi-component requirements (used only when one applies).
 - **14 skills** — stack-detector, requirement-grill, memory-keeper, wiki-ingest/query/lint,
   context-injector conventions, coding-discipline, plus the six commands as CLI skills.
 - **Enforcement hooks** — a human-in-the-loop gate that denies PR/push/deploy until a
@@ -264,9 +265,9 @@ Expected results in the repo afterwards (verify each):
 If you followed Part 1 you already have it — the framework dual-publishes as a **Copilot CLI
 plugin** ([plugins docs](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-cli-plugins));
 Copilot CLI reads the same marketplace file Claude Code uses. The plugin gives every Copilot
-CLI session: the **11-agent roster** (as `*.agent.md`), the **7 harness skills**
+CLI session: the **12-agent roster** (as `*.agent.md`), the **8 harness skills**
 (context-injector conventions, stack-detector, requirement-grill, memory-keeper,
-wiki-ingest/query/lint — same SKILL.md standard as Claude), the **harness commands**
+wiki-ingest/query/lint, coding-discipline — same SKILL.md standard as Claude), the **harness commands**
 (goal/init/scan/bootstrap/sync/export, also registered as CLI skills — `copilot harness-goal …`),
 and the **bundled enforcement hooks**. Note: plugin components are cached — after updating
 the internal repo, run `copilot plugin update se-harness-copilot`.

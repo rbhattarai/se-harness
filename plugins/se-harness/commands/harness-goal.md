@@ -60,22 +60,22 @@ frontmatter. The story ID threads through branch names, commits, and the PR from
 
 **No `workspace-plan.md`** (0-1 component, the common case): proceed with 1-5 below, unchanged.
 
-**`workspace-plan.md` exists** (2+ components): work its rows in dependency order — serialize
-anything another row's `depends_on` names until that dependency is `done`; parallelize the
-rest. Per row:
-a. Set it to `status: in-progress` in `workspace-plan.md` before starting.
-b. **Component lives in this repo** → continue with 1-5 below, scoped to that component.
-c. **Component lives in a different repo** → there is no automated cross-repo dispatch yet
-   (that's `docs/workspace-orchestration-plan.md` phases 6-7). Tell the user this row needs
-   its own `/harness-goal` run in that repo, referencing this REQ id so the two threads stay
-   linked; leave the row `in-progress` here — it's that other run's job to flip it to `done`.
-d. Once a row's work is verified (step 5's automated gate below, or the other repo's own
-   gate), set it to `done`. Genuinely stuck → `blocked`, with why recorded in the plan's
-   Integration notes — never leave a row silently `in-progress`.
+**`workspace-plan.md` exists** (2+ components): delegate to **workspace-orchestrator** (phase
+6 of the workspace-orchestration plan) rather than running 1-5 below yourself. It works the
+rows in dependency order — serializing anything another row's `depends_on` names until that
+dependency is `done`, parallelizing the rest — doing the work directly for a row in this repo,
+crossing into a sibling repo's already-cloned tree for a row that lives there, and updating
+each row's `status:` as it goes. It never bypasses a repo's own PR/deploy gates (steps 7/9
+below still apply, per repo, with explicit approval each time) and never marks a row `done`
+without passing that row's own automated gate. If the runtime can't actually cross into a
+sibling repo from here, it says so and falls back to the step-5 handoff: tell the user to run
+`/harness-goal` directly in that repo, referencing this REQ id, and leave the row
+`in-progress` until that run flips it to `done`.
 
-1. **architect** produces `REQ-NNN/design.md` (for a multi-component REQ: either one
-   `design.md` per row, or a shared file with one section per component — state which you
-   used); resolve its open questions with the user before any code.
+1. **architect** produces `REQ-NNN/design.md`; resolve its open questions with the user
+   before any code. (Workspace-orchestrator follows this same step 1-5 procedure per row it
+   works — one `design.md` per component, or a shared file with one section each; it states
+   which.)
 2. Break the design into tasks; typical order — db first, then backend ∥ frontend in parallel:
    ```
    bash ${CLAUDE_PLUGIN_ROOT}/scripts/worktree-task.sh create REQ-NNN db-schema
