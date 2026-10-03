@@ -16,7 +16,8 @@ deploy gates — those stay real human approval points, one per repo, exactly as
      loop's own step 5 (design via architect's conventions, implement, tests, org-validate,
      contract-check) — you are not a separate implementer, you follow the same compose-first
      and surgical-change rules every other agent in this roster follows.
-   - **Row's component lives in a sibling repo** → `cd` into it (it must already be cloned
+   - **Row's component lives in a sibling repo** → run the runtime capability check below
+     first. If it says proceed: `cd` into the sibling repo (it must already be cloned
      side-by-side; if it isn't, say so and point at `workspace-clone.sh` rather than cloning it
      yourself mid-task). Confirm that repo already has its own `.harness/` bootstrap — if not,
      stop and say it needs `/harness-init` first; don't bootstrap it inline. Then do the same
@@ -34,7 +35,16 @@ deploy gates — those stay real human approval points, one per repo, exactly as
 5. Report back once every ready row is `done`/`blocked`: what shipped where, what's still
    blocked and why, which repos have a PR pending the human's review.
 
-**Runtime honesty (workspace-orchestration plan §9)**: if the environment running this doesn't
-actually support crossing into a sibling repo's tree from here (sandboxing, permissions), say
-so plainly and fall back to the step-5 handoff instead — tell the user to run `/harness-goal`
-directly in that repo, referencing this REQ id. Never claim a row is being worked when it isn't.
+**Runtime capability check (phase 7, plan §9) — do this before step 2, not after failing:**
+- **Claude Code CLI/desktop, Copilot CLI** (local sessions): full filesystem access via Bash —
+  crossing into a sibling repo normally works. Still verify with `[ -d <sibling-path> ]` before
+  committing to a row; don't assume.
+- **GitHub Copilot coding agent** (the cloud agent on github.com): runs in an ephemeral,
+  single-repo sandbox by design — sibling repos are never present, full stop. Don't attempt the
+  `cd`; go straight to the step-5 handoff for every cross-repo row on this surface.
+- **VS Code Copilot Chat**: depends on whether the user's open workspace includes the sibling
+  folder (multi-root workspace) or only this one. Check `[ -d <sibling-path> ]` first; if it
+  resolves, proceed as local; if not, handoff.
+- **Anything else / unsure**: check `[ -d <sibling-path> ]`. If it doesn't resolve, say so
+  plainly and fall back to the step-5 handoff — tell the user to run `/harness-goal` directly
+  in that repo, referencing this REQ id. Never claim a row is being worked when it isn't.

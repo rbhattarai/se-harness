@@ -352,12 +352,27 @@ GC_OUT="$GC_FIX.out"
 (cd "$GC_FIX" && gc_payload "gh pr create --title x" | bash "$GC_SCRIPT") > "$GC_OUT" 2>&1
 GC_CODE=$?
 check "gate-check: approved REQ, a pending workspace-plan row — blocked" test "$GC_CODE" -eq 2
-check "gate-check: blocked message names the pending component" grep -qF "component: frontend" "$GC_OUT"
+check "gate-check: blocked message names the pending component" grep -qF "frontend=pending" "$GC_OUT"
+check "gate-check: blocked message leads with the actionable instruction" \
+  bash -c "head -1 '$GC_OUT' | grep -qF 'must reach status: done'"
 
 sed -i 's/status: pending/status: done/' "$GC_FIX/.harness/requirements/REQ-001/workspace-plan.md" 2>/dev/null \
   || sed -i '' 's/status: pending/status: done/' "$GC_FIX/.harness/requirements/REQ-001/workspace-plan.md"
 (cd "$GC_FIX" && gc_payload "gh pr create --title x" | bash "$GC_SCRIPT") >/dev/null 2>&1
 check "gate-check: all workspace-plan rows done — allowed" test $? -eq 0
+
+# phase 7: many incomplete rows must still produce a short, actionable message — the Copilot
+# hook adapter truncates a deny reason to 500 chars, so the instruction can't depend on a row
+# dump that might get cut off first.
+for i in 1 2 3 4 5 6 7 8; do
+  echo "- component: svc$i | status: pending | owner: x | outcome: x | depends_on: - | evidence: -" \
+    >> "$GC_FIX/.harness/requirements/REQ-001/workspace-plan.md"
+done
+(cd "$GC_FIX" && gc_payload "git push" | bash "$GC_SCRIPT") > "$GC_OUT" 2>&1
+check "gate-check: many incomplete rows still exits 2" test $? -eq 2
+check "gate-check: many incomplete rows reports the true total count" grep -qF "(8 total)" "$GC_OUT"
+check "gate-check: many incomplete rows message stays well under 500 chars" \
+  bash -c "[ \$(wc -c < '$GC_OUT') -lt 500 ]"
 rm -rf "$GC_FIX" "$GC_OUT"
 
 # --- privacy invariant: plugins make no network calls (see PRIVACY.md) ---

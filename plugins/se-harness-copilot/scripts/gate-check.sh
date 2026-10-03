@@ -33,6 +33,7 @@ if [ -z "$APPROVED" ]; then
 fi
 
 INCOMPLETE=""
+N_INCOMPLETE=0
 for req_file in $APPROVED; do
   req_id=$(basename "$req_file" .md)
   plan="$(dirname "$req_file")/$req_id/workspace-plan.md"
@@ -41,15 +42,25 @@ for req_file in $APPROVED; do
     [ -n "$row" ] || continue
     case "$row" in
       *"status: done"*) ;;
-      *) INCOMPLETE="${INCOMPLETE}${req_id}: ${row}"$'\n' ;;
+      *)
+        N_INCOMPLETE=$((N_INCOMPLETE + 1))
+        [ "$N_INCOMPLETE" -le 5 ] || continue   # cap: keep the message short for any hook
+                                                 # adapter that truncates it (e.g. Copilot's
+                                                 # 500-char deny-reason limit) — the count below
+                                                 # still reports the true total.
+        comp=$(printf '%s' "$row" | sed -E 's/^- component: *([^|]+)\|.*/\1/' | sed 's/[[:space:]]*$//')
+        stat=$(printf '%s' "$row" | sed -E 's/.*status: *([^|]+)\|?.*/\1/' | sed 's/[[:space:]]*$//')
+        INCOMPLETE="${INCOMPLETE}${req_id}/${comp}=${stat}; "
+        ;;
     esac
   done < <(grep '^- component:' "$plan" 2>/dev/null)
 done
 
-if [ -n "$INCOMPLETE" ]; then
-  echo "BLOCKED by se-harness gate: workspace-plan.md has rows that are not status: done yet:" >&2
-  printf '%s' "$INCOMPLETE" >&2
-  echo "Every component row must reach status: done before push/PR/deploy for this requirement." >&2
+if [ "$N_INCOMPLETE" -gt 0 ]; then
+  # Actionable line FIRST — an adapter that truncates the message (e.g. Copilot CLI's deny
+  # reason, cut to 500 chars) must not lose the instruction to make room for row detail.
+  echo "BLOCKED by se-harness gate: every workspace-plan.md row must reach status: done before push/PR/deploy." >&2
+  echo "Not yet done ($N_INCOMPLETE total): ${INCOMPLETE}" >&2
   exit 2
 fi
 

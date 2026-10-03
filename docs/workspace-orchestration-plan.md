@@ -4,7 +4,7 @@
 > from a personal working file once it started driving real implementation (phase 1 landed in
 > commit `dd17e81`). Status markers below follow `brainstorm.md`'s convention.
 
-**Status**: ✅ **Phases 1-6 implemented** — phase 1: additive `workspace.yaml` model +
+**Status**: ✅ **Phases 1-7 implemented** — phase 1: additive `workspace.yaml` model +
 `workspace-validate.sh` (commit `dd17e81`). Phase 2: workspace-level `/harness-init` entry point
 + opt-in confirmed cloning (`workspace-clone.sh`) + modulith/hybrid topology detection +
 evidence-required `components:`/`relationships:` proposals, plus `/harness-scan` scope-awareness.
@@ -18,7 +18,13 @@ it already does for an unapproved REQ. Phase 6: a `workspace-orchestrator` agent
 roster) works `workspace-plan.md`'s rows directly, crossing into an already-cloned sibling
 repo's tree rather than handing that off to the human — still stopping at each repo's own
 PR/deploy gates, and falling back to the phase-5 handoff honestly if the runtime can't actually
-cross repos from where it's running (§9). ⏳ Phases 7-9 not started.
+cross repos from where it's running (§9). Phase 7: the orchestrator now checks cross-repo
+capability per-surface *before* attempting it (full on local Claude Code/Copilot CLI, never on
+the Copilot cloud coding agent's single-repo sandbox, conditional on VS Code's open workspace);
+`gate-check.sh`'s workspace-plan message was reordered and capped so Copilot's 500-char
+deny-reason truncation can never swallow the actionable instruction; confirmed no change was
+needed to `copilot-hook-adapter.sh` itself (it translates on exit code alone). `docs/
+interop-matrix.md` documents all of this. ⏳ Phases 8-9 not started.
 
 ## 0. Revision notes (se-harness review pass)
 
@@ -556,7 +562,16 @@ as one large orchestrator-subsystem drop.
    tree) rather than nested subagent dispatch, since that capability isn't reliably available
    across runtimes (§9) — it never claims a row is in progress if it can't actually act on it,
    falling back to the phase-5 handoff instead. It never bypasses a repo's own PR/deploy gates.
-7. **Runtime adapters**: add supported agent-client integrations and sequential fallback.
+7. ✅ **Runtime adapters** — IMPLEMENTED: `workspace-orchestrator.md` checks per-surface
+   cross-repo capability *before* attempting a sibling-repo row (Claude Code CLI/desktop and
+   Copilot CLI: full local FS access; Copilot coding agent: never, single-repo sandbox by
+   design; VS Code Copilot Chat: conditional on the open workspace, checked with
+   `[ -d <sibling-path> ]`) and falls back to the phase-5 manual handoff when it can't, instead
+   of claiming progress it can't make. `gate-check.sh`'s workspace-plan.md block message was
+   reordered (actionable line first) and capped (5 rows + true count) so Copilot's 500-char
+   deny-reason truncation can never cut off the instruction. Verified `copilot-hook-adapter.sh`
+   needs no changes — it translates purely on exit code, agnostic to *why* a script blocked.
+   `docs/interop-matrix.md` gained a row documenting all of this per platform.
 8. **Integration validation**: add cross-boundary contract, integration, and end-to-end workflows.
 9. **Documentation and regression**: cover all supported topologies and retain single-repo
    behavior; update `docs/setup-guide-claude.md`/`setup-guide-copilot.md` per phase, not at the end.
