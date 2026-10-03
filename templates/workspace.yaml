@@ -57,6 +57,12 @@ workspace:
     jira_project: ""
     confluence_spaces: []    # e.g. ["ACME", "PLATFORM"]
     sharepoint_sites: []     # e.g. ["https://acme.sharepoint.com/sites/engineering"]
+    memory:
+      structural_driver: null  # phase 4, tier 1 ONLY — one of registry/recommendations.json's
+                                # memory.structural.choose_one entries, or null (deferred, valid).
+                                # Tiers 2/3 (session log, domain wiki) are always plain markdown
+                                # regardless of this value — see docs/workspace-orchestration-plan.md §4.5/§8.
+                                # Set by /harness-init Step 6; actually installed by /harness-bootstrap.
 
   units:
     - name: example-service

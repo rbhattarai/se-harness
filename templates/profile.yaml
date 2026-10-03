@@ -39,3 +39,11 @@ sources:                    # enterprise memory sources (tier-3 wiki ingestion) 
   deferred:                 # NOT ingested in v1 (A5 #6) — needs transcription/OCR infra
     - video_recordings
     - nas_documents
+
+memory:                     # tier-1 (structural) ONLY — phase 4. Tiers 2/3 are always plain
+                             # markdown under .harness/memory/, regardless of this value.
+  structural_driver: null   # one of registry/recommendations.json's memory.structural
+                             # choose_one entries, or null (deferred — valid, not nagged).
+                             # Inherited from workspace.yaml's shared.memory.structural_driver
+                             # when a workspace manifest exists. Set by /harness-init Step 6;
+                             # actually installed by /harness-bootstrap, never by init itself.

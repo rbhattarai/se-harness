@@ -134,7 +134,34 @@ the user knows now (Phase 2 `/harness-scan` will verify/extend it):
    (the wiki-ingest skill will pull the URL's content into domain memory later).
 None of these are required — record empty lists if the org has none; don't nag.
 
-## Step 6 — Generate artifacts
+## Step 6 — Structural memory (tier 1 only — workspace-orchestration plan §4.5)
+
+This step records a **choice**, never an installation — running the actual installer (e.g.
+`uv tool install graphifyy`) is `/harness-bootstrap`'s job, not init's; init never executes
+third-party code. It also touches **tier 1 only**. Tiers 2 (session log) and 3 (domain wiki)
+are always plain markdown under `.harness/memory/`, at every topology — nothing here changes
+that; Step 7's memory scaffold below is unconditional and identical regardless of this choice.
+
+**Workspace inheritance first** (same lookup and write-back pattern as Steps 4-5): if
+`shared.memory.structural_driver` in the workspace manifest is already set (non-null), inherit
+it silently, tell the user what was inherited, and skip the question below.
+
+Otherwise, ask once: offer the `memory.structural.choose_one` list from
+`registry/recommendations.json` (currently CodeGraph — two unrelated repos, disambiguate by
+URL, not name — codebase-memory-mcp, or Graphify), summarizing each option's tradeoff from the
+registry's `note` field in a sentence or two, plus an explicit **defer** choice (valid; this is
+an open bake-off, not a requirement — don't nag about it later). Record the answer:
+- **Workspace exists** → write it to `shared.memory.structural_driver` in the workspace
+  manifest (confirm first, it's a file outside this repo) so every unit inherits the same
+  choice; echo it into this repo's `profile.yaml` too (`memory.structural_driver`) for local
+  visibility.
+- **No workspace** (single repo) → write directly to this repo's `profile.yaml`
+  (`memory.structural_driver`).
+
+A deferred choice is recorded as `null`, not skipped silently — `/harness-bootstrap` and
+`/harness-scan` both check this field before falling back to asking or probing generically.
+
+## Step 7 — Generate artifacts
 Order matters; use the exact mechanics below.
 
 1. **`.harness/profile.yaml`** — render from `${CLAUDE_PLUGIN_ROOT}/../../templates/profile.yaml`
@@ -167,11 +194,12 @@ Order matters; use the exact mechanics below.
    content outside the markers survives.
 7. **`.harness/agentstack.lock`** — JSON: `se_harness` version (from plugin.json),
    `initialized`/`updated` ISO dates, `profile` echo of key choices (methodology, stack,
-   cloud, topology), `components: {}` (Phase 3 fills this).
+   cloud, topology, `memory.structural_driver`), `components: {}` (Phase 3 fills this).
 
-## Step 7 — Report & next steps
+## Step 8 — Report & next steps
 Summarize what was created vs. skipped (already existed). Then:
 - **Existing project** → "run `/harness-scan` to detect stack/devops/org conventions from the
   code" (Phase 2 — if not yet available, say so and note the profile can be completed manually).
-- Both → next: Phase 3 bootstrap (methodology + stack plugins), then `/harness-goal <goal>`.
+- Both → next: Phase 3 bootstrap (methodology + stack plugins + the structural-memory driver
+  chosen in Step 6, if any), then `/harness-goal <goal>`.
 - Remind: fill `.env.harness`, commit `.harness/` + AGENTS.md/CLAUDE.md, DON'T commit `.env.harness`.

@@ -23,9 +23,12 @@ Run the deterministic collector (read-only, bounded output):
 ```
 bash ${CLAUDE_PLUGIN_ROOT}/scripts/scan-evidence.sh ${ARGUMENTS:-.}
 ```
-If a code-graph MCP server or the Graphify skill is available (CodeGraph / codebase-memory-mcp /
-Graphify), also index and pull its architecture summary (Graphify: `graphify-out/GRAPH_REPORT.md`
-or `graphify query`) — richer structure, but the scan MUST work without it.
+Check `profile.yaml`'s `memory.structural_driver` (phase 4) first — if a specific driver was
+chosen at init, look for *that one* specifically rather than probing generically. If it's still
+unset, fall back to checking for any available code-graph MCP server or the Graphify skill
+(CodeGraph / codebase-memory-mcp / Graphify) as before. Either way, if found, index and pull
+its architecture summary (Graphify: `graphify-out/GRAPH_REPORT.md` or `graphify query`) —
+richer structure, but the scan MUST work without it.
 
 ## Step 2 — Detect (stack-detector skill)
 Reason over the evidence per the **stack-detector** skill: usage beats listing; version-aware;

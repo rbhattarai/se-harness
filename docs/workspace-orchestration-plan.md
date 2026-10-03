@@ -4,12 +4,14 @@
 > from a personal working file once it started driving real implementation (phase 1 landed in
 > commit `dd17e81`). Status markers below follow `brainstorm.md`'s convention.
 
-**Status**: ✅ **Phases 1-3 implemented** — phase 1: additive `workspace.yaml` model +
+**Status**: ✅ **Phases 1-4 implemented** — phase 1: additive `workspace.yaml` model +
 `workspace-validate.sh` (commit `dd17e81`). Phase 2: workspace-level `/harness-init` entry point
 + opt-in confirmed cloning (`workspace-clone.sh`) + modulith/hybrid topology detection +
 evidence-required `components:`/`relationships:` proposals, plus `/harness-scan` scope-awareness.
 Phase 3: methodology and non-code sources now default to workspace scope, inherited by every
-unit unless explicitly (and visibly) overridden. ⏳ Phases 4-9 not started.
+unit unless explicitly (and visibly) overridden. Phase 4: `/harness-init` records a tier-1
+structural-memory driver choice (never installs it); `/harness-bootstrap` and `/harness-scan`
+both read it back instead of re-asking or probing generically. ⏳ Phases 5-9 not started.
 
 ## 0. Revision notes (se-harness review pass)
 
@@ -521,8 +523,14 @@ as one large orchestrator-subsystem drop.
    instead of silently re-detecting independently per repo. `workspace-validate.sh` now checks
    `shared.methodology` against the known enum, regardless of `schemaVersion` (this field
    predates the additive schema). Stack/DevOps/cloud remain repo-scoped by design — unchanged.
-4. **Structural-memory integration** (tier 1 only): wire driver selection into the additive
-   manifest; no change to tiers 2/3.
+4. ✅ **Structural-memory integration** (tier 1 only) — IMPLEMENTED: `/harness-init` gained
+   Step 6, which records a `memory.structural_driver` choice (workspace-scoped when a manifest
+   exists, repo-scoped otherwise) from the registry's existing bake-off list, or an explicit
+   `null` (deferred — valid). Init never installs anything; `/harness-bootstrap` reads the
+   recorded choice back and skips re-asking, going straight to installing that one driver.
+   `/harness-scan` reads it too, to look for that specific driver instead of probing
+   generically. `templates/AGENTS.md.tmpl` names the chosen driver in its generated Memory
+   section when set, falling back to generic wording when not. No change to tiers 2/3.
 5. **Task planning**: add evidence-backed impact mapping, the §5.0 fast path, and
    `workspace-plan.md` as a REQ sibling file, extending `gate-check.sh` to read it.
 6. **Agent scaffolding**: generate the workspace orchestrator and repo/component agents from

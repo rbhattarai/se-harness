@@ -37,7 +37,7 @@ and must be resolved or justified before PR.
 
 ## Memory (progressive disclosure — do not bulk-load)
 - Index: `.harness/memory/MEMORY.md` (one line per entry — read this, then open only what you need)
-- Structure: query the code-graph MCP, don't grep blindly
+- Structure: {{#memory.structural_driver}}query {{memory.structural_driver}}{{/memory.structural_driver}}{{^memory.structural_driver}}query the code-graph MCP if one is configured{{/memory.structural_driver}}, don't grep blindly
 - Domain: `.harness/memory/wiki/` (Karpathy-style; `index.md` first)
 - Per-turn hot set is injected automatically by the context-injector hook
 

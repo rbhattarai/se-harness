@@ -22,10 +22,15 @@ Read `.harness/profile.yaml` (guard: must exist — run `/harness-init` first) a
 - `observability.choose_one` → ask which (or neither)
 - `sources`: Jira/Confluence set → `atlassian`; GitHub remote detected → `github`;
   `org.conventions_url` on Figma-backed design orgs → `figma`
-- `memory.structural` → note the A7 bake-off; offer codebase-memory-mcp's installer, one of
-  the two unrelated "CodeGraph" projects (codegraph-ai/CodeGraph or colbymchenry/codegraph —
-  disambiguate by repo, not name), or Graphify (Graphify-Labs/graphify — CLI + `/graphify`
-  skill, not MCP-first: `uv tool install graphifyy` then `graphify install --project`), or defer
+- `memory.structural` → first check `profile.yaml`'s `memory.structural_driver` (and
+  `workspace.yaml`'s `shared.memory.structural_driver` if a workspace manifest exists) — if
+  `/harness-init` Step 6 already recorded a non-null choice, skip the question entirely and
+  add that one driver's install command straight to the manifest as `kind: cli`, labeled
+  "chosen at init." Only if it's still `null`/unset, ask fresh: note the A7 bake-off; offer
+  codebase-memory-mcp's installer, one of the two unrelated "CodeGraph" projects
+  (codegraph-ai/CodeGraph or colbymchenry/codegraph — disambiguate by repo, not name), or
+  Graphify (Graphify-Labs/graphify — CLI + `/graphify` skill, not MCP-first: `uv tool install
+  graphifyy` then `graphify install --project`), or defer
 
 Present as a table: **component | why (profile key that triggered it) | source | install method**.
 Never recommend a name not present in the registry file — gaps are stated, not improvised.
