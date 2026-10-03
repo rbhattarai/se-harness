@@ -4,8 +4,11 @@
 > from a personal working file once it started driving real implementation (phase 1 landed in
 > commit `dd17e81`). Status markers below follow `brainstorm.md`'s convention.
 
-**Status**: ✅ **Phase 1 implemented** (additive `workspace.yaml` model + `workspace-validate.sh`,
-commit `dd17e81`). ⏳ Phases 2-9 not started.
+**Status**: ✅ **Phases 1-2 implemented** — phase 1: additive `workspace.yaml` model +
+`workspace-validate.sh` (commit `dd17e81`). Phase 2: workspace-level `/harness-init` entry point
++ opt-in confirmed cloning (`workspace-clone.sh`) + modulith/hybrid topology detection +
+evidence-required `components:`/`relationships:` proposals, plus `/harness-scan` scope-awareness.
+⏳ Phases 3-9 not started.
 
 ## 0. Revision notes (se-harness review pass)
 
@@ -498,8 +501,16 @@ as one large orchestrator-subsystem drop.
    `units:`/`contracts:`. `plugins/se-harness/scripts/workspace-validate.sh` validates the new
    sections (no-op on a manifest with no `schemaVersion`); covered by `tests/run-tests.sh`,
    including a regression proving `contract-check.sh`'s behavior is unaffected.
-2. **Discovery and initialization**: add workspace detection, opt-in confirmed repository
-   acquisition (§4.2), topology recommendations, and user confirmation to `/harness-init`.
+2. ✅ **Discovery and initialization** — IMPLEMENTED: `/harness-init` Step 1 now detects
+   whether it's running inside a repo (unchanged path) or at a candidate workspace root
+   (`repos.txt`-driven bootstrap, Step 1a); `plugins/se-harness/scripts/workspace-clone.sh`
+   does the opt-in, plan-then-confirm, never-overwrite cloning (§4.2). Step 3 (topology) now
+   asks explicitly before concluding `modulith` (directory structure is a clue, never a silent
+   conclusion) and proposes `hybrid` when mono-repo/modulith structure and multi-repo
+   membership are both confirmed. Cross-unit `components:`/`relationships:` are proposed only
+   with cited evidence (§3.1) and validated via `workspace-validate.sh` before being written.
+   `/harness-scan` gained the same detection rules for re-scans plus a workspace-root guard
+   (full multi-repo-in-one-pass scanning is still §10, not yet done).
 3. **Scoped configuration**: separate workspace methodology and non-code sources from
    repo/component stack and operations in the generated profiles.
 4. **Structural-memory integration** (tier 1 only): wire driver selection into the additive

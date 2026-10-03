@@ -37,7 +37,11 @@
 
 workspace:
   name: ""
-  topology: mono-repo        # mono-repo | multi-repo
+  topology: mono-repo        # mono-repo | modulith | multi-repo | hybrid
+                              # modulith: one deployable repo, internal module boundaries —
+                              #   units: has one entry (path: .); model modules via components:
+                              # hybrid: this repo has mono-repo/modulith structure of its own
+                              #   AND is also part of a multi-repo product — both halves apply
   layout: domain             # layered | domain
 
   shared:                    # inherited by every unit's generated AGENTS.md/CLAUDE.md

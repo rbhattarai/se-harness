@@ -253,6 +253,44 @@ check "contract-check: additive manifest, no contract change, exits 0" \
 check "contract-check: additive manifest still flags a real contract change" test "$CC_CODE" -eq 2
 rm -rf "$WVG"
 
+# --- workspace-clone.sh: opt-in, confirmed, never-overwrite repo acquisition (phase 2) ---
+WC_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/plugins/se-harness/scripts/workspace-clone.sh"
+WC_FIX=$(mktemp -d 2>/dev/null || mktemp -d -t seharness)
+git init -q --bare "$WC_FIX/remote-a.git" >/dev/null 2>&1
+mkdir -p "$WC_FIX/ws"
+git clone -q "$WC_FIX/remote-a.git" "$WC_FIX/seed" >/dev/null 2>&1
+STORED_URL=$(git -C "$WC_FIX/seed" remote get-url origin)
+rm -rf "$WC_FIX/seed"
+printf '# comment, then a blank line\n\nservice-a=%s\n' "$STORED_URL" > "$WC_FIX/repos.txt"
+
+WC_OUT="$WC_FIX.out"
+bash "$WC_SCRIPT" plan "$WC_FIX/repos.txt" "$WC_FIX/ws" > "$WC_OUT" 2>&1
+check "workspace-clone: plan exits 0" test $? -eq 0
+check "workspace-clone: plan reports missing before any clone" grep -q "service-a  *missing" "$WC_OUT"
+check "workspace-clone: plan never touches disk" bash -c "[ ! -e '$WC_FIX/ws/service-a' ]"
+
+bash "$WC_SCRIPT" apply "$WC_FIX/repos.txt" "$WC_FIX/ws" > "$WC_OUT" 2>&1
+check "workspace-clone: apply (missing) exits 0" test $? -eq 0
+check "workspace-clone: apply actually cloned the repo" test -d "$WC_FIX/ws/service-a/.git"
+
+bash "$WC_SCRIPT" plan "$WC_FIX/repos.txt" "$WC_FIX/ws" > "$WC_OUT" 2>&1
+check "workspace-clone: plan reports matches after clone" grep -q "service-a  *matches" "$WC_OUT"
+
+bash "$WC_SCRIPT" apply "$WC_FIX/repos.txt" "$WC_FIX/ws" > "$WC_OUT" 2>&1
+check "workspace-clone: re-apply on a matching clone exits 0 (no-op)" test $? -eq 0
+check "workspace-clone: re-apply reports already-present, not a re-clone" grep -q "already present" "$WC_OUT"
+
+mkdir -p "$WC_FIX/ws2/service-a" && echo unrelated > "$WC_FIX/ws2/service-a/file.txt"
+bash "$WC_SCRIPT" apply "$WC_FIX/repos.txt" "$WC_FIX/ws2" > "$WC_OUT" 2>&1
+WC_CODE=$?
+check "workspace-clone: collision exits 2" test "$WC_CODE" -eq 2
+check "workspace-clone: collision is reported, never touched" test -f "$WC_FIX/ws2/service-a/file.txt"
+check "workspace-clone: collision content is untouched" grep -qF unrelated "$WC_FIX/ws2/service-a/file.txt"
+
+check "workspace-clone: missing inventory file exits 1" \
+  bash -c "bash '$WC_SCRIPT' plan '$WC_FIX/nope.txt' '$WC_FIX/ws' >/dev/null 2>&1; test \$? -eq 1"
+rm -rf "$WC_FIX" "$WC_OUT"
+
 # --- privacy invariant: plugins make no network calls (see PRIVACY.md) ---
 check "no network calls in plugin scripts" \
   bash -c "! grep -rlE 'curl |wget |Invoke-WebRequest|Invoke-RestMethod' plugins/*/scripts/"

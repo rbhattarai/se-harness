@@ -15,23 +15,80 @@ If `.harness/profile.yaml` already exists and `$ARGUMENTS` does not contain `--u
 show the existing profile summary and ask whether to update it or abort. Never silently
 re-initialize.
 
-## Step 1 — New or existing?
+## Step 1 — Detect the setup target (workspace-orchestration plan §4.1)
+Run `git rev-parse --is-inside-work-tree`.
+- **Inside a git repo** → this is the existing, unchanged per-repo path. Continue at Step 2.
+- **Not inside a git repo** → this directory is a candidate **workspace root**, not a repo to
+  bootstrap directly. Offer workspace-level setup instead of silently treating it as a new
+  single-repo project:
+  1. Look for `repos.txt` in the current directory (one repo per line: `<git-url>` or
+     `<name>=<git-url>` — same format `scripts/workspace-clone.sh` reads).
+     - **Found** → this is the bootstrap inventory. Go to Step 1a.
+     - **Not found** → ask: provide repo URLs now (write them to `repos.txt` in the format
+       above, one per line, then go to Step 1a), or "I'll clone manually" (point at the
+       existing documented side-by-side-clone flow in the setup guides, then stop — nothing
+       else in this step applies).
+  2. Cloning is **never automatic**. If the user wants it, continue; if not, stop here —
+     `repos.txt` alone is a valid, harmless artifact to leave in place.
+
+### Step 1a — Opt-in, confirmed clone (only when the user wants it)
+1. Run `bash tools/harness/workspace-clone.sh plan repos.txt .` and show the
+   table verbatim — name, status (`missing` / `matches` / `collision`), destination, source URL.
+   This never touches disk.
+2. **Confirm before acting**: if every row is `missing`, ask once for the whole batch
+   (AskUserQuestion). If any row is `collision`, call it out by name and ask per-repo whether
+   to skip it (default) or that the user will resolve it manually first — never ask to
+   overwrite, that option doesn't exist.
+3. Run `bash tools/harness/workspace-clone.sh apply repos.txt .` for the
+   confirmed names only (pass them as trailing arguments; omit them to apply every entry if
+   the whole batch was confirmed). Report exactly what the script reported — cloned, skipped
+   (already present), skipped (collision, not touched), or failed — per repo. A `collision` or
+   a failed clone never blocks the repos that succeeded.
+4. Tell the user: workspace repos are in place; run `/harness-init` again **inside each one**
+   to bootstrap it — starting with whichever repo is most central (ask, or suggest the one
+   with the most inbound dependencies if that's evident). This step never writes
+   `.harness/profile.yaml` itself; each repo still gets its own full Step 2+ pass.
+
+## Step 2 — New or existing?
 Look at the repo (any source files beyond scaffolding?). Propose your conclusion and confirm
 with the user via AskUserQuestion — don't assume.
 
-## Step 2 — Topology
+## Step 3 — Topology
 Check for workspace markers: `pnpm-workspace.yaml`, `nx.json`, `turbo.json`, `lerna.json`,
 `*.sln`, Maven multi-module `pom.xml` (`<modules>`), `go.work`, `WORKSPACE`/`MODULE.bazel`.
-- Markers found → propose **mono-repo**, list detected units, confirm. Create `workspace.yaml`
-  at the repo root from `templates/workspace.yaml` (units with `path:`, one per detected unit).
+
+- **Markers found** → propose **mono-repo**, list detected units, confirm. Create
+  `workspace.yaml` at the repo root from `templates/workspace.yaml` (units with `path:`, one
+  per detected unit).
+  - Then look for cross-unit relationships with real evidence — a unit's manifest depending on
+    another unit's package name, an import crossing unit directories, a `depends_on` in a
+    workspace-level compose file. Propose each as a `components:`/`relationships:` entry
+    (schemaVersion 2, additive — see `templates/workspace.yaml`'s commented example) **only
+    with the evidence attached**; a relationship you can't cite stays an open question you
+    mention in the report, never a written entry (§3.1 — no evidence, no relationship). Confirm
+    the whole proposed list with the user before writing it; validate with
+    `bash tools/harness/workspace-validate.sh workspace.yaml` before reporting
+    success.
+- **No markers, but internal module structure is evident** (Spring Modulith
+  `@ApplicationModule`/`spring-modulith` dependency, NestJS feature folders each with their own
+  `@Module()`, Django-style `INSTALLED_APPS` per-app folders, a `src/modules/`-or-`src/domains/`
+  convention, or similar) → this is a **modulith candidate**, not proof of one. Ask explicitly:
+  *"This looks like it's organized into internal modules (evidence: ...). Is this one deployable
+  app with internal module boundaries, or should I treat it as a plain single repo?"* Directory
+  structure is a clue, never a silent conclusion (principle 3). If confirmed: `topology:
+  modulith`, one `unit` (`path: .`), and propose `components:` (`kind: module`) for each
+  detected module plus any evidenced `relationships:` between them — same confirm-before-write
+  and `workspace-validate.sh` check as above.
 - Ask whether this repo is part of a **multi-repo product** (sibling repos forming one system).
   If yes: record the workspace meta-repo URL in the profile; if no meta-repo exists yet, offer
   to generate `workspace.yaml` from the template (units with `repo:`) for the user to place in
   a meta-repo. Ask about **contracts** (OpenAPI/proto/event schemas this repo provides or
-  consumes) and fill the `contracts:` section — it powers the contract-check hook.
+  consumes) and fill the `contracts:` section — it powers the contract-check hook. If this repo
+  *also* has mono-repo or modulith structure confirmed above, `topology:` is **hybrid**, not
+  mono-repo or multi-repo alone — both halves of the manifest apply.
 - Otherwise → **single** (no workspace.yaml needed).
 
-## Step 3 — Interview (AskUserQuestion, batch related questions, max 4 per call)
+## Step 4 — Interview (AskUserQuestion, batch related questions, max 4 per call)
 Ask only what wasn't detected. Cover:
 1. **Methodology**: BMAD (roles/stakeholders, enterprise) / Spec Kit (greenfield, spec-first) /
    OpenSpec (brownfield, delta-based). Recommend based on project type; user decides.
@@ -43,7 +100,7 @@ Ask only what wasn't detected. Cover:
 4. **Non-code sources**: Jira project key, Confluence space keys, SharePoint sites (each
    optional — record "" when not used).
 
-## Step 4 — Organization context (required before AGENTS.md/CLAUDE.md is finalized)
+## Step 5 — Organization context (required before AGENTS.md/CLAUDE.md is finalized)
 Ask explicitly — for new projects this is the only source; for existing projects collect what
 the user knows now (Phase 2 `/harness-scan` will verify/extend it):
 1. **Internal libraries** the company built (name, registry/scope, purpose) — these become
@@ -53,7 +110,7 @@ the user knows now (Phase 2 `/harness-scan` will verify/extend it):
    (the wiki-ingest skill will pull the URL's content into domain memory later).
 None of these are required — record empty lists if the org has none; don't nag.
 
-## Step 5 — Generate artifacts
+## Step 6 — Generate artifacts
 Order matters; use the exact mechanics below.
 
 1. **`.harness/profile.yaml`** — render from `../se-harness/templates/profile.yaml`
@@ -88,7 +145,7 @@ Order matters; use the exact mechanics below.
    `initialized`/`updated` ISO dates, `profile` echo of key choices (methodology, stack,
    cloud, topology), `components: {}` (Phase 3 fills this).
 
-## Step 6 — Report & next steps
+## Step 7 — Report & next steps
 Summarize what was created vs. skipped (already existed). Then:
 - **Existing project** → "run `/harness-scan` to detect stack/devops/org conventions from the
   code" (Phase 2 — if not yet available, say so and note the profile can be completed manually).

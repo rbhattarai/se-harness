@@ -10,7 +10,13 @@ Detect what this codebase actually uses and fold it into the harness. Re-runnabl
 user confirms the proposal.
 
 ## Step 0 — Guard
-`.harness/profile.yaml` must exist — if not, tell the user to run `/harness-init` first and stop.
+`.harness/profile.yaml` must exist — if not, check whether this looks like a **workspace
+root** instead (a `workspace.yaml` or `repos.txt` present, but no profile.yaml locally — i.e.
+you're one level above the member repos, not inside one). If so, say that explicitly and point
+at scanning **inside each member repo** — this command is still per-repo scoped; a true
+workspace-root scan across every member repo in one pass is not yet implemented (see
+`docs/workspace-orchestration-plan.md` §10). Otherwise, tell the user to run `/harness-init`
+first and stop.
 
 ## Step 1 — Collect evidence
 Run the deterministic collector (read-only, bounded output):
@@ -27,9 +33,15 @@ app vs tooling; cloud from artifacts; per-unit stacks when topology markers exis
 with targeted file reads where the evidence is ambiguous — do not skip the verification greps.
 
 Produce the proposal table (field | proposed value | evidence | confidence) covering:
-`project.topology` (+ units if mono-repo), `stack.*`, `devops.*`, `cloud`, and the full
-`org:` section (internal libraries, preferred libraries, conventions — explicit from configs
-AND implicit inferred from code).
+`project.topology` (+ units if mono-repo/modulith — same detection rules as `/harness-init`
+Step 3, including modulith candidates and evidenced `components:`/`relationships:` entries),
+`stack.*`, `devops.*`, `cloud`, and the full `org:` section (internal libraries, preferred
+libraries, conventions — explicit from configs AND implicit inferred from code).
+
+Re-scans can find **new or changed** cross-unit relationships since the last run (a new
+import, a new compose `depends_on`) — propose additions/removals the same evidence-required
+way as init, and flag (don't silently drop) any existing `relationships:` entry whose evidence
+file no longer exists.
 
 ## Step 3 — Confirm with the user
 - **High-confidence rows**: present the table, bulk-confirm.
@@ -41,12 +53,16 @@ AND implicit inferred from code).
 ## Step 4 — Merge (only after confirmation)
 1. **`.harness/profile.yaml`** — update detected keys. Existing user-entered values win on
    conflict unless the user explicitly approved the override in Step 3.
-2. **`.harness/org-rules.txt`** — regenerate from the confirmed `org.preferred_libraries`
+2. **`workspace.yaml`** — if topology/component/relationship rows changed, apply them here
+   (never only to `profile.yaml`) and validate with
+   `bash tools/harness/workspace-validate.sh workspace.yaml` before reporting
+   success; a validation failure blocks the merge for that file, not the rest of Step 4.
+3. **`.harness/org-rules.txt`** — regenerate from the confirmed `org.preferred_libraries`
    pairs (`banned:<never>:use <use> (<reason>)`).
-3. **AGENTS.md / CLAUDE.md** — re-render the template inner blocks from the updated profile and
+4. **AGENTS.md / CLAUDE.md** — re-render the template inner blocks from the updated profile and
    splice via `bash tools/harness/render-block.sh <target> <block-file>`
    (never edit these files directly).
-4. **`.harness/agentstack.lock`** — set `updated` timestamp and append a `scans:` entry
+5. **`.harness/agentstack.lock`** — set `updated` timestamp and append a `scans:` entry
    (date + one-line summary of what changed).
 
 ## Step 5 — Report

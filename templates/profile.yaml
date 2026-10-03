@@ -5,7 +5,8 @@
 project:
   name: ""
   type: existing            # new | existing
-  topology: single          # single | mono-repo | multi-repo (see workspace.yaml for non-single)
+  topology: single          # single | mono-repo | modulith | multi-repo | hybrid
+                             # (see workspace.yaml for every value except single)
 
 methodology: openspec       # bmad | spec-kit | openspec
 
