@@ -1,18 +1,22 @@
 #!/usr/bin/env bash
-# workspace-validate.sh — phase 1 of the workspace-orchestration plan (additive manifest model,
-# see docs/workspace-orchestration-plan.md §3/§12 phase 1).
+# workspace-validate.sh — workspace-orchestration plan, phases 1+3
+# (see docs/workspace-orchestration-plan.md §3/§3.2/§12).
 #
-# Validates the OPTIONAL schemaVersion/components/relationships sections of workspace.yaml.
-# A manifest with none of those keys (today's shape) is untouched by this script and always
-# passes — this is the backward-compatibility bar. contract-check.sh is unmodified and keeps
-# reading `contracts:` exactly as before; this script never touches that section.
+# Two independent checks, both skip cleanly when not applicable:
+#   - shared.methodology (phase 3, always checked when the key is present, regardless of
+#     schemaVersion — this field predates the additive schema and is read by every topology)
+#   - the OPTIONAL schemaVersion/components/relationships sections (phase 1, additive; only
+#     checked when `schemaVersion:` is present)
+# A manifest with none of these keys (today's shape) is untouched and always passes — this is
+# the backward-compatibility bar. contract-check.sh is unmodified and keeps reading
+# `contracts:` exactly as before; this script never touches that section.
 #
 # usage: workspace-validate.sh [path-to-workspace.yaml]
 #   no arg = same manifest lookup as contract-check.sh (./workspace.yaml, ../workspace.yaml,
 #            or $WORKSPACE_MANIFEST)
-# exit:  0 = no schemaVersion key (nothing to validate) or every check passed
+# exit:  0 = nothing to check, or every check passed
 #        1 = manifest not found when an explicit path was given
-#        2 = schemaVersion present and at least one check failed (details on stderr)
+#        2 = at least one check failed (details on stderr)
 
 set -u
 
@@ -26,10 +30,31 @@ else
   [ -n "$MANIFEST" ] || exit 0   # not a workspace project — silent no-op, same as contract-check.sh
 fi
 
-grep -qE '^schemaVersion:[[:space:]]*[0-9]+' "$MANIFEST" || exit 0  # today's shape — nothing to check
-
 FAIL=0
 fail() { echo "workspace-validate: $1" >&2; FAIL=1; }
+
+# --- shared.methodology (phase 3 — checked regardless of schemaVersion) ---
+METHOD=$(awk '
+  $0 ~ /^[ \t]*shared:[ \t]*$/ { ins=1; shdr=match($0, /[^ \t]/) - 1; next }
+  ins && $0 !~ /^[ \t]*$/ {
+    indent=match($0, /[^ \t]/) - 1
+    if (indent <= shdr) ins=0
+  }
+  ins && /^[ \t]+methodology:/ {
+    v=$0; sub(/^[ \t]+methodology:[ \t]*/, "", v); gsub(/^"|"$/, "", v)
+    print v; exit
+  }
+' "$MANIFEST")
+if [ -n "$METHOD" ]; then
+  case "$METHOD" in
+    bmad|spec-kit|openspec) ;;
+    *) fail "shared.methodology '$METHOD' is not one of bmad|spec-kit|openspec" ;;
+  esac
+fi
+
+grep -qE '^schemaVersion:[[:space:]]*[0-9]+' "$MANIFEST" || { \
+  if [ "$FAIL" -eq 0 ]; then echo "workspace-validate: clean"; exit 0; fi; exit 2; \
+}
 
 # --- units: name -> path-or-repo-basename (supports block style and flow `{ ... }` style) ---
 # `units:` is nested under `workspace:` (2-space indent) per templates/workspace.yaml, unlike

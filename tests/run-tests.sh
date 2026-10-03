@@ -187,6 +187,29 @@ WV_OUT="$WV_FIX.out"
 bash plugins/se-harness/scripts/workspace-validate.sh "$WV_FIX/good.yaml" > "$WV_OUT" 2>&1
 check "workspace-validate: well-formed additive manifest reports clean" grep -q "clean" "$WV_OUT"
 
+# shared.methodology (phase 3) — checked regardless of schemaVersion
+cat > "$WV_FIX/method-ok.yaml" <<'EOF'
+workspace:
+  name: acme
+  shared:
+    methodology: openspec
+    org: {}
+EOF
+check "workspace-validate: valid shared.methodology, no schemaVersion, exits 0" \
+  bash plugins/se-harness/scripts/workspace-validate.sh "$WV_FIX/method-ok.yaml"
+
+cat > "$WV_FIX/method-bad.yaml" <<'EOF'
+workspace:
+  name: acme
+  shared:
+    methodology: scrum-of-scrums
+EOF
+bash plugins/se-harness/scripts/workspace-validate.sh "$WV_FIX/method-bad.yaml" > "$WV_OUT" 2>&1
+WV_METHOD_CODE=$?
+check "workspace-validate: invalid shared.methodology exits 2" test "$WV_METHOD_CODE" -eq 2
+check "workspace-validate: invalid shared.methodology is reported" \
+  grep -qF "shared.methodology 'scrum-of-scrums' is not one of" "$WV_OUT"
+
 # violations: bad boundary.type, path outside any unit, missing evidence, unknown component id
 cat > "$WV_FIX/bad.yaml" <<'EOF'
 schemaVersion: 2

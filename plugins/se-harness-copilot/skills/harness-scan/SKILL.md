@@ -44,6 +44,16 @@ import, a new compose `depends_on`) — propose additions/removals the same evid
 way as init, and flag (don't silently drop) any existing `relationships:` entry whose evidence
 file no longer exists.
 
+**Workspace-scoped fields (phase 3)**: `methodology` and the `sources:`/`org:` fields default
+to workspace scope. If a workspace manifest exists, compare this repo's current
+`profile.yaml` values against `shared.methodology`/`shared.org`/`shared.jira_project` etc.:
+- Same value → nothing to report.
+- Different value **with** an explanatory comment already next to it in `profile.yaml` →
+  nothing to report (it's a documented exception).
+- Different value **with no comment** → flag it as an **undocumented deviation** in the
+  proposal table (don't auto-fix; ask whether it should inherit the workspace value or get a
+  reason recorded).
+
 ## Step 3 — Confirm with the user
 - **High-confidence rows**: present the table, bulk-confirm.
 - **Low-confidence rows and inconsistencies** (e.g. both `moment` and `dayjs` in use): ask

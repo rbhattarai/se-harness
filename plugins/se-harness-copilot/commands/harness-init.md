@@ -88,18 +88,43 @@ Check for workspace markers: `pnpm-workspace.yaml`, `nx.json`, `turbo.json`, `le
 - Otherwise → **single** (no workspace.yaml needed).
 
 ## Step 4 — Interview (AskUserQuestion, batch related questions, max 4 per call)
-Ask only what wasn't detected. Cover:
-1. **Methodology**: BMAD (roles/stakeholders, enterprise) / Spec Kit (greenfield, spec-first) /
-   OpenSpec (brownfield, delta-based). Recommend based on project type; user decides.
+
+**Workspace inheritance first** (workspace-orchestration plan §3.2, phase 3): methodology and
+non-code sources default to **workspace** scope; stack and DevOps/cloud stay **repo** scope by
+design (local facts, never inherited). Look for `workspace.yaml` or `../workspace.yaml` (same
+lookup `contract-check.sh`/`workspace-validate.sh` use). If found, read `shared.methodology`
+and `shared.jira_project`/`shared.confluence_spaces`/`shared.sharepoint_sites`:
+- Any already set → **inherit silently**, tell the user what was inherited, skip asking about
+  it below.
+- Any empty/missing → ask as usual (below). After the user answers, offer to write it back
+  into the workspace manifest's `shared:` block so every other unit in this workspace inherits
+  it too — confirm first (it's a file outside this repo), then
+  `bash tools/harness/workspace-validate.sh <that workspace.yaml>` before
+  reporting success.
+
+Ask only what wasn't detected and isn't already inherited. Cover:
+1. **Methodology** (workspace-scoped by default): BMAD (roles/stakeholders, enterprise) /
+   Spec Kit (greenfield, spec-first) / OpenSpec (brownfield, delta-based). Recommend based on
+   project type; user decides. If this repo's choice **deviates** from an inherited workspace
+   default, that's a documented exception: record it as an inline comment next to
+   `methodology:` in this repo's `profile.yaml` (e.g. `methodology: bmad   # workspace default
+   is openspec — deviates because <reason>`), never a silent divergence.
 2. **Stack** — *new projects only* (existing projects get this from `/harness-scan`):
    offer presets first — `Python (FastAPI + Postgres)`, `Node + React (Express/Postgres/Redis)`,
    `Node + Angular`, `Other (specify)` — then confirm databases/messaging/devops details.
 3. **DevOps + cloud**: CI system, container approach (default docker-compose), cloud target
    (aws / azure / gcp / vercel / none-yet).
-4. **Non-code sources**: Jira project key, Confluence space keys, SharePoint sites (each
-   optional — record "" when not used).
+4. **Non-code sources** (workspace-scoped by default): Jira project key, Confluence space keys,
+   SharePoint sites (each optional — record "" when not used).
 
 ## Step 5 — Organization context (required before AGENTS.md/CLAUDE.md is finalized)
+
+**Workspace inheritance first** (same lookup and write-back pattern as Step 4): if
+`shared.org` in the workspace manifest already has `internal_libraries`/`preferred_libraries`/
+`conventions`, inherit them and tell the user what was inherited — skip asking about anything
+already covered. Ask only about what's missing, then offer to write new answers back into
+`shared.org` (confirm first) so later repos inherit them too.
+
 Ask explicitly — for new projects this is the only source; for existing projects collect what
 the user knows now (Phase 2 `/harness-scan` will verify/extend it):
 1. **Internal libraries** the company built (name, registry/scope, purpose) — these become

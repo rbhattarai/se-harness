@@ -8,7 +8,10 @@ project:
   topology: single          # single | mono-repo | modulith | multi-repo | hybrid
                              # (see workspace.yaml for every value except single)
 
-methodology: openspec       # bmad | spec-kit | openspec
+methodology: openspec       # bmad | spec-kit | openspec — inherited from workspace.yaml's
+                             # shared.methodology when a workspace manifest exists (phase 3);
+                             # a value that deviates from it should carry a trailing comment
+                             # explaining why (a documented exception, not a silent one)
 
 stack:                      # detected by /harness-scan or chosen at init
   languages: []             # e.g. [typescript, java]
@@ -27,7 +30,9 @@ org:                        # organization context (A1 intake; compose-first, A5
   conventions_url: ""       # Confluence/SharePoint page holding org guidelines (wiki-ingest pulls it)
   conventions: []           # inline rules, e.g. "errors: never swallow; wrap in AppError"
 
-sources:                    # enterprise memory sources (tier-3 wiki ingestion)
+sources:                    # enterprise memory sources (tier-3 wiki ingestion) — inherited
+                             # from workspace.yaml's shared.{jira_project,confluence_spaces,
+                             # sharepoint_sites} when a workspace manifest exists (phase 3)
   jira_project: ""
   confluence_spaces: []
   sharepoint_sites: []

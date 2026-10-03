@@ -4,11 +4,12 @@
 > from a personal working file once it started driving real implementation (phase 1 landed in
 > commit `dd17e81`). Status markers below follow `brainstorm.md`'s convention.
 
-**Status**: ✅ **Phases 1-2 implemented** — phase 1: additive `workspace.yaml` model +
+**Status**: ✅ **Phases 1-3 implemented** — phase 1: additive `workspace.yaml` model +
 `workspace-validate.sh` (commit `dd17e81`). Phase 2: workspace-level `/harness-init` entry point
 + opt-in confirmed cloning (`workspace-clone.sh`) + modulith/hybrid topology detection +
 evidence-required `components:`/`relationships:` proposals, plus `/harness-scan` scope-awareness.
-⏳ Phases 3-9 not started.
+Phase 3: methodology and non-code sources now default to workspace scope, inherited by every
+unit unless explicitly (and visibly) overridden. ⏳ Phases 4-9 not started.
 
 ## 0. Revision notes (se-harness review pass)
 
@@ -511,8 +512,15 @@ as one large orchestrator-subsystem drop.
    with cited evidence (§3.1) and validated via `workspace-validate.sh` before being written.
    `/harness-scan` gained the same detection rules for re-scans plus a workspace-root guard
    (full multi-repo-in-one-pass scanning is still §10, not yet done).
-3. **Scoped configuration**: separate workspace methodology and non-code sources from
-   repo/component stack and operations in the generated profiles.
+3. ✅ **Scoped configuration** — IMPLEMENTED: `workspace.yaml`'s `shared:` block gained
+   `methodology`/`confluence_spaces`/`sharepoint_sites` alongside the existing `org`/`mcp`/
+   `jira_project`. `/harness-init` Steps 4-5 read these first and only ask when still empty,
+   then offer to write the answer back so every other unit inherits it; a repo that deviates
+   records why as an inline comment next to the field in its own `profile.yaml` — a documented
+   exception, never a silent one. `/harness-scan` flags **undocumented** deviations on re-scan
+   instead of silently re-detecting independently per repo. `workspace-validate.sh` now checks
+   `shared.methodology` against the known enum, regardless of `schemaVersion` (this field
+   predates the additive schema). Stack/DevOps/cloud remain repo-scoped by design — unchanged.
 4. **Structural-memory integration** (tier 1 only): wire driver selection into the additive
    manifest; no change to tiers 2/3.
 5. **Task planning**: add evidence-backed impact mapping, the §5.0 fast path, and
