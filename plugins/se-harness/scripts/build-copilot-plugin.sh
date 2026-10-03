@@ -32,7 +32,7 @@ cat > "$OUT/plugin.json" <<'EOF'
 {
   "name": "se-harness-copilot",
   "description": "SE Harness for GitHub Copilot CLI: SDLC agent roster, harness skills, goal-loop commands, and bundled enforcement hooks. Generated from the Claude-first se-harness plugin - do not edit by hand; regenerate with build-copilot-plugin.sh. Repo-level hooks for the coding agent/VS Code - see docs/setup-guide-copilot.md.",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "author": { "name": "Rohan Bhattarai", "email": "rohan.bhattarai.dev@gmail.com" },
   "repository": "https://github.com/rbhattarai/se-harness",
   "license": "MIT",
