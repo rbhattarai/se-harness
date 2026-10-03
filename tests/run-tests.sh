@@ -418,6 +418,65 @@ EOF
 check "gate-check: missing integration: field defaults to blocked, not an implicit pass" test $? -eq 2
 rm -rf "$GC_FIX" "$GC_OUT"
 
+# --- workspace-scan-evidence.sh: §10, full workspace-root scan collector ---
+WSE_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/plugins/se-harness/scripts/workspace-scan-evidence.sh"
+WSE_FIX=$(mktemp -d 2>/dev/null || mktemp -d -t seharness)
+WSE_OUT="$WSE_FIX.out"
+
+# mono-repo: path: form with a NESTED path — must resolve to the nested dir, not <name>
+cat > "$WSE_FIX/workspace.yaml" <<'EOF'
+workspace:
+  name: acme
+  units:
+    - name: example-service
+      path: services/example
+      stack: []
+EOF
+mkdir -p "$WSE_FIX/services/example/.harness"
+echo 'project: {}' > "$WSE_FIX/services/example/.harness/profile.yaml"
+echo '{"name":"example"}' > "$WSE_FIX/services/example/package.json"
+bash "$WSE_SCRIPT" "$WSE_FIX" > "$WSE_OUT" 2>&1
+check "workspace-scan-evidence: mono-repo exits 0" test $? -eq 0
+check "workspace-scan-evidence: resolves nested path:, not just the unit name" \
+  grep -qF "UNIT: example-service ($WSE_FIX/services/example)" "$WSE_OUT"
+check "workspace-scan-evidence: scans the bootstrapped unit's real manifest" grep -qF '"name":"example"' "$WSE_OUT"
+
+# multi-repo: repo: form (flow style), mixed readiness — one scanned, one not-bootstrapped,
+# one not-cloned at all
+cat > "$WSE_FIX/workspace.yaml" <<'EOF'
+workspace:
+  name: acme
+  units:
+    - { name: frontend, repo: <url>/frontend.git, stack: [angular] }
+    - { name: backend-core, repo: <url>/backend-core.git, stack: [dotnet] }
+    - { name: not-cloned, repo: <url>/not-cloned.git, stack: [] }
+EOF
+mkdir -p "$WSE_FIX/frontend/.harness" "$WSE_FIX/backend-core"
+echo 'project: {}' > "$WSE_FIX/frontend/.harness/profile.yaml"
+bash "$WSE_SCRIPT" "$WSE_FIX" > "$WSE_OUT" 2>&1
+check "workspace-scan-evidence: multi-repo exits 0" test $? -eq 0
+check "workspace-scan-evidence: reports NOT-BOOTSTRAPPED for a cloned-but-uninitialized unit" \
+  grep -qF "NOT-BOOTSTRAPPED" "$WSE_OUT"
+check "workspace-scan-evidence: reports NOT-CLONED for a missing unit" grep -qF "NOT-CLONED" "$WSE_OUT"
+check "workspace-scan-evidence: summary counts scanned/skipped correctly" \
+  grep -qF "scanned: 1, skipped: 2" "$WSE_OUT"
+
+# undeclared directory: already bootstrapped but not in workspace.yaml — must be proposed,
+# never silently adopted; node_modules-style noise must never be flagged
+mkdir -p "$WSE_FIX/mystery-service/.harness" "$WSE_FIX/node_modules"
+echo 'project: {}' > "$WSE_FIX/mystery-service/.harness/profile.yaml"
+bash "$WSE_SCRIPT" "$WSE_FIX" > "$WSE_OUT" 2>&1
+check "workspace-scan-evidence: flags an undeclared bootstrapped directory" grep -qF "UNDECLARED" "$WSE_OUT"
+check "workspace-scan-evidence: never flags node_modules as undeclared" \
+  bash -c "! grep -q 'UNDECLARED.*node_modules' '$WSE_OUT'"
+rm -rf "$WSE_FIX/mystery-service" "$WSE_FIX/node_modules"
+
+# no workspace.yaml and no repos.txt — usage error, not a silent "nothing to do"
+EMPTY_FIX=$(mktemp -d 2>/dev/null || mktemp -d -t seharness)
+bash "$WSE_SCRIPT" "$EMPTY_FIX" >/dev/null 2>&1
+check "workspace-scan-evidence: no manifest at all exits 1" test $? -eq 1
+rm -rf "$EMPTY_FIX" "$WSE_FIX" "$WSE_OUT"
+
 # --- privacy invariant: plugins make no network calls (see PRIVACY.md) ---
 check "no network calls in plugin scripts" \
   bash -c "! grep -rlE 'curl |wget |Invoke-WebRequest|Invoke-RestMethod' plugins/*/scripts/"

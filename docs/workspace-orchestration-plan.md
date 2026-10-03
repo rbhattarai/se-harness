@@ -490,17 +490,44 @@ today (`PreToolUse` deny behaves differently across Copilot CLI/coding-agent vs.
 `docs/setup-guide-copilot.md` Part 6) — the adapter layer generalizes a gap that already has to be
 worked around. Do not promise autonomous multi-agent coordination just because agent files exist.
 
-## 10. `/harness-scan`
+## 10. `/harness-scan` ✅ IMPLEMENTED
 
-Make scanning scope-aware:
+Scope-aware scanning, landed as its own increment after the main 9 phases:
 
-- In a single Git repo, preserve current behavior.
-- At a workspace root, scan workspace configuration and each declared repo/component; report
-  shared and local findings separately.
-- Detect moved, missing, or newly discovered boundaries without silently rewriting the manifest.
-- Show evidence and confidence for inferred topology and relationships.
-- Ask before changing confirmed roles, methodology, memory setup, or generated files.
-- Allow a local scan without changing unrelated workspace configuration.
+- ✅ In a single Git repo, preserve current behavior — Step 0's guard only branches into the
+  new Step 0a when there's no local `profile.yaml` **and** a `workspace.yaml`/`repos.txt` is
+  present; otherwise nothing changed.
+- ✅ At a workspace root, scan workspace configuration and each declared repo/component;
+  report shared and local findings separately. New script
+  `plugins/se-harness/scripts/workspace-scan-evidence.sh`: resolves every declared unit's
+  path (both `path:` — including nested mono-repo paths — and `repo:`'s sibling-clone
+  convention), runs `scan-evidence.sh` once per unit that's actually bootstrapped, and
+  reports `NOT-BOOTSTRAPPED`/`NOT-CLONED` for the rest rather than guessing. Step 0a-4 then
+  has Steps 1-5 treat the result as covering every scanned unit; Step 3's confirmation and
+  Step 5's report are explicitly grouped shared-findings-first, then per-unit.
+- ✅ Detect moved, missing, or newly discovered boundaries without silently rewriting the
+  manifest. `workspace-scan-evidence.sh` also scans the workspace root's top-level
+  directories for anything with its own `.git` or `.harness/profile.yaml` that isn't in the
+  manifest (`UNDECLARED`, noise directories like `node_modules` excluded) — Step 0a proposes
+  adding each as a candidate, confirmed before `workspace.yaml` is touched, never automatic.
+  Deliberately **not** a hard-fail check in `workspace-validate.sh`: a workspace.yaml is
+  routinely written *before* its units are cloned, so "path doesn't exist yet" can't be an
+  error there without breaking that normal sequence — it's informational in the scan collector
+  instead.
+- ✅ Show evidence and confidence for inferred topology and relationships. Cross-repo
+  evidence is a genuine capability upgrade here, not just repetition: with every unit's
+  evidence available at once, a relationship can be confirmed from **both sides** (unit A's
+  client calling a route, unit B's evidence defining it) — materially stronger than either
+  side scanned alone, and the proposal table's confidence column says so.
+- ✅ Ask before changing confirmed roles, methodology, memory setup, or generated files —
+  same Step 3 confirm-before-write discipline as the per-repo path, just grouped and batched
+  sensibly across units instead of one AskUserQuestion wall spanning all of them.
+- ✅ Allow a local scan without changing unrelated workspace configuration — the per-repo
+  path (Steps 1-5 without Step 0a) is completely untouched; nothing about it changed.
+
+10 new fixture tests for `workspace-scan-evidence.sh` (mono-repo nested path resolution,
+multi-repo mixed readiness, undeclared-directory detection with a noise-directory negative
+case, and the no-manifest-at-all error path).
 
 ## 11. Safety and quality requirements
 
@@ -537,8 +564,8 @@ as one large orchestrator-subsystem drop.
    conclusion) and proposes `hybrid` when mono-repo/modulith structure and multi-repo
    membership are both confirmed. Cross-unit `components:`/`relationships:` are proposed only
    with cited evidence (§3.1) and validated via `workspace-validate.sh` before being written.
-   `/harness-scan` gained the same detection rules for re-scans plus a workspace-root guard
-   (full multi-repo-in-one-pass scanning is still §10, not yet done).
+   `/harness-scan` gained the same detection rules for re-scans plus a workspace-root guard.
+   Full multi-repo-in-one-pass scanning landed later, as its own increment — see §10 below.
 3. ✅ **Scoped configuration** — IMPLEMENTED: `workspace.yaml`'s `shared:` block gained
    `methodology`/`confluence_spaces`/`sharepoint_sites` alongside the existing `org`/`mcp`/
    `jira_project`. `/harness-init` Steps 4-5 read these first and only ask when still empty,
