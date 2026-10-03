@@ -3,8 +3,8 @@
 ![se-harness — bootstrap an AI-agentic SDLC around any project: 3 hook-enforced approval gates, 11 SDLC agents, Claude Code + Copilot CLI](./docs/assets/social-preview.png)
 
 **An AI-agentic SDLC harness you can bootstrap around any software project — new or
-existing, any stack, single-repo or multi-repo. AI agents do the work; hooks make sure
-they can't ship without you.**
+existing, any stack, from a single repo to a multi-repo product. AI agents do the work;
+hooks make sure they can't ship without you.**
 
 [![release](https://img.shields.io/github/v/release/rbhattarai/se-harness?label=release&color=2ea44f)](https://github.com/rbhattarai/se-harness/releases)
 [![license](https://img.shields.io/github/license/rbhattarai/se-harness?label=license&color=97ca00)](./LICENSE)
@@ -19,11 +19,20 @@ they can't ship without you.**
 
 AI coding agents are good at writing code and bad at process discipline. se-harness wraps
 a full software-engineering lifecycle around them: it learns your project (scan +
-interview), builds a memory of your code and domain, staffs it with 11 specialized
+interview), builds a memory of your code and domain, staffs it with 12 specialized
 agents, and runs each goal through
 requirement → stories → implementation → tests → PR → deploy — pausing at **three
 human-approval gates that are enforced by hooks, not prompts**. The agent literally cannot
 open the PR, push, or deploy until *you* flip `status: approved`.
+
+The same goal loop scales from a single repo up to a whole product: single repo, mono-repo,
+modulith, multi-repo, and hybrid topologies all go through `/harness-goal` the same way. For
+the common case (your change touches one repo, even in a multi-repo product) nothing extra
+happens — no new files, no added ceremony. Only when a change's impact spans **2 or more**
+repos/components does the harness create an inspectable `workspace-plan.md`, hand it to a
+`workspace-orchestrator` agent that works it directly (crossing into an already-cloned
+sibling repo when a task lives there), and require a combined integration check — not just
+each piece's own tests — before the usual gates will let anything ship.
 
 One repo serves **both ecosystems**: Claude Code and GitHub Copilot CLI read the same
 plugin marketplace.
@@ -57,6 +66,14 @@ plugin marketplace.
 - **Multi-repo aware** — declare products in `workspace.yaml` with a contracts registry;
   `contract-check.sh` blocks pushes that change a provided contract and names the consumer
   repos that would break.
+- **Workspace-level orchestration** — `workspace.yaml` models single repo, mono-repo,
+  modulith, multi-repo, and hybrid topologies in one additive schema (older manifests work
+  unchanged). `/harness-init` can bootstrap a whole product from a `repos.txt` inventory
+  (opt-in, confirmed cloning — never a silent overwrite); `/harness-scan` can scan every
+  declared unit in one pass. A change spanning 2+ repos gets a real plan
+  (`workspace-plan.md`), a `workspace-orchestrator` agent to work it, and a combined
+  integration check before `gate-check.sh` allows push/PR/deploy — full detail in
+  [`docs/workspace-orchestration-plan.md`](./docs/workspace-orchestration-plan.md).
 - **Drift-aware sync** — `/harness-sync` detects drift on four axes (profile,
   recommendations, templates, memory health), shows the diff first, and refreshes only
   generated blocks.
@@ -98,9 +115,12 @@ detected. Then `/harness-bootstrap` for opt-in companion tooling, and your first
 It writes `.harness/requirements/REQ-001.md` and the gate hook blocks PR/push/deploy until
 **you** flip `status: approved`.
 
-**Multi-repo product** — clone all repos side-by-side, add a `workspace.yaml` (from
-[`templates/workspace.yaml`](./templates/workspace.yaml): units, shared org context, and a
-`contracts:` registry), then run the same init per code repo.
+**Multi-repo product** — either clone all repos side-by-side yourself and add a
+`workspace.yaml` (from [`templates/workspace.yaml`](./templates/workspace.yaml): units,
+shared org context, and a `contracts:` registry), or run `/harness-init` from an empty
+workspace folder with a `repos.txt` listing the repos — it'll offer to clone them for you
+(opt-in, shows the plan, never overwrites). Either way, run `/harness-init` again inside
+each code repo to bootstrap it.
 
 **Want to try it without risking your own repo?** The companion demo repo
 [**demo-loan-app**](https://github.com/rbhattarai/demo-loan-app) is a live two-app loan
@@ -140,13 +160,21 @@ and run a cross-unit goal end to end.
 
 ## Status
 
-**v1 is complete**: all six commands, the 12-agent roster, the memory tiers, the hooks, and
-the Copilot export are implemented and script-tested (176-test suite in CI). **Workspace-level
-orchestration** (single repo → mono-repo → modulith → multi-repo → hybrid, one goal loop that
-coordinates across repos) is underway: phases 1-6 of 9 are implemented — see
-[`docs/workspace-orchestration-plan.md`](./docs/workspace-orchestration-plan.md) for exactly
-what's done vs. open. Also on the roadmap: a web profile-builder and real-world hardening.
-Details: [development history](./docs/development-history.md) · plan and research log in
+**[v1.0.0](https://github.com/rbhattarai/se-harness/releases/tag/v1.0.0) is out**: all six
+commands, the 12-agent roster, the memory tiers, the hooks, and the Copilot export are
+implemented and script-tested (199-test suite in CI). **Workspace-level orchestration** —
+single repo → mono-repo → modulith → multi-repo → hybrid, one goal loop that coordinates
+across repos, with the orchestration overhead scaling to zero for the common single/
+few-component case — is **complete**: see
+[`docs/workspace-orchestration-plan.md`](./docs/workspace-orchestration-plan.md) for the
+full phase-by-phase breakdown, including the handful of open design decisions it was honest
+enough to leave unresolved rather than claim done (per-component scoping of non-code
+sources; true parallel execution of independent workspace-plan rows, which today are worked
+in correct dependency order but one at a time). Not yet been run against a real multi-repo
+product in practice — if you try it, that's the gap most likely to surface something the
+test suite couldn't catch. Also on the roadmap: a web profile-builder and a structural-memory
+driver bake-off (CodeGraph vs. codebase-memory-mcp vs. Graphify). Details:
+[development history](./docs/development-history.md) · plan and research log in
 [`brainstorm.md`](./brainstorm.md).
 
 ## Repo layout
@@ -157,13 +185,16 @@ Details: [development history](./docs/development-history.md) · plan and resear
 plugins/se-harness/                  # the harness plugin (source of truth)
   commands/                          # the six /harness-* commands
   agents/                            # 12-agent SDLC roster (narrow tools per agent)
-  skills/                            # context-injector, stack-detector, memory-keeper, wiki-*
-  hooks/hooks.json + scripts/        # gate-check, org-validate, memory-log, contract-check, splicer
+  skills/                            # context-injector, stack-detector, memory-keeper, wiki-*,
+                                      # requirement-grill, coding-discipline
+  hooks/hooks.json + scripts/        # gate-check, org-validate, memory-log, contract-check,
+                                      # workspace-clone/-validate/-scan-evidence, splicer
 plugins/se-harness-copilot/          # Copilot CLI variant — GENERATED by build-copilot-plugin.sh
 registry/recommendations.json        # profile → plugin mappings (recommender data; honest gaps)
-templates/                           # profile/env/requirement/AGENTS/CLAUDE/mcp/workspace + memory seeds
+templates/                           # profile/env/requirement/AGENTS/CLAUDE/mcp/workspace/
+                                      # workspace-plan + memory seeds
 docs/                                # setup guides, interop matrix, platform schema notes, demo guide
-tests/                               # 123-test suite run in CI
+tests/                               # 199-test suite run in CI
 ```
 
 ## Contributing / publishing
