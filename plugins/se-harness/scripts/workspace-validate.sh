@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # workspace-validate.sh — phase 1 of the workspace-orchestration plan (additive manifest model,
-# see harness-revised-plan-workspace-support-agentic.md §3/§12 phase 1).
+# see docs/workspace-orchestration-plan.md §3/§12 phase 1).
 #
 # Validates the OPTIONAL schemaVersion/components/relationships sections of workspace.yaml.
 # A manifest with none of those keys (today's shape) is untouched by this script and always

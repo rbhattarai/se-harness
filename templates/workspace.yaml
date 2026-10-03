@@ -11,7 +11,7 @@
 # workspace happy with "one unit = one repo/dir" should stop here. The `schemaVersion` /
 # `components:` / `relationships:` keys below exist only for monorepos/moduliths that need
 # component granularity finer than one unit — see scripts/workspace-validate.sh and
-# harness-revised-plan-workspace-support-agentic.md §3 for the full model. Omitting all three
+# docs/workspace-orchestration-plan.md §3 for the full model. Omitting all three
 # keys (the default) is exactly this file's v1 shape; nothing reads them until a later phase
 # wires them into /harness-init and /harness-goal.
 #
