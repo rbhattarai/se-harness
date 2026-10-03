@@ -41,6 +41,14 @@ and must be resolved or justified before PR.
 - Domain: `.harness/memory/wiki/` (Karpathy-style; `index.md` first)
 - Per-turn hot set is injected automatically by the context-injector hook
 
+## Behavioral rules (Karpathy-inspired)
+<!-- Distilled from https://github.com/multica-ai/andrej-karpathy-skills/blob/main/CLAUDE.md -->
+- Think before coding: state assumptions, surface tradeoffs, ask when unclear — never silently pick an interpretation.
+- Simplicity first: minimum code that solves the problem; no speculative features, single-use abstractions, or impossible-scenario handling.
+- Surgical changes: touch only what the task requires; match existing style; mention unrelated dead code, don't delete it; clean up only orphans your changes created.
+- Goal-driven: turn tasks into verifiable goals (test first, then implement); loop until verified.
+- Wrong/right examples per principle: `coding-discipline` skill.
+
 ## Workflow
 Goals go through `/harness-goal`: grill → deep-dive → refined REQ (⛔ human approves) → Jira
 story + XRay tests → implement in worktrees → e2e (planner/generator/healer) → ⛔ human PR gate

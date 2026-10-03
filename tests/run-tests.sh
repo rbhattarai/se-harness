@@ -100,6 +100,36 @@ for f in plugins/se-harness/scripts/*.sh tests/run-tests.sh; do
   check "bash -n: $f" bash -n "$f"
 done
 
+# --- wiki-lint.sh: functional checks on fixture wikis ---
+WL_FIX=$(mktemp -d 2>/dev/null || mktemp -d -t seharness)
+WL_OUT="$WL_FIX.out"
+printf '# Index\n\n- [payments](payments.md) — x\n- [ghost](ghost.md) — x\n' > "$WL_FIX/index.md"
+printf '# Log\n' > "$WL_FIX/log.md"
+printf '# Payments\n\nSee [[refunds]].\n\n## CONTRADICTION here\n\nsources: X, ingested 2026-07-15\n' > "$WL_FIX/payments.md"
+i=0; while [ "$i" -lt 160 ]; do echo "filler $i" >> "$WL_FIX/payments.md"; i=$((i + 1)); done
+printf '# Refunds\n' > "$WL_FIX/refunds.md"
+printf '# Lonely\n\nsources: Y, ingested 2026-07-10\n' > "$WL_FIX/lonely.md"
+printf '# Secrets\n\npassword = "hunter2-value"\n\nsources: Z, ingested 2026-07-12\n' > "$WL_FIX/secrets.md"
+bash plugins/se-harness/scripts/wiki-lint.sh "$WL_FIX" > "$WL_OUT" 2>&1
+WL_CODE=$?
+check "wiki-lint exits 1 on findings" test "$WL_CODE" -eq 1
+for tag in MISSING-FROM-INDEX DANGLING-INDEX-LINK ORPHAN NO-SOURCES CONTRADICTION OVERSIZE SECRET-HIT; do
+  check "wiki-lint reports $tag" grep -q "$tag" "$WL_OUT"
+done
+check "wiki-lint never echoes secret content" bash -c "! grep -q hunter2 $WL_OUT"
+WL_CLEAN=$(mktemp -d 2>/dev/null || mktemp -d -t seharness)
+printf '# Index\n\n- [a](a.md) — x\n- [b](b.md) — x\n' > "$WL_CLEAN/index.md"
+printf '# Log\n' > "$WL_CLEAN/log.md"
+printf '# A\n\nSee [[b]].\n\nsources: X, ingested 2026-07-15\n' > "$WL_CLEAN/a.md"
+printf '# B\n\nSee [[a]].\n\nsources: Y, ingested 2026-07-15\n' > "$WL_CLEAN/b.md"
+bash plugins/se-harness/scripts/wiki-lint.sh "$WL_CLEAN" > "$WL_OUT" 2>&1
+WL_CODE=$?
+check "wiki-lint exits 0 when clean" test "$WL_CODE" -eq 0
+check "wiki-lint reports clean" grep -q "wiki-lint: clean" "$WL_OUT"
+check "wiki-lint exits 2 on missing dir" \
+  bash -c 'bash plugins/se-harness/scripts/wiki-lint.sh "$0" >/dev/null 2>&1; test $? -eq 2' "$WL_FIX/nope"
+rm -rf "$WL_FIX" "$WL_CLEAN" "$WL_OUT"
+
 # --- workspace-validate.sh: additive schema (phase 1 of the workspace-orchestration plan) ---
 WV_FIX=$(mktemp -d 2>/dev/null || mktemp -d -t seharness)
 
