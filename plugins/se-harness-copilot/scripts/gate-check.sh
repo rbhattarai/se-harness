@@ -4,6 +4,12 @@
 # while no approved requirement exists in .harness/requirements/.
 # Reads the hook JSON on stdin; v0 parses with grep (no jq dependency).
 # Exit 2 = block with message to Claude; exit 0 = allow.
+#
+# Phase 5 (workspace-orchestration plan §5.3): an approved REQ whose impact spanned 2+
+# components also gets a REQ-NNN/workspace-plan.md sibling file (see templates/workspace-plan.md
+# for the row shape). If one exists, every row must reach `status: done` too — approving the
+# requirement is not approving incomplete cross-component work. A REQ with no workspace-plan.md
+# (the common single/few-component case, §5.0) is completely unaffected by this.
 
 set -u
 INPUT=$(cat)
@@ -19,10 +25,32 @@ printf '%s' "$CMD" | grep -qE '(gh pr create|git push|docker push|terraform appl
 # No harness in this repo → not our business.
 [ -d ".harness/requirements" ] || exit 0
 
-if grep -lq "^status: *approved" .harness/requirements/REQ-*.md 2>/dev/null; then
-  exit 0
+APPROVED=$(grep -l "^status: *approved" .harness/requirements/REQ-*.md 2>/dev/null)
+if [ -z "$APPROVED" ]; then
+  echo "BLOCKED by se-harness gate: no requirement in .harness/requirements/ has status: approved." >&2
+  echo "Present the refined requirement to the user and get explicit approval (HITL gate) first." >&2
+  exit 2
 fi
 
-echo "BLOCKED by se-harness gate: no requirement in .harness/requirements/ has status: approved." >&2
-echo "Present the refined requirement to the user and get explicit approval (HITL gate) first." >&2
-exit 2
+INCOMPLETE=""
+for req_file in $APPROVED; do
+  req_id=$(basename "$req_file" .md)
+  plan="$(dirname "$req_file")/$req_id/workspace-plan.md"
+  [ -f "$plan" ] || continue
+  while IFS= read -r row; do
+    [ -n "$row" ] || continue
+    case "$row" in
+      *"status: done"*) ;;
+      *) INCOMPLETE="${INCOMPLETE}${req_id}: ${row}"$'\n' ;;
+    esac
+  done < <(grep '^- component:' "$plan" 2>/dev/null)
+done
+
+if [ -n "$INCOMPLETE" ]; then
+  echo "BLOCKED by se-harness gate: workspace-plan.md has rows that are not status: done yet:" >&2
+  printf '%s' "$INCOMPLETE" >&2
+  echo "Every component row must reach status: done before push/PR/deploy for this requirement." >&2
+  exit 2
+fi
+
+exit 0

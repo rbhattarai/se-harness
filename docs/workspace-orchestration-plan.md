@@ -4,14 +4,18 @@
 > from a personal working file once it started driving real implementation (phase 1 landed in
 > commit `dd17e81`). Status markers below follow `brainstorm.md`'s convention.
 
-**Status**: ✅ **Phases 1-4 implemented** — phase 1: additive `workspace.yaml` model +
+**Status**: ✅ **Phases 1-5 implemented** — phase 1: additive `workspace.yaml` model +
 `workspace-validate.sh` (commit `dd17e81`). Phase 2: workspace-level `/harness-init` entry point
 + opt-in confirmed cloning (`workspace-clone.sh`) + modulith/hybrid topology detection +
 evidence-required `components:`/`relationships:` proposals, plus `/harness-scan` scope-awareness.
 Phase 3: methodology and non-code sources now default to workspace scope, inherited by every
 unit unless explicitly (and visibly) overridden. Phase 4: `/harness-init` records a tier-1
 structural-memory driver choice (never installs it); `/harness-bootstrap` and `/harness-scan`
-both read it back instead of re-asking or probing generically. ⏳ Phases 5-9 not started.
+both read it back instead of re-asking or probing generically. Phase 5: `/harness-goal` builds
+an evidence-backed impact map and only creates `workspace-plan.md` when it spans 2+ components
+(§5.0's fast path); `gate-check.sh` blocks push/PR/deploy while any row isn't `done`, same as
+it already does for an unapproved REQ. Cross-repo dispatch is still manual (phases 6-7).
+⏳ Phases 6-9 not started.
 
 ## 0. Revision notes (se-harness review pass)
 
@@ -531,8 +535,16 @@ as one large orchestrator-subsystem drop.
    `/harness-scan` reads it too, to look for that specific driver instead of probing
    generically. `templates/AGENTS.md.tmpl` names the chosen driver in its generated Memory
    section when set, falling back to generic wording when not. No change to tiers 2/3.
-5. **Task planning**: add evidence-backed impact mapping, the §5.0 fast path, and
-   `workspace-plan.md` as a REQ sibling file, extending `gate-check.sh` to read it.
+5. ✅ **Task planning** — IMPLEMENTED: `/harness-goal` step 2 builds an evidence-backed impact
+   map (component, evidence, confidence); step 3 applies §5.0 — 0-1 components continues
+   exactly as before (no new file, no ceremony), 2+ components renders `templates/
+   workspace-plan.md` into `REQ-NNN/workspace-plan.md` (one grep-able row per component,
+   `status: pending`/`in-progress`/`done`/`blocked`), presented for the **same** approval as
+   the REQ, not a second gate. `gate-check.sh` now also blocks push/PR/deploy while any
+   approved REQ's workspace-plan.md has a row that isn't `done` — a REQ with no such file is
+   completely unaffected (verified by regression tests). Cross-repo rows in step 5 are handed
+   off as "run `/harness-goal` in that repo, referencing this REQ id" — honest about there
+   being no automated dispatch yet (phases 6-7).
 6. **Agent scaffolding**: generate the workspace orchestrator and repo/component agents from
    confirmed boundaries, only once a workspace actually needs the orchestrator (§5.0).
 7. **Runtime adapters**: add supported agent-client integrations and sequential fallback.

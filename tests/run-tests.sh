@@ -314,6 +314,52 @@ check "workspace-clone: missing inventory file exits 1" \
   bash -c "bash '$WC_SCRIPT' plan '$WC_FIX/nope.txt' '$WC_FIX/ws' >/dev/null 2>&1; test \$? -eq 1"
 rm -rf "$WC_FIX" "$WC_OUT"
 
+# --- gate-check.sh: HITL gate + phase 5's workspace-plan.md row check ---
+GC_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/plugins/se-harness/scripts/gate-check.sh"
+GC_FIX=$(mktemp -d 2>/dev/null || mktemp -d -t seharness)
+gc_payload() { printf '{"tool_name":"Bash","tool_input":{"command":"%s"}}' "$1"; }
+
+(cd "$GC_FIX" && gc_payload "git push origin main" | bash "$GC_SCRIPT") >/dev/null 2>&1
+check "gate-check: no .harness dir at all — allowed" test $? -eq 0
+
+mkdir -p "$GC_FIX/.harness/requirements"
+(cd "$GC_FIX" && gc_payload "git push origin main" | bash "$GC_SCRIPT") >/dev/null 2>&1
+check "gate-check: harness dir, zero requirements — blocked" test $? -eq 2
+
+(cd "$GC_FIX" && gc_payload "ls -la" | bash "$GC_SCRIPT") >/dev/null 2>&1
+check "gate-check: non-irreversible command — always allowed" test $? -eq 0
+
+cat > "$GC_FIX/.harness/requirements/REQ-001.md" <<'EOF'
+---
+id: REQ-001
+status: draft
+---
+EOF
+(cd "$GC_FIX" && gc_payload "git push origin main" | bash "$GC_SCRIPT") >/dev/null 2>&1
+check "gate-check: REQ exists but draft — blocked" test $? -eq 2
+
+sed -i 's/status: draft/status: approved/' "$GC_FIX/.harness/requirements/REQ-001.md" 2>/dev/null \
+  || sed -i '' 's/status: draft/status: approved/' "$GC_FIX/.harness/requirements/REQ-001.md"
+(cd "$GC_FIX" && gc_payload "git push origin main" | bash "$GC_SCRIPT") >/dev/null 2>&1
+check "gate-check: REQ approved, no workspace-plan.md — allowed (unchanged behavior)" test $? -eq 0
+
+mkdir -p "$GC_FIX/.harness/requirements/REQ-001"
+cat > "$GC_FIX/.harness/requirements/REQ-001/workspace-plan.md" <<'EOF'
+- component: frontend | status: pending | owner: implementer-frontend | outcome: UI done | depends_on: cart-api | evidence: -
+- component: cart-api | status: done | owner: implementer-backend | outcome: API done | depends_on: - | evidence: -
+EOF
+GC_OUT="$GC_FIX.out"
+(cd "$GC_FIX" && gc_payload "gh pr create --title x" | bash "$GC_SCRIPT") > "$GC_OUT" 2>&1
+GC_CODE=$?
+check "gate-check: approved REQ, a pending workspace-plan row — blocked" test "$GC_CODE" -eq 2
+check "gate-check: blocked message names the pending component" grep -qF "component: frontend" "$GC_OUT"
+
+sed -i 's/status: pending/status: done/' "$GC_FIX/.harness/requirements/REQ-001/workspace-plan.md" 2>/dev/null \
+  || sed -i '' 's/status: pending/status: done/' "$GC_FIX/.harness/requirements/REQ-001/workspace-plan.md"
+(cd "$GC_FIX" && gc_payload "gh pr create --title x" | bash "$GC_SCRIPT") >/dev/null 2>&1
+check "gate-check: all workspace-plan rows done — allowed" test $? -eq 0
+rm -rf "$GC_FIX" "$GC_OUT"
+
 # --- privacy invariant: plugins make no network calls (see PRIVACY.md) ---
 check "no network calls in plugin scripts" \
   bash -c "! grep -rlE 'curl |wget |Invoke-WebRequest|Invoke-RestMethod' plugins/*/scripts/"

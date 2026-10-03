@@ -16,20 +16,40 @@ criteria (no "fast/better/robust"), the non-functionals this change can violate,
 behavior, conflicts with prior decisions (wiki-query + org conventions). Batch questions,
 stop when testable — over-grilling erodes trust.
 
-## 2. Deep-dive memory
-- **Structural**: code-graph MCP — impacted files, callers, blast radius. Check
-  `workspace.yaml` provides/consumes if present (contract impact).
+## 2. Deep-dive memory — build the impact map (workspace-orchestration plan §5.2)
+- **Structural**: the configured tier-1 driver (`memory.structural_driver`) or a code-graph
+  MCP — impacted files, callers, blast radius. If `workspace.yaml` exists, check its
+  `contracts:`/`relationships:` for provides/consumes (contract impact) and identify which
+  declared **components/units** this goal plausibly touches.
 - **Domain**: wiki-query over `.harness/memory/wiki/` (related PRDs, decisions, contradictions).
 - **Session**: `MEMORY.md` + recent daily logs for prior attempts (`[[...]] causes [[...]]` chains).
+
+Record each candidate component in an **impact map**: component, why it's included, evidence
+source, confidence. Check current code before treating indexed memory as authoritative; drop
+anything whose name merely sounds relevant with no cited evidence. No `workspace.yaml` at all
+means the impact map is trivially "this repo" — one component, skip straight to step 3's fast
+path. The **distinct component count** from this map feeds step 3's fast-path decision.
 
 ## 3. Refined requirement  ⛔ HITL GATE 1
 ```
 bash tools/harness/new-requirement.sh "<one-line goal>"
 ```
 Fill the created `REQ-NNN.md` (grill output + deep-dive impact; status stays `draft`).
-**Stop and present it.** Only the user flips status to `approved` — record `approved` verbatim
-from their reply; assumptions you made go under "resolved by agent default" so the gate shows
-them. `gate-check.sh` blocks push/PR/deploy while nothing is approved.
+
+**Scale to impact size (§5.0)** — this is not an optional optimization, it is the mechanism
+that keeps a single-repo goal exactly as simple as today:
+- **Impact map names 0-1 components**: continue below unchanged. No workspace plan file, no
+  extra ceremony, ever.
+- **Impact map names 2+ components**: also render `templates/workspace-plan.md` into
+  `REQ-NNN/workspace-plan.md` — one row per impacted component (owner, outcome, `depends_on`,
+  evidence), every row starting at `status: pending`. Present it **alongside** the REQ for the
+  same approval below, not as a second gate.
+
+**Stop and present it** (REQ, and workspace-plan.md if one was created). Only the user flips
+status to `approved` — record `approved` verbatim from their reply; assumptions you made go
+under "resolved by agent default" so the gate shows them. `gate-check.sh` blocks push/PR/deploy
+while nothing is approved, and — once a workspace plan exists for this REQ — while any of its
+rows haven't reached `status: done` either.
 
 ## 4. Story + test cases  *(story-writer agent)*
 Delegate to **story-writer**: Jira story + XRay/Zephyr test cases via Atlassian MCP (tracker =
@@ -37,8 +57,25 @@ system of record; local copies in `REQ-NNN/`). Story key + test-case keys land i
 frontmatter. The story ID threads through branch names, commits, and the PR from here on.
 
 ## 5. Design + implement  *(architect → implementers, isolated worktrees)*
-1. **architect** produces `REQ-NNN/design.md`; resolve its open questions with the user
-   before any code.
+
+**No `workspace-plan.md`** (0-1 component, the common case): proceed with 1-5 below, unchanged.
+
+**`workspace-plan.md` exists** (2+ components): work its rows in dependency order — serialize
+anything another row's `depends_on` names until that dependency is `done`; parallelize the
+rest. Per row:
+a. Set it to `status: in-progress` in `workspace-plan.md` before starting.
+b. **Component lives in this repo** → continue with 1-5 below, scoped to that component.
+c. **Component lives in a different repo** → there is no automated cross-repo dispatch yet
+   (that's `docs/workspace-orchestration-plan.md` phases 6-7). Tell the user this row needs
+   its own `/harness-goal` run in that repo, referencing this REQ id so the two threads stay
+   linked; leave the row `in-progress` here — it's that other run's job to flip it to `done`.
+d. Once a row's work is verified (step 5's automated gate below, or the other repo's own
+   gate), set it to `done`. Genuinely stuck → `blocked`, with why recorded in the plan's
+   Integration notes — never leave a row silently `in-progress`.
+
+1. **architect** produces `REQ-NNN/design.md` (for a multi-component REQ: either one
+   `design.md` per row, or a shared file with one section per component — state which you
+   used); resolve its open questions with the user before any code.
 2. Break the design into tasks; typical order — db first, then backend ∥ frontend in parallel:
    ```
    bash tools/harness/worktree-task.sh create REQ-NNN db-schema
@@ -63,8 +100,10 @@ specs against the live app (real selectors via Playwright MCP) → failures clas
 
 ## 7. Pull request  ⛔ HITL GATE 2
 Present the evidence table: diff summary, unit/integration/e2e results, org-rule compliance,
-anything hand-rolled because no internal component fit. On approval: draft PR via GitHub MCP,
-titled with REQ + story key.
+anything hand-rolled because no internal component fit. If `workspace-plan.md` exists, include
+its current row statuses in the evidence — `gate-check.sh` blocks the PR itself while any row
+isn't `done`, so this is worth surfacing before the user even asks. On approval: draft PR via
+GitHub MCP, titled with REQ + story key.
 
 ## 8. Local verify
 Generate/update docker-compose; build and run the whole app locally; smoke-check the REQ's
@@ -76,6 +115,8 @@ Approval must be explicit **in this session** — prior approvals don't carry ov
 profile's provider plugin, watch rollout, documented rollback on failure.
 
 ## 10. Close the loop  *(memory-keeper skill)*
-Set REQ status `done`. Append the day's entry: what shipped, decisions, dead ends, typed links
+Set REQ status `done`. If `workspace-plan.md` exists, confirm every row is already `done` (it
+must be, or gate-check.sh would have blocked step 7/9) and add a closing line to its
+Integration notes. Append the day's entry: what shipped, decisions, dead ends, typed links
 (`[[REQ-NNN]] solves [[...]]`). If domain knowledge changed, wiki-ingest the delta. Commits/PRs
 were auto-logged by the post-commit hook — don't duplicate them.
