@@ -23,19 +23,27 @@ automatically. Check once, up front, instead of letting an arbitrary later step 
 
 1. Check whether `tools/harness/workspace-clone.sh` exists as a real file.
    - **Exists** → nothing else in this step applies; continue to Step 1.
-   - **Missing** → look for a sibling framework checkout at `../se-harness/` (the side-by-side
-     clone the setup guides document).
-     - **Found** → vendor the scripts now, once, for this directory: `mkdir -p tools/harness &&
-       cp ../se-harness/plugins/se-harness-copilot/scripts/*.sh tools/harness/`.
-       Tell the user you did this, then continue to Step 1.
-     - **Not found** → stop. Tell the user plainly: the scripts this command needs aren't
-       vendored here, and there's no fixed path to where the plugin itself is installed, so it
-       can't be found automatically. Give both options, let them pick: (a) `git clone <se-harness
-       repo url> se-harness` right here as a sibling, then re-run this command — this also covers
-       the `templates/`/`registry/` references used later; or (b) if they know where the plugin
-       was installed/unzipped, vendor by hand: `mkdir -p tools/harness && cp
-       <that-path>/plugins/se-harness-copilot/scripts/*.sh tools/harness/`. Never guess at an
-       install path.
+   - **Missing** → locate where the plugin itself is actually installed and vendor from there,
+     trying each of these in order, stopping at the first that finds something:
+     a. The Copilot/VS Code plugin cache. Run:
+        `find ~/.vscode/agent-plugins -type d -path '*/plugins/se-harness-copilot/scripts' 2>/dev/null`
+        (this is `<host>/<org>/<repo>/plugins/se-harness-copilot/scripts/` under
+        `~/.vscode/agent-plugins/` — confirmed present there after a normal
+        `copilot plugin install`).
+        - **One match** → vendor: `mkdir -p tools/harness && cp <that match>/*.sh tools/harness/`.
+          Tell the user you did this, then continue to Step 1.
+        - **Multiple matches** (e.g. both a public and an internal-mirror install) → list them
+          and ask the user which one via AskUserQuestion — never guess.
+        - **None** → try (b).
+     b. A sibling framework checkout at `../se-harness/` (the side-by-side clone the setup
+        guides document) → if found, vendor
+        `../se-harness/plugins/se-harness-copilot/scripts/*.sh` the same way; else try (c).
+     c. Neither found → stop. Tell the user plainly: the scripts this command needs aren't
+        vendored here and couldn't be found automatically. Give both options, let them pick:
+        (a) check their own `~/.vscode/agent-plugins/` for the install themselves (path layout
+        above) and point you at it, or (b) `git clone <se-harness repo url> se-harness` right
+        here as a sibling, then re-run this command — this also covers the
+        `templates/`/`registry/` references used later. Never guess at an install path.
 
 ## Step 1 — Detect the setup target (workspace-orchestration plan §4.1)
 Run `git rev-parse --is-inside-work-tree`.
