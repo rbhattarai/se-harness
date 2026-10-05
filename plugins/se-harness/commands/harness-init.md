@@ -14,6 +14,28 @@ If `.harness/profile.yaml` already exists and `$ARGUMENTS` does not contain `--u
 show the existing profile summary and ask whether to update it or abort. Never silently
 re-initialize.
 
+## Step 0a — Make sure the harness scripts are reachable
+Every step below runs a script at `${CLAUDE_PLUGIN_ROOT}/scripts/<script>.sh`. On Copilot that
+path is a repo-vendored convention (`docs/setup-guide-copilot.md` Part 1.3/4.7): it only
+resolves once the scripts have actually been copied into this directory, which nothing does
+automatically. Check once, up front, instead of letting an arbitrary later step fail:
+
+1. Check whether `${CLAUDE_PLUGIN_ROOT}/scripts/workspace-clone.sh` exists as a real file.
+   - **Exists** → nothing else in this step applies; continue to Step 1.
+   - **Missing** → look for a sibling framework checkout at `../se-harness/` (the side-by-side
+     clone the setup guides document).
+     - **Found** → vendor the scripts now, once, for this directory: `mkdir -p tools/harness &&
+       cp ${CLAUDE_PLUGIN_ROOT}/../../plugins/se-harness-copilot/scripts/*.sh tools/harness/`.
+       Tell the user you did this, then continue to Step 1.
+     - **Not found** → stop. Tell the user plainly: the scripts this command needs aren't
+       vendored here, and there's no fixed path to where the plugin itself is installed, so it
+       can't be found automatically. Give both options, let them pick: (a) `git clone <se-harness
+       repo url> se-harness` right here as a sibling, then re-run this command — this also covers
+       the `templates/`/`registry/` references used later; or (b) if they know where the plugin
+       was installed/unzipped, vendor by hand: `mkdir -p tools/harness && cp
+       <that-path>/plugins/se-harness-copilot/scripts/*.sh tools/harness/`. Never guess at an
+       install path.
+
 ## Step 1 — Detect the setup target (workspace-orchestration plan §4.1)
 Run `git rev-parse --is-inside-work-tree`.
 - **Inside a git repo** → this is the existing, unchanged per-repo path. Continue at Step 2.

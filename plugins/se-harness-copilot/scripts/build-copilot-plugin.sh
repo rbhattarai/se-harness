@@ -110,7 +110,8 @@ done
 COUNT_C=0
 for f in "$SRC"/commands/*.md; do
   cname=$(basename "$f")
-  sed -e 's|\${CLAUDE_PLUGIN_ROOT}/scripts/|tools/harness/|g' \
+  sed -e 's|\${CLAUDE_PLUGIN_ROOT}/\.\./\.\./plugins/se-harness-copilot/scripts/|../se-harness/plugins/se-harness-copilot/scripts/|g' \
+      -e 's|\${CLAUDE_PLUGIN_ROOT}/scripts/|tools/harness/|g' \
       -e 's|\${CLAUDE_PLUGIN_ROOT}/\.\./\.\./templates/|../se-harness/templates/|g' \
       -e 's|\${CLAUDE_PLUGIN_ROOT}/\.\./\.\./registry/|../se-harness/registry/|g' \
       "$f" > "$OUT/commands/$cname"

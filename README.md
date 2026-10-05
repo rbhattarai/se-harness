@@ -175,7 +175,7 @@ product in practice — if you try it, that's the gap most likely to surface som
 test suite couldn't catch. Also on the roadmap: a web profile-builder and a structural-memory
 driver bake-off (CodeGraph vs. codebase-memory-mcp vs. Graphify). Details:
 [development history](./docs/development-history.md) · plan and research log in
-[`brainstorm.md`](./brainstorm.md).
+[`docs/brainstorm.md`](./docs/brainstorm.md).
 
 ## Repo layout
 

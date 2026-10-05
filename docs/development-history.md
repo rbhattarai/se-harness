@@ -1,7 +1,7 @@
 # Development history
 
 Phase-by-phase build log, moved here from the README. The plan and research behind it live
-in [`brainstorm.md`](../brainstorm.md) (Part A = plan, Part B = research).
+in [`brainstorm.md`](./brainstorm.md) (Part A = plan, Part B = research).
 
 ## Phase log
 
