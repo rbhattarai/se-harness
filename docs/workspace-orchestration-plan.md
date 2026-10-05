@@ -38,6 +38,18 @@
 
 Full phase detail and the files each one touched: §12.
 
+**Real-world validation (2026-10-03, finance-portal)**: the plan's first trial against an
+actual multi-unit product, not a fixture. It mostly held up — the manifest, the scripts, and
+the generated artifacts all worked against a real repo on the first try (`workspace-validate.sh`
+and `contract-check.sh` both ran clean; a year-old `/harness-scan`-equivalent evidence pass
+turned out to still be 100% accurate, zero drift, when independently re-checked). One real gap
+surfaced: `/harness-init` Step 3's mono-repo detection relied on a fixed list of formal
+workspace-tool markers (`nx.json`, `turbo.json`, ...) and had no signal for "multiple sibling
+directories, each its own independent build manifest, no root aggregator" — a legitimate,
+common mono-repo shape that list didn't cover. Fixed in `harness-init.md` Step 3 (now checks
+both signals, same confirm-before-write discipline either way); see `brainstorm.md`'s A6
+section for the fuller note. Full walkthrough: `se-harness-setup.md` in the finance-portal repo.
+
 ## 0. Revision notes (se-harness review pass)
 
 This revision folds in six changes from a review against the se-harness codebase as of commit

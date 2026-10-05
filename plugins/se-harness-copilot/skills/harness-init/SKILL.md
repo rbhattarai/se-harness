@@ -55,9 +55,19 @@ with the user via AskUserQuestion — don't assume.
 
 ## Step 3 — Topology
 Check for workspace markers: `pnpm-workspace.yaml`, `nx.json`, `turbo.json`, `lerna.json`,
-`*.sln`, Maven multi-module `pom.xml` (`<modules>`), `go.work`, `WORKSPACE`/`MODULE.bazel`.
+`*.sln`, Maven multi-module `pom.xml` (`<modules>`), `go.work`, `WORKSPACE`/`MODULE.bazel` —
+**or**, absent all of those, **two or more sibling directories, each with its own independent
+build manifest** (`package.json`, `pom.xml`, `build.gradle`/`build.gradle.kts`, `go.mod`,
+`Cargo.toml`, `*.csproj`, ...) **and no root-level aggregator of the same kind**. This second
+signal matters: a real mono-repo found this way during a live trial (three sibling services,
+no `nx.json`/`turbo.json`/root `pom.xml`, nothing formal at all) — relying on the formal-tool
+list alone would have missed it and fallen through to "single," which is wrong. The signal is
+weaker than a formal marker, so it still gets proposed and confirmed, never concluded silently
+either way (principle 3) — list which manifest identified each sibling directory as part of
+the evidence you present.
 
-- **Markers found** → propose **mono-repo**, list detected units, confirm. Create
+- **Either signal found** → propose **mono-repo**, list detected units (name each sibling
+  directory and the manifest/marker that identified it), confirm. Create
   `workspace.yaml` at the repo root from `templates/workspace.yaml` (units with `path:`, one
   per detected unit).
   - Then look for cross-unit relationships with real evidence — a unit's manifest depending on

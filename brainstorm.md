@@ -180,6 +180,15 @@ workspace:
 
 **Mono-repo — v1 (it's the easy case).** Detection is deterministic: `/harness-scan` reads workspace markers (`pnpm-workspace.yaml`, `nx.json`, `turbo.json`, `lerna.json`, .NET `.sln`, Maven multi-module, `go.work`, Bazel) and proposes the unit list. Generation: root AGENTS.md/CLAUDE.md = workspace level (org context, architecture map, unit index); **nested per-unit AGENTS.md** = stack rules, loaded contextually by both Claude Code and Copilot — no custom machinery. **Cross-unit awareness is free**: one structural graph covers the repo, so cross-unit impact analysis falls out of the existing pipeline. Goal loop: fan-out per-unit agents in worktrees, one PR, one compose file.
 
+**Correction from a live trial (2026-10-03, finance-portal)**: the formal-marker list above isn't
+the whole story. A real mono-repo — three sibling services, each its own independent Maven/npm
+manifest, zero `nx.json`/`turbo.json`/root `pom.xml`/anything formal — would have fallen through
+every marker check and landed on "single," the wrong conclusion. `harness-init.md` Step 3 now
+also checks for "two or more sibling directories, each with its own independent build manifest,
+no root-level aggregator" as a second, weaker-but-real mono-repo signal (same confirm-before-write
+discipline either way). Worth remembering for any other heuristic in this plan stated as a fixed
+list: a live repo is usually the thing that proves a checklist incomplete, not more research.
+
 **Multi-repo — three tiers:**
 - **Tier 1 (v1) — independent bootstrap + shared inheritance.** `workspace.yaml` lives in a small dedicated **meta-repo** (mirrors GitHub's `.github-private` org-agents pattern, B10); each member repo's `profile.yaml` points at it; `/harness-sync` pulls the `shared:` block into each repo's generated sections. Each repo otherwise bootstraps independently.
 - **Tier 2 (v1.5) — contract-registry awareness, no service graph needed.** The motivating case ("order-service changed its API — does payment-service still match?") doesn't require cross-repo code analysis: `provides`/`consumes` point at contract artifacts that already exist (OpenAPI/proto/event schemas). A `contract-check` skill/hook flags declared consumers deterministically when a provided contract changes, optionally opening linked Jira tasks / draft PRs per consumer repo. Plus a `workspace-clone` helper checking sibling repos out side-by-side so one session can read across them.
