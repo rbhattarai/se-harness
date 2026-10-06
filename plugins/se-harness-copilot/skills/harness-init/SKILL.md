@@ -74,10 +74,50 @@ Run `git rev-parse --is-inside-work-tree`.
    the whole batch was confirmed). Report exactly what the script reported — cloned, skipped
    (already present), skipped (collision, not touched), or failed — per repo. A `collision` or
    a failed clone never blocks the repos that succeeded.
-4. Tell the user: workspace repos are in place; run `/harness-init` again **inside each one**
-   to bootstrap it — starting with whichever repo is most central (ask, or suggest the one
-   with the most inbound dependencies if that's evident). This step never writes
-   `.harness/profile.yaml` itself; each repo still gets its own full Step 2+ pass.
+4. Ask once (AskUserQuestion): **bootstrap every cloned repo now too** (recommended — go to
+   Step 1b), or **leave them cloned** and the user will run `/harness-init` in each one
+   themselves later (valid; stop here — this step never writes `.harness/profile.yaml` itself).
+
+### Step 1b — Bootstrap every cloned unit in one pass (opt-in, from Step 1a point 4)
+This replaces 20 separate `/harness-init` invocations with one: you drive Steps 2-8 yourself,
+once per unit, inside this same run. Tell the user up front this may take a while for a large
+workspace and that you'll report progress as you go.
+
+1. **Create `workspace.yaml` now, with the shared choices made once** — don't wait for Step 3
+   inside some later unit to ask this; asking it here first means every unit in the loop below
+   inherits silently instead of asking the same question 20 times:
+   - `topology: multi-repo`, `units:` from `repos.txt` (`repo:` form, `stack: []` until a unit
+     is actually bootstrapped below).
+   - **Methodology** — same options and wording as Step 4 point 1 — ask once, write to
+     `shared.methodology`.
+   - **Structural memory** — same options and wording as Step 6 — ask once, write to
+     `shared.memory.structural_driver` (`null`/defer is a valid answer).
+   - **Shared org context** — same questions as Step 5, scoped to whatever's genuinely common
+     across units (a shared internal UI library, a company-wide banned-library rule) — ask
+     once, write to `shared.org`. Repo-specific additions still get asked per unit in the loop
+     below; this only captures what's common.
+   - Validate with `bash tools/harness/workspace-validate.sh workspace.yaml`
+     before continuing.
+2. **Workspace-level memory** — distinct from any one unit's own `.harness/memory/`; this is
+   for decisions that span the whole product, starting with the choices just made. Create
+   `.harness/memory/{MEMORY.md,SCRATCHPAD.md,daily/.gitkeep,wiki/index.md,wiki/log.md}` at the
+   workspace root, same templates as Step 7 point 4, and log today's methodology/
+   structural-memory/org decisions as the first daily entry.
+3. **Loop.** For each unit, in order: `cd` into it and run Steps 2 through 8 of this same
+   command, directly — you're already running the command, so continue the flow yourself
+   rather than telling the user to re-invoke it. Steps 4-6's inheritance logic now finds
+   everything already set in `workspace.yaml` from point 1, so each unit asks **only** what's
+   genuinely unit-specific (stack details `/harness-scan` can't detect, DevOps/cloud target,
+   libraries unique to that unit). If a unit has nothing left to ask, say so and go straight to
+   Step 7 for it — don't manufacture a question to fill the slot. A unit that fails (directory
+   missing, detection error) gets reported and skipped; it never aborts the remaining units.
+4. **Finalize.** Once every unit has a real `.harness/profile.yaml`, update
+   `workspace.yaml`'s `units[].stack` from what each unit actually detected, re-validate, and
+   report one table: unit | bootstrapped? | stack | methodology | structural_driver | notes.
+   Tell the user `/harness-bootstrap` is still **per-repo** (installs are repo-level artifacts)
+   — run it in whichever unit they want companion tools installed first; its own Step 1 already
+   reads `shared.memory.structural_driver` and the methodology choice from `workspace.yaml`, so
+   it won't ask again.
 
 ## Step 2 — New or existing?
 Look at the repo (any source files beyond scaffolding?). Propose your conclusion and confirm

@@ -50,6 +50,26 @@ common mono-repo shape that list didn't cover. Fixed in `harness-init.md` Step 3
 both signals, same confirm-before-write discipline either way); see `brainstorm.md`'s A6
 section for the fuller note. Full walkthrough: `se-harness-setup.md` in the finance-portal repo.
 
+**Real-world validation (2026-10-06, FISMA/Copilot, a 20-repo multi-repo product)**: a second
+live trial, this time on Copilot CLI instead of Claude Code, and genuinely multi-repo (20
+separately-cloned repos) rather than mono-repo. Two real gaps surfaced, both in
+`/harness-init`'s workspace-root path, both fixed in `harness-init.md`:
+1. Step 1a invoked `${CLAUDE_PLUGIN_ROOT}/scripts/workspace-clone.sh`, which the Copilot build
+   step rewrites to a bare `tools/harness/workspace-clone.sh` — valid only once scripts are
+   vendored into the current directory, which nothing did before a brand-new workspace root's
+   first command. Fixed with Step 0a: check the path resolves before using it; if not, vendor
+   from the Copilot/VS Code plugin cache (`~/.vscode/agent-plugins/<host>/<org>/<repo>/...` —
+   confirmed present there after a normal `copilot plugin install`), falling back to a sibling
+   framework checkout if the cache search finds nothing.
+2. After cloning, Step 1a stopped and told the user to run `/harness-init` again inside each of
+   the 20 repos by hand. Workable but tedious at this scale, and it deferred the
+   `shared.methodology`/`shared.memory.structural_driver`/`shared.org` choices to "whichever
+   repo happens to run Step 3/4/5/6 first" rather than making them once, up front. Fixed with
+   Step 1b: an opt-in full loop that creates `workspace.yaml` (with those shared choices asked
+   exactly once) before bootstrapping any unit, then drives Steps 2-8 itself for every cloned
+   unit in the same run — no re-invocation needed — relying entirely on Steps 4-6's existing
+   inheritance logic to keep each unit's own questions down to what's genuinely unit-specific.
+
 ## 0. Revision notes (se-harness review pass)
 
 This revision folds in six changes from a review against the se-harness codebase as of commit
