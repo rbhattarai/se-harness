@@ -116,7 +116,10 @@ workspace and that you'll report progress as you go.
    Tell the user `/harness-bootstrap` is still **per-repo** (installs are repo-level artifacts)
    — run it in whichever unit they want companion tools installed first; its own Step 1 already
    reads `shared.memory.structural_driver` and the methodology choice from `workspace.yaml`, so
-   it won't ask again.
+   it won't ask again. If that shared choice is Graphify, once `/harness-bootstrap` has run in
+   each unit, `/harness-mem-graphify` with no `repo_name` builds every unit's index and merges
+   them into one workspace-level graph in a single pass — mention it as the natural next step
+   once bootstrap is done across the units.
 
 ## Step 2 — New or existing?
 Look at the repo (any source files beyond scaffolding?). Propose your conclusion and confirm
@@ -240,6 +243,9 @@ an open bake-off, not a requirement — don't nag about it later). Record the an
 
 A deferred choice is recorded as `null`, not skipped silently — `/harness-bootstrap` and
 `/harness-scan` both check this field before falling back to asking or probing generically.
+If the choice is Graphify, the sequence after this command is `/harness-bootstrap` (installs
+the CLI) then `/harness-mem-graphify` (builds the first index) — mention both, in order, so
+the user isn't left wondering why nothing got indexed yet.
 
 ## Step 7 — Generate artifacts
 Order matters; use the exact mechanics below.

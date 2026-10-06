@@ -18,9 +18,12 @@ stop when testable — over-grilling erodes trust.
 
 ## 2. Deep-dive memory — build the impact map (workspace-orchestration plan §5.2)
 - **Structural**: the configured tier-1 driver (`memory.structural_driver`) or a code-graph
-  MCP — impacted files, callers, blast radius. If `workspace.yaml` exists, check its
-  `contracts:`/`relationships:` for provides/consumes (contract impact) and identify which
-  declared **components/units** this goal plausibly touches.
+  MCP — impacted files, callers, blast radius. If the driver is Graphify and `graphify-out/`
+  is missing or stale, that's a gap to flag in the impact map, not a reason to stop — note it
+  and suggest `/harness-mem-graphify`, then fall back to Grep/Glob for this goal. If
+  `workspace.yaml` exists, check its `contracts:`/`relationships:` for provides/consumes
+  (contract impact) and identify which declared **components/units** this goal plausibly
+  touches.
 - **Domain**: wiki-query over `.harness/memory/wiki/` (related PRDs, decisions, contradictions).
 - **Session**: `MEMORY.md` + recent daily logs for prior attempts (`[[...]] causes [[...]]` chains).
 

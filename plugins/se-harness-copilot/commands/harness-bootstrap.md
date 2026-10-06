@@ -46,7 +46,12 @@ For each selected component, by `kind`:
   print the exact `/plugin` commands for the user to run interactively and mark the item
   `pending-manual` in the lockfile.
 - **cli**: run the registry's `install` command verbatim (confirm with the user first — it
-  executes third-party code).
+  executes third-party code). **Exception: the Graphify component.** Don't run its bare
+  `uv tool install graphifyy` here — hand off to `/harness-mem-graphify` instead (confirm
+  first, same as any third-party install). It owns the fuller gated sequence this step doesn't
+  (Python/uv prerequisite checks, an org's private package index from
+  `shared.package_index` if set, the first index build, and the lockfile record) — running
+  the bare command here would both duplicate and undercut it.
 - **mcp**: render the needed entries from `templates/mcp.json.tmpl` into the project's
   `.mcp.json` (merge — never clobber existing servers; secrets stay `${VAR}` references
   to `.env.harness`).

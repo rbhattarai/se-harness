@@ -50,7 +50,9 @@ driver was chosen at init, look for *that one* specifically rather than probing 
 available code-graph MCP server or the Graphify skill (CodeGraph / codebase-memory-mcp /
 Graphify) as before. Either way, if found, index and pull its architecture summary (Graphify:
 `graphify-out/GRAPH_REPORT.md` or `graphify query`) — richer structure, but the scan MUST
-work without it.
+work without it. If the driver is Graphify and `graphify-out/` is missing or looks stale next
+to recent commits, say so and point at `/harness-mem-graphify` to build/refresh it — don't run
+`graphify` commands yourself here, this command only ever reads what already exists.
 
 ## Step 2 — Detect (stack-detector skill)
 Reason over the evidence per the **stack-detector** skill: usage beats listing; version-aware;

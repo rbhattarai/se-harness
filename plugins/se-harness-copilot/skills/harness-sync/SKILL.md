@@ -35,8 +35,10 @@ lockfile. Missing map (first sync) → record it now and note "baseline recorded
 hashes → the corresponding generated blocks need re-rendering even if the profile is unchanged.
 
 **D. Memory health.** From `.harness/memory/wiki/log.md`: if the last `lint` entry is > 30
-days old (or absent with >5 pages), recommend a wiki-lint pass. If a structural-memory server
-is configured, remind that reindexing is cheap after large refactors. Check MEMORY.md length
+days old (or absent with >5 pages), recommend a wiki-lint pass. If `memory.structural_driver`
+is Graphify, check `graphify-out/graph.json`'s mtime against recent commit activity — stale
+next to a large refactor → recommend `/harness-mem-graphify`; any other structural-memory
+server → remind that reindexing is cheap after large refactors. Check MEMORY.md length
 (> ~40 lines → memory-keeper consolidation due).
 
 ## Step 2 — Present the drift report
