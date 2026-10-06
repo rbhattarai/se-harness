@@ -53,6 +53,11 @@ workspace:
     # the field in that unit's own .harness/profile.yaml, not a silent divergence.
     methodology: ""          # bmad | spec-kit | openspec — workspace-wide default
     org: {}                  # same shape as profile.yaml org: — conventions, internal libs
+    # package_index:            OPTIONAL, additive to org: — set only if this org requires
+    #   url: ""                 installs (uv/pip) to come from a private index rather than
+    #   allow_insecure_host: "" public PyPI. Read by /harness-mem-graphify when installing
+    #                           Graphify; never a secret itself, but never put credentials in
+    #                           the URL — use a netrc/env-based auth mechanism instead.
     mcp: []                  # MCP servers every unit should configure (e.g. [github, atlassian])
     jira_project: ""
     confluence_spaces: []    # e.g. ["ACME", "PLATFORM"]

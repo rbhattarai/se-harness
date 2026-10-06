@@ -11,17 +11,18 @@ uses **GitHub Copilot** (not Claude Code). Written for a first-time user.
 **se-harness** wraps an AI-agentic SDLC harness around any software project — new or
 existing, any stack. Installing it gives your Copilot sessions:
 
-- **6 commands** — `harness-init` (intake interview → generates AGENTS.md/CLAUDE.md,
+- **7 commands** — `harness-init` (intake interview → generates AGENTS.md/CLAUDE.md,
   `.harness/profile.yaml`, memory seeds), `harness-scan` (brownfield stack/org detection),
   `harness-bootstrap` (recommends & installs companion plugins/MCP servers),
   `harness-goal` (the delivery loop: grill → requirement → stories → implement → test →
   PR → deploy, with 3 human-approval gates), `harness-sync` (drift detection & refresh),
-  `harness-export` (compile agents for other tools).
+  `harness-export` (compile agents for other tools), `harness-mem-graphify` (build/maintain
+  Graphify structural-memory indexes, per-repo and workspace-merged).
 - **12 SDLC agents** — architect, story-writer, backend/frontend implementers, db-engineer,
   unit/integration testers, e2e planner/generator/healer, release-manager, and a
   workspace-orchestrator for multi-component requirements (used only when one applies).
-- **14 skills** — stack-detector, requirement-grill, memory-keeper, wiki-ingest/query/lint,
-  context-injector conventions, coding-discipline, plus the six commands as CLI skills.
+- **15 skills** — stack-detector, requirement-grill, memory-keeper, wiki-ingest/query/lint,
+  context-injector conventions, coding-discipline, plus the seven commands as CLI skills.
 - **Enforcement hooks** — a human-in-the-loop gate that denies PR/push/deploy until a
   requirement is `approved`, org-rules validation on edits, contract-impact checking across
   repos, and automatic memory logging of commits/PRs.

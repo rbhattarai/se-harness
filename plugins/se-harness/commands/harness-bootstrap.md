@@ -59,7 +59,16 @@ For each selected component, by `kind`:
    receiving updates — say so).
 2. Project-specific quality gates beyond the built-ins (gate-check, org-validate): point the
    user at the `hookify` plugin for authoring extra rules as hooks.
-3. Re-render AGENTS.md/CLAUDE.md blocks via
+3. **Graphify selected and installed this run**: offer to wire
+   `${CLAUDE_PLUGIN_ROOT}/scripts/graphify-update-hook.sh` as a PostToolUse(Bash) hook for this
+   repo, the same way this surface registers its other project-level hooks. It only runs the
+   cheap incremental `graphify update . --no-cluster` after a commit, in the background, and
+   no-ops instantly for any repo that didn't choose Graphify — it's opt-in per repo
+   (ECC "composable" doctrine), never bundled into the plugin's own global hooks.json.
+   Mention plainly that it can't cover the workspace-level merge (a hook only sees the repo its
+   session is in) — `/harness-mem-graphify`'s own "Keeping this fresh automatically" section
+   covers that gap and what to do about it.
+4. Re-render AGENTS.md/CLAUDE.md blocks via
    `bash ${CLAUDE_PLUGIN_ROOT}/scripts/render-block.sh <target> <block-file>` so the generated
    block reflects what's now installed.
 
