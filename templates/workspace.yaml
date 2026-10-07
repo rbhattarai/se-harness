@@ -51,9 +51,10 @@ workspace:
     # answer back here so every other unit inherits it too. A unit MAY deviate (e.g. a
     # different methodology) — that's a documented exception, recorded as a comment next to
     # the field in that unit's own .harness/profile.yaml, not a silent divergence.
-    methodology: ""          # bmad | spec-kit | openspec | se-harness-sdlc — workspace-wide
-                              # default. Only openspec and se-harness-sdlc are actually
-                              # delegated to by /harness-goal today (see profile.yaml's comment).
+    methodology: ""          # bmad | spec-kit | openspec | se-harness — workspace-wide
+                              # default. "se-harness" displays as "se-harness (built-in)" —
+                              # only it and openspec are actually delegated to by /harness-goal
+                              # today (see profile.yaml's comment).
     org: {}                  # same shape as profile.yaml org: — conventions, internal libs
     # package_index:            OPTIONAL, additive to org: — set only if this org requires
     #   url: ""                 installs (uv/pip) to come from a private index rather than

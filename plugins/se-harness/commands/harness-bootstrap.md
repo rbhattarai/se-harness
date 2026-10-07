@@ -37,8 +37,9 @@ run `/harness-init` first and stop.
 Read `.harness/profile.yaml` (guard: must exist — run `/harness-init` first) and
 `${CLAUDE_PLUGIN_ROOT}/../../registry/recommendations.json`. Map profile → components:
 
-- `methodology` → its entry (plugin or CLI install) — `se-harness-sdlc`'s registry entry is
-  `kind: native`, nothing to install; skip it silently, no manifest row
+- `methodology` → its entry (plugin or CLI install) — `se-harness` ("se-harness (built-in)" to
+  the user) has a `kind: native` registry entry, nothing to install; skip it silently, no
+  manifest row
 - each `stack.*` value → its `plugins` list (skip entries with empty lists; surface their
   `note` so the user knows why nothing is recommended)
 - `cloud` → its plugins
