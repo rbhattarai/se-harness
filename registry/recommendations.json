@@ -1,21 +1,25 @@
 {
   "_note": "Recommender data: maps profile keys to installable components. Sources: official Claude marketplace (B9 inventory) unless 'marketplace' says otherwise. Honest gaps are recorded as 'none' with a note — the recommender must never invent a plugin name. Update this file as marketplaces evolve; CI should validate plugin names against the live marketplace list.",
   "methodologies": {
+    "se-harness-sdlc": {
+      "kind": "native",
+      "note": "This framework's own built-in grill -> REQ -> story -> design -> implement -> gates loop (see /harness-goal). Nothing to install, nothing for /harness-bootstrap to do for this entry — selecting it just means /harness-goal runs its own loop undelegated. The safe default for anyone who doesn't need a named external methodology."
+    },
     "bmad": {
       "kind": "plugin",
       "marketplace": "PabloLION/bmad-plugin",
       "plugin": "bmad",
-      "note": "BMAD v6 port: 9 agents, 26 workflows. BMAD core team's official installer in progress (bmad-code-org/BMAD-METHOD#746) — prefer official when released."
+      "note": "BMAD v6 port: 9 agents, 26 workflows. BMAD core team's official installer in progress (bmad-code-org/BMAD-METHOD#746) — prefer official when released. Not yet delegated to by /harness-goal (installed for the user's own parallel/manual use) — it runs its own built-in loop regardless, same as se-harness-sdlc, until that integration is built."
     },
     "spec-kit": {
       "kind": "cli",
       "install": "uvx --from git+https://github.com/github/spec-kit.git specify init --here",
-      "note": "Installs /speckit.* commands into the repo. Requires uv (Python)."
+      "note": "Installs /speckit.* commands into the repo. Requires uv (Python). Not yet delegated to by /harness-goal (installed for the user's own parallel/manual use) — it runs its own built-in loop regardless, same as se-harness-sdlc, until that integration is built."
     },
     "openspec": {
       "kind": "cli",
-      "install": "npx @fission-ai/openspec@latest init",
-      "note": "Delta-based SDD, best for brownfield. Requires Node 20+. Package name is @fission-ai/openspec (github.com/Fission-AI/OpenSpec) — the unscoped 'openspec' npm package is an unrelated 0.0.0 placeholder, not this project."
+      "install": "npm install -g @fission-ai/openspec@latest",
+      "note": "Delta-based SDD, best for brownfield. Requires Node 20+. Package name is @fission-ai/openspec (github.com/Fission-AI/OpenSpec) — the unscoped 'openspec' npm package is an unrelated 0.0.0 placeholder, not this project. se-harness's own /harness-methodology-openspec handles the fuller gated install-plus-init sequence (/harness-bootstrap hands off to it rather than running the bare install command) and /harness-goal actually drives the lifecycle: step 3 runs /opsx:propose to seed the REQ, step 10 runs /opsx:archive to close it — the only methodology actually delegated to today besides se-harness-sdlc itself."
     }
   },
   "stack": {

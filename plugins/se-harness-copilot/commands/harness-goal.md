@@ -48,7 +48,20 @@ path. The **distinct component count** from this map feeds step 3's fast-path de
 ```
 bash tools/harness/new-requirement.sh "<one-line goal>"
 ```
-Fill the created `REQ-NNN.md` (grill output + deep-dive impact; status stays `draft`).
+
+**Methodology is OpenSpec** (`methodology: openspec` in `profile.yaml`/`workspace.yaml`):
+locate the installed `/opsx:propose` command definition for this client — search wherever this
+surface's command files live (`.claude/commands/`, `.github/prompts/`, or equivalent) for
+something matching `opsx*propose*`; `/harness-methodology-openspec` installed it. Not found →
+that's a setup gap, say so and point at that command rather than guessing a path. Found → read
+and follow it, passing the grilled, falsifiable goal from step 1 (not the raw `$ARGUMENTS`) as
+the description. Let it write `openspec/changes/<change-id>/{proposal.md,specs/,design.md,
+tasks.md}` as it normally would. Fill `REQ-NNN.md` as a **thin pointer**, not a duplicate: grill
+summary, deep-dive impact map, `openspec_change_id: <change-id>` in frontmatter, status stays
+`draft` — don't re-write what `proposal.md`/`specs/` already say.
+
+**Any other methodology (including se-harness's own built-in loop)**: fill the created
+`REQ-NNN.md` directly (grill output + deep-dive impact; status stays `draft`) — unchanged.
 
 **Scale to impact size (§5.0)** — this is not an optional optimization, it is the mechanism
 that keeps a single-repo goal exactly as simple as today:
@@ -59,11 +72,17 @@ that keeps a single-repo goal exactly as simple as today:
   evidence), every row starting at `status: pending`. Present it **alongside** the REQ for the
   same approval below, not as a second gate.
 
-**Stop and present it** (REQ, and workspace-plan.md if one was created). Only the user flips
-status to `approved` — record `approved` verbatim from their reply; assumptions you made go
-under "resolved by agent default" so the gate shows them. `gate-check.sh` blocks push/PR/deploy
-while nothing is approved, and — once a workspace plan exists for this REQ — while any of its
-rows haven't reached `status: done` either.
+**Stop and present it** (REQ, and workspace-plan.md if one was created — for OpenSpec, point at
+`openspec/changes/<change-id>/proposal.md` and `specs/` alongside it, since that's where the
+real spec content lives, not in the REQ itself). Only the user flips status to `approved` —
+record `approved` verbatim from their reply; assumptions you made go under "resolved by agent
+default" so the gate shows them. For OpenSpec, this approval **is** the review OpenSpec's own
+docs say should happen before `/opsx:apply` — step 5 below deliberately never runs
+`/opsx:apply` itself (se-harness's own worktree-isolated, gate-enforced implementer agents do
+the actual coding, same as any other methodology, reading `tasks.md` as their task source), so
+there's no second OpenSpec-side approval to collect; don't ask twice for one decision.
+`gate-check.sh` blocks push/PR/deploy while nothing is approved, and — once a workspace plan
+exists for this REQ — while any of its rows haven't reached `status: done` either.
 
 ## 4. Story + test cases  *(story-writer agent)*
 Delegate to **story-writer**: Jira story + XRay/Zephyr test cases via Atlassian MCP (tracker =
@@ -89,8 +108,16 @@ sibling repo from here, it says so and falls back to the step-5 handoff: tell th
 1. **architect** produces `REQ-NNN/design.md`; resolve its open questions with the user
    before any code. (Workspace-orchestrator follows this same step 1-5 procedure per row it
    works — one `design.md` per component, or a shared file with one section each; it states
-   which.)
-2. Break the design into tasks; typical order — db first, then backend ∥ frontend in parallel:
+   which.) **OpenSpec REQ** (has `openspec_change_id`): `/opsx:propose` already drafted
+   `openspec/changes/<change-id>/design.md` — architect **refines** it (same "resolve open
+   questions with the user" discipline, applied to what's already there) rather than authoring
+   one from scratch; `REQ-NNN/design.md` stays a pointer to it, not a second copy.
+2. Break the design into tasks. **OpenSpec REQ**: derive the breakdown from
+   `openspec/changes/<change-id>/tasks.md`'s checklist instead of inventing one — one
+   `worktree-task.sh create` per checklist item (or logical group of adjacent items), and check
+   each one off in `tasks.md` as its worktree task completes, so OpenSpec's own tracking stays
+   truthful. **Any other methodology**: typical order — db first, then backend ∥ frontend in
+   parallel:
    ```
    bash tools/harness/worktree-task.sh create REQ-NNN db-schema
    bash tools/harness/worktree-task.sh create REQ-NNN backend-api
@@ -108,7 +135,10 @@ sibling repo from here, it says so and falls back to the step-5 handoff: tell th
    before proceeding. Red anything → back to the owning agent, not onward.
 
 ## 6. E2E tests  *(planner → generator → healer)*
-**e2e-planner** turns `test-cases.md` into `e2e-plan.md` → **e2e-generator** writes Playwright
+**OpenSpec REQ**: `openspec/changes/<change-id>/specs/`'s scenarios are already written in a
+WHEN/THEN shape close to test-case form — e2e-planner should read them as additional input
+alongside `test-cases.md`, not ignore them in favor of re-deriving the same scenarios from
+scratch. **e2e-planner** turns `test-cases.md` into `e2e-plan.md` → **e2e-generator** writes Playwright
 specs against the live app (real selectors via Playwright MCP) → failures classified by
 **e2e-healer** (test defects healed; app regressions reported back to step 5, never papered over).
 If `workspace-plan.md` exists and the acceptance criteria span components, these specs target
@@ -139,6 +169,11 @@ profile's provider plugin, watch rollout, documented rollback on failure.
 ## 10. Close the loop  *(memory-keeper skill)*
 Set REQ status `done`. If `workspace-plan.md` exists, confirm every row is already `done` (it
 must be, or gate-check.sh would have blocked step 7/9) and add a closing line to its
-Integration notes. Append the day's entry: what shipped, decisions, dead ends, typed links
-(`[[REQ-NNN]] solves [[...]]`). If domain knowledge changed, wiki-ingest the delta. Commits/PRs
-were auto-logged by the post-commit hook — don't duplicate them.
+Integration notes. **OpenSpec REQ**: now that the change has actually shipped (deploy gate
+passed), locate and follow the installed `/opsx:archive` command the same way step 3 found
+`/opsx:propose` — it moves `openspec/changes/<change-id>/` to
+`openspec/changes/archive/<timestamp>/` and updates the living specs; this is deliberately the
+*last* thing that happens, not right after merge, since the spec should only be promoted to
+canonical once the change is live. Append the day's entry: what shipped, decisions, dead ends,
+typed links (`[[REQ-NNN]] solves [[...]]`). If domain knowledge changed, wiki-ingest the delta.
+Commits/PRs were auto-logged by the post-commit hook — don't duplicate them.

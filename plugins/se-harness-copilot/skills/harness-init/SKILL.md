@@ -187,12 +187,21 @@ and `shared.jira_project`/`shared.confluence_spaces`/`shared.sharepoint_sites`:
   reporting success.
 
 Ask only what wasn't detected and isn't already inherited. Cover:
-1. **Methodology** (workspace-scoped by default): BMAD (roles/stakeholders, enterprise) /
-   Spec Kit (greenfield, spec-first) / OpenSpec (brownfield, delta-based). Recommend based on
-   project type; user decides. If this repo's choice **deviates** from an inherited workspace
-   default, that's a documented exception: record it as an inline comment next to
-   `methodology:` in this repo's `profile.yaml` (e.g. `methodology: bmad   # workspace default
-   is openspec — deviates because <reason>`), never a silent divergence.
+1. **Methodology** (workspace-scoped by default): **se-harness (built-in)** (this framework's
+   own grill → REQ → story → design → implement → gates loop, zero extra dependencies — the
+   safe default for anyone who doesn't need a named methodology) / **OpenSpec** (brownfield,
+   delta-based) / BMAD (roles/stakeholders, enterprise) / Spec Kit (greenfield, spec-first).
+   Recommend based on project type; user decides. **Be honest about what's actually wired**:
+   only se-harness (built-in) and OpenSpec change `/harness-goal`'s own behavior today — pick
+   OpenSpec and step 3 of that loop runs `/opsx:propose` to seed the REQ, step 10 runs
+   `/opsx:archive` to close it (`/harness-methodology-openspec` handles setup). Picking BMAD or
+   Spec Kit installs the tool via `/harness-bootstrap` for the user's own parallel/manual use,
+   but `/harness-goal` still runs its own built-in loop regardless, exactly like choosing
+   se-harness (built-in) — say this plainly when either comes up, don't imply parity with
+   OpenSpec. If this repo's choice **deviates** from an inherited workspace default, that's a
+   documented exception: record it as an inline comment next to `methodology:` in this repo's
+   `profile.yaml` (e.g. `methodology: bmad   # workspace default is openspec — deviates because
+   <reason>`), never a silent divergence.
 2. **Stack** — *new projects only* (existing projects get this from `/harness-scan`):
    offer presets first — `Python (FastAPI + Postgres)`, `Node + React (Express/Postgres/Redis)`,
    `Node + Angular`, `Other (specify)` — then confirm databases/messaging/devops details.

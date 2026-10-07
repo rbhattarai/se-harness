@@ -142,6 +142,7 @@ and run a cross-unit goal end to end.
 | `/harness-sync` | Four-axis drift detection → diff-first report → confirmed refresh of generated blocks |
 | `/harness-export` | Compile agents + hooks for Copilot / Cursor (Codex reads `AGENTS.md` natively) |
 | `/harness-mem-graphify` | Build/maintain Graphify structural-memory indexes — per-repo, and merged at workspace level |
+| `/harness-methodology-openspec` | Install/init OpenSpec where chosen — `/harness-goal` drives its actual propose/archive lifecycle |
 
 ## Documentation
 

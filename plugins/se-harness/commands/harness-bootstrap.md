@@ -37,7 +37,8 @@ run `/harness-init` first and stop.
 Read `.harness/profile.yaml` (guard: must exist — run `/harness-init` first) and
 `${CLAUDE_PLUGIN_ROOT}/../../registry/recommendations.json`. Map profile → components:
 
-- `methodology` → its entry (plugin or CLI install)
+- `methodology` → its entry (plugin or CLI install) — `se-harness-sdlc`'s registry entry is
+  `kind: native`, nothing to install; skip it silently, no manifest row
 - each `stack.*` value → its `plugins` list (skip entries with empty lists; surface their
   `note` so the user knows why nothing is recommended)
 - `cloud` → its plugins
@@ -75,7 +76,10 @@ For each selected component, by `kind`:
   first, same as any third-party install). It owns the fuller gated sequence this step doesn't
   (Python/uv prerequisite checks, an org's private package index from
   `shared.package_index` if set, the first index build, and the lockfile record) — running
-  the bare command here would both duplicate and undercut it.
+  the bare command here would both duplicate and undercut it. **Exception: the OpenSpec
+  component.** Same reasoning — hand off to `/harness-methodology-openspec` instead of the bare
+  `npm install -g` command; it owns the gated install-plus-`openspec init` sequence and the
+  lockfile record, and it's what `/harness-goal` later expects to find already set up.
 - **mcp**: render the needed entries from `templates/mcp.json.tmpl` into the project's
   `.mcp.json` (merge — never clobber existing servers; secrets stay `${VAR}` references
   to `.env.harness`).
