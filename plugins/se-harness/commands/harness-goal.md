@@ -17,11 +17,22 @@ behavior, conflicts with prior decisions (wiki-query + org conventions). Batch q
 stop when testable — over-grilling erodes trust.
 
 ## 2. Deep-dive memory — build the impact map (workspace-orchestration plan §5.2)
-- **Structural**: the configured tier-1 driver (`memory.structural_driver`) or a code-graph
-  MCP — impacted files, callers, blast radius. If the driver is Graphify and `graphify-out/`
-  is missing or stale, that's a gap to flag in the impact map, not a reason to stop — note it
-  and suggest `/harness-mem-graphify`, then fall back to Grep/Glob for this goal. If
-  `workspace.yaml` exists, check its `contracts:`/`relationships:` for provides/consumes
+- **Structural**: query the configured tier-1 driver (`memory.structural_driver`) for impacted
+  files, callers, blast radius — concretely, by driver, not Grep/Glob by default:
+  - **Graphify** (CLI/flat-file, not MCP): read `graphify-out/graph.json` and
+    `GRAPH_REPORT.md` directly, or run `graphify query <symbol-or-file>` via Bash for a
+    live, targeted query. If `graphify-out/` is missing or stale (mtime older than recent
+    commits), that's a gap to flag in the impact map, not a reason to stop — note it, suggest
+    `/harness-mem-graphify`, and fall back to Grep/Glob for *this* goal only.
+  - **codebase-memory-mcp or a CodeGraph variant** (MCP-based): look for that server's own
+    tool in your available tools (`mcp__<server-name>__*`) and call it. If the configured
+    driver's MCP server isn't actually connected this session, that's the same kind of gap as
+    Graphify above — flag it, don't silently fall back without saying so.
+  - **`null`/deferred, or the configured driver is unavailable**: Grep/Glob is the honest
+    fallback here — say so in the impact map rather than presenting it as equivalent to a real
+    structural query.
+
+  If `workspace.yaml` exists, check its `contracts:`/`relationships:` for provides/consumes
   (contract impact) and identify which declared **components/units** this goal plausibly
   touches.
 - **Domain**: wiki-query over `.harness/memory/wiki/` (related PRDs, decisions, contradictions).
