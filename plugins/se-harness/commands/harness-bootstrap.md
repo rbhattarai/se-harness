@@ -9,6 +9,30 @@ Turn the profile into an installed harness. **Composable, opt-in** (the ECC less
 cherry-pick; never install everything). Read `--dry-run` from `$ARGUMENTS`: if present, produce
 the recommendation manifest and stop before installing anything.
 
+## Step 0 — Guard & workspace scope
+`.harness/profile.yaml` in the current directory → normal per-repo run, continue at Step 1,
+nothing below applies. Missing, but `workspace.yaml` or `repos.txt` is present instead → this
+is a **workspace root**, not a repo to bootstrap directly:
+
+1. Ask once (AskUserQuestion): run across **every** declared/listed unit that's already
+   bootstrapped (has its own `.harness/profile.yaml`), **specific units** (name them), or let
+   you **suggest** units — propose any unit with a profile but an empty `components:` in its
+   `.harness/agentstack.lock` (never bootstrapped) or a `pending-manual` status worth
+   re-checking, and confirm the proposed list before proceeding. Never default to "every unit"
+   without asking.
+2. Skip and report any listed unit that has no `.harness/profile.yaml` yet — point at
+   `/harness-init` for it; never attempt to bootstrap an un-initialized unit.
+3. For each chosen unit, in order: `cd` into it and run Steps 1-6 of this same command,
+   directly — same "continue the flow yourself" approach as `/harness-init` Step 1b. Each
+   unit's recommendation manifest is its own (stack-driven) — unlike `/harness-init`'s
+   methodology/structural-memory choices, nothing here is shared across units, so there's no
+   "ask once" shortcut; Step 2's selection still happens per unit.
+4. Once every chosen unit is done, report one consolidated table across all of them — unit |
+   installed | pending-manual | declined — in addition to each unit's own Step 6 report.
+
+Neither `.harness/profile.yaml` nor a workspace manifest/inventory present → tell the user to
+run `/harness-init` first and stop.
+
 ## Step 1 — Build the recommendation manifest
 Read `.harness/profile.yaml` (guard: must exist — run `/harness-init` first) and
 `${CLAUDE_PLUGIN_ROOT}/../../registry/recommendations.json`. Map profile → components:

@@ -22,16 +22,19 @@ go to **Step 0a**. Otherwise, tell the user to run `/harness-init` first and sto
    output), `NOT-BOOTSTRAPPED` (cloned but `/harness-init` never ran there), or `NOT-CLONED`;
    plus an `UNDECLARED` section for directories that look like a unit (their own `.git` or
    `.harness/profile.yaml`) but aren't in the manifest. Never modifies anything.
-2. **Units not ready**: report any `NOT-BOOTSTRAPPED`/`NOT-CLONED` units plainly and ask
-   whether to (a) continue scanning only the ready units, or (b) stop so the user bootstraps/
-   clones the rest first (pointing at `/harness-init` or `workspace-clone.sh`). Never silently
-   scan a subset without saying so.
+2. **Scope**: evidence-gathering above already covered every ready unit (it's read-only, cheap
+   to do for all of them) — this is about which units' findings actually get merged into their
+   profile and regenerated artifacts below. Report any `NOT-BOOTSTRAPPED`/`NOT-CLONED` units
+   plainly, then ask once (AskUserQuestion): proceed with **every** ready unit, **specific
+   units** (name them from the ready set), or stop so the user bootstraps/clones the rest first
+   (pointing at `/harness-init` or `workspace-clone.sh`). Never silently merge a subset without
+   saying so.
 3. **Undeclared candidates**: for each, propose adding it as a new unit — name, resolved
    path, and the evidence that flagged it (`.git` present / already has a profile). Confirm
    before writing anything to `workspace.yaml`; an undeclared directory is a candidate, never
    an automatic addition.
-4. Continue to Step 1 below treating the collected evidence as covering **every scanned
-   unit** — everywhere Steps 1-5 say "this repo," read "each scanned unit," and the
+4. Continue to Step 1 below treating the collected evidence as covering **every unit chosen in
+   point 2 above** — everywhere Steps 1-5 say "this repo," read "each chosen unit," and the
    shared-vs-local reconciliation in Step 2 now runs **once across all of them**, not once per
    separate invocation. Per-unit findings (stack, devops, cloud) stay separate per unit;
    shared findings (methodology, org, non-code sources) get reconciled once against

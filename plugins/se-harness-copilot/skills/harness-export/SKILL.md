@@ -10,6 +10,26 @@ Export this project's harness for the client named in `$ARGUMENTS`. AGENTS.md is
 core (B10): Copilot and Codex read it natively — and Copilot reads CLAUDE.md too — so
 instructions usually need **zero conversion**. What needs compiling is the agent roster.
 
+## Step 0 — Workspace scope
+`.harness/profile.yaml` in the current directory → normal per-repo run, continue at Step 1,
+nothing below applies. Missing, but `workspace.yaml` or `repos.txt` is present instead → this
+is a **workspace root**:
+
+1. Ask once (AskUserQuestion): export for **every** bootstrapped unit, **specific units** (name
+   them), or let you **suggest** units — propose any unit that doesn't yet have the target
+   client's exported artifacts (`.github/agents/` for copilot, `.cursor/rules/` for cursor; for
+   codex, nothing is ever missing since it reads `AGENTS.md` natively — say so and skip the
+   suggestion for that client), and confirm the proposed list before proceeding.
+2. Skip and report any listed unit with no `.harness/profile.yaml`/`AGENTS.md` yet — point at
+   `/harness-init` for it.
+3. For each chosen unit, in order: `cd` into it and run Steps 1-5 of this same command,
+   directly, same "continue the flow yourself" approach as `/harness-init` Step 1b.
+4. Report one consolidated capability table across all processed units, alongside each unit's
+   own Step 5 report.
+
+Neither a local profile nor a workspace manifest/inventory present → tell the user to run
+`/harness-init` first and stop.
+
 ## Step 1 — Instructions layer (verify, don't convert)
 Confirm AGENTS.md exists with the generated block (run `/harness-init` first if not). Report:
 - **codex**: reads AGENTS.md natively → done; no files to write. Note: Claude hooks have no
