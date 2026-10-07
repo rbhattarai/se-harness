@@ -65,6 +65,17 @@ Never install or run Graphify for a unit that didn't choose it:
      If the configured index is unreachable, stop and report the blocker — don't disable TLS
      verification or silently fall back to public PyPI. If `shared.package_index` isn't
      set, plain `uv tool install graphifyy` (public PyPI) is correct.
+   - **Video extra, separately, always opt-in**: check whether it's already present (e.g.
+     `graphify --version --verbose` or an import check for `faster_whisper`, whichever
+     `graphify install --help`/its own docs confirm as current) — skip asking if so. If not,
+     ask once, explicitly: install the `graphifyy[video]` extra to transcribe and index NAS
+     video recordings (pulls in faster-whisper; this is a real, non-trivial download — say so).
+     Only on approval: `uv tool install "graphifyy[video]"` (same private-index handling as
+     above if `shared.package_index` is set). Declining is valid and the default — this command
+     still does the plain code-graph work either way; nothing below depends on this extra being
+     present. Record whichever outcome (installed / declined / already present) in the unit's
+     `.harness/agentstack.lock` note for the `graphify` component, so later runs don't re-ask
+     after a decline without the user changing their mind explicitly.
 6. Verify `graphify --version` before processing any unit.
 7. For each unit missing its own project-level Graphify skill, run `graphify install --project`
    (let it auto-detect the ecosystem) — or, if auto-detection picks wrong, the explicit flag for
@@ -138,10 +149,11 @@ don't clone anything missing.
 
 ## Step 5 — Completion report
 
-Per unit: Graphify version, node/edge counts, whether community labels were verified
-descriptive, whether its HTML is full-symbol or a preserved community overview. Plus, if Step 4
-ran: the merged workspace graph's location and which units it includes. Call out every skipped
-unit or validation failure explicitly — never silently drop one from the report.
+Per unit: Graphify version, whether the video extra is installed/declined, node/edge counts,
+whether community labels were verified descriptive, whether its HTML is full-symbol or a
+preserved community overview. Plus, if Step 4 ran: the merged workspace graph's location and
+which units it includes. Call out every skipped unit or validation failure explicitly — never
+silently drop one from the report.
 
 ## Keeping this fresh automatically
 
