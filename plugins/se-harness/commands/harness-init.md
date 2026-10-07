@@ -220,7 +220,9 @@ Ask only what wasn't detected and isn't already inherited. Cover:
 3. **DevOps + cloud**: CI system, container approach (default docker-compose), cloud target
    (aws / azure / gcp / vercel / none-yet).
 4. **Non-code sources** (workspace-scoped by default): Jira project key, Confluence space keys,
-   SharePoint sites (each optional — record "" when not used).
+   SharePoint sites, NAS document paths, NAS video paths (each optional — record ""/`[]` when
+   not used). Recording a path here doesn't ingest anything — `/harness-mem-wiki` is what
+   actually reads and synthesizes these sources, later, on its own schedule.
 
 ## Step 5 — Organization context (required before AGENTS.md/CLAUDE.md is finalized)
 
@@ -275,8 +277,12 @@ Order matters; use the exact mechanics below.
 1. **`.harness/profile.yaml`** — render from `${CLAUDE_PLUGIN_ROOT}/../../templates/profile.yaml`
    with all interview answers. Never put secrets here.
 2. **`.env.harness`** — copy `templates/env.harness.example` **only if `.env.harness` doesn't
-   already exist**; leave existing files untouched. Tell the user which vars to fill for the
-   sources they named.
+   already exist**; leave existing files untouched. This repo-level file is for this repo's own
+   secrets only (cloud-provider creds matching its `cloud:` field, anything else repo-specific)
+   — it no longer carries Jira/Confluence/SharePoint/GitHub placeholders; those are org-wide,
+   not per-repo, and live in a **workspace-root** `.env.harness` instead
+   (`templates/env.harness.workspace.example`), which `/harness-mem-wiki` creates and reads, not
+   this command. Tell the user which repo-level vars to fill for what this repo actually needs.
 3. **`.gitignore`** — append each line of `templates/gitignore.harness` that isn't already
    present (grep before append; create `.gitignore` if missing).
 4. **Memory scaffold** (skip any file that already exists):

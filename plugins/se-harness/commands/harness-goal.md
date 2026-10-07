@@ -35,7 +35,8 @@ stop when testable — over-grilling erodes trust.
   If `workspace.yaml` exists, check its `contracts:`/`relationships:` for provides/consumes
   (contract impact) and identify which declared **components/units** this goal plausibly
   touches.
-- **Domain**: wiki-query over `.harness/memory/wiki/` (related PRDs, decisions, contradictions).
+- **Domain**: `wiki-query` (checks the workspace-level wiki when one exists, plus this repo's
+  own — the skill handles both locations) for related PRDs, decisions, contradictions.
 - **Session**: `MEMORY.md` + recent daily logs for prior attempts (`[[...]] causes [[...]]` chains).
 
 Record each candidate component in an **impact map**: component, why it's included, evidence

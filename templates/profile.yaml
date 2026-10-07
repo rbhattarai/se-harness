@@ -36,13 +36,15 @@ org:                        # organization context (A1 intake; compose-first, A5
 
 sources:                    # enterprise memory sources (tier-3 wiki ingestion) — inherited
                              # from workspace.yaml's shared.{jira_project,confluence_spaces,
-                             # sharepoint_sites} when a workspace manifest exists (phase 3)
+                             # sharepoint_sites,nas_doc_paths,nas_video_paths} when a workspace
+                             # manifest exists (phase 3). Recording a value here doesn't ingest
+                             # anything by itself — /harness-mem-wiki does the actual synthesis,
+                             # into the workspace-level wiki, not this repo's own.
   jira_project: ""
   confluence_spaces: []
   sharepoint_sites: []
-  deferred:                 # NOT ingested in v1 (A5 #6) — needs transcription/OCR infra
-    - video_recordings
-    - nas_documents
+  nas_doc_paths: []         # PDFs/Office docs; /harness-mem-wiki walks these recursively
+  nas_video_paths: []       # transcribed via Graphify's video extra, then wiki-ingested
 
 memory:                     # tier-1 (structural) ONLY — phase 4. Tiers 2/3 are always plain
                              # markdown under .harness/memory/, regardless of this value.

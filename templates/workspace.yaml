@@ -65,6 +65,8 @@ workspace:
     jira_project: ""
     confluence_spaces: []    # e.g. ["ACME", "PLATFORM"]
     sharepoint_sites: []     # e.g. ["https://acme.sharepoint.com/sites/engineering"]
+    nas_doc_paths: []        # PDFs/Office docs; /harness-mem-wiki walks these recursively
+    nas_video_paths: []      # transcribed via Graphify's video extra, then wiki-ingested
     memory:
       structural_driver: null  # phase 4, tier 1 ONLY — one of registry/recommendations.json's
                                 # memory.structural.choose_one entries, or null (deferred, valid).
