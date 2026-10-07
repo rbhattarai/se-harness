@@ -45,10 +45,56 @@ run the gate/org-validate/memory-log/contract hooks on Copilot's coding agent + 
 (semantics translated: Claude exit-2 block → Copilot `permissionDecision` deny; tested).
 Skills remain Claude-only; capability table in the export command stays honest.
 
-**v1 build plan (Phases 0–6) complete; Phase 7 buildable parts done.** Remaining: federated
-service graph + workspace-level goal loop (pending structural-memory bake-off), web UI
-profile-builder, swarm backend, video/NAS ingestion — and hardening (jq-based hook parsing,
-CI validation of registry names against live marketplaces, real-world dogfooding).
+**v1 build plan (Phases 0–6) complete; Phase 7 buildable parts done.** Remaining at that point:
+federated service graph + workspace-level goal loop, web UI profile-builder, swarm backend,
+video/NAS ingestion — and hardening (real-world dogfooding chief among them).
+
+## Since v1 — workspace orchestration, v1.0.0, and two live trials
+
+**Workspace-level orchestration (10 increments)**, tracked in
+[`docs/workspace-orchestration-plan.md`](./workspace-orchestration-plan.md): additive
+`workspace.yaml` schema (`schemaVersion`/`components`/`relationships`, backward-compatible),
+opt-in sibling-repo cloning (`workspace-clone.sh`), full workspace-root scanning in one pass
+(`workspace-scan-evidence.sh`), scoped-configuration inheritance (methodology/org/non-code
+sources default to workspace scope, ask-once-write-back), `workspace-plan.md` + the
+`workspace-orchestrator` agent (impact-map-driven fast path: 0–1 components = zero overhead,
+2+ = a real plan), and a combined cross-unit integration check before `gate-check.sh` allows
+ship. Then **v1.0.0**: version lockstep across both plugin manifests, a generated plugin icon
+and submission-review fixes for the Claude plugin directory, a README refresh.
+
+**Two real-world trials, not just fixtures** — a mono-repo product on Claude Code, and a
+20-repo multi-repo product on Copilot CLI — each surfacing and fixing real gaps:
+- `/harness-init`'s mono-repo detection relied on a fixed list of formal workspace-tool
+  markers; missed a legitimate shape (sibling directories, each its own independent build
+  manifest, no root aggregator). Fixed: a second, weaker-but-still-evidenced signal, same
+  confirm-before-write discipline.
+- Copilot-specific: commands reference `tools/harness/<script>.sh`, a repo-vendored
+  convention — valid only once scripts are actually copied in, which nothing did before a
+  brand-new workspace root's first command. Fixed: a guard that vendors from the Copilot/VS
+  Code plugin cache, falling back to a sibling framework checkout.
+- `/harness-init`, `/harness-bootstrap`, `/harness-sync`, and `/harness-export` all required
+  manual re-invocation per repo from a workspace root — tedious at real scale (20 repos) and
+  it deferred shared choices (methodology, structural-memory driver) to whichever repo ran
+  first instead of asking once. Fixed: each now offers a workspace-wide loop — every unit,
+  named units, or an agent-suggested subset from a real per-command signal — reusing
+  `/harness-init`'s "ask shared choices once, loop the rest itself" mechanism throughout.
+- `/harness-goal`'s structural-memory deep-dive and methodology handling both named the
+  *concept* ("query the configured driver," "the chosen methodology") without ever wiring the
+  *mechanism* — in practice this meant Grep/Glob and se-harness's own undelegated loop
+  regardless of what was configured. Fixed with concrete per-driver/per-methodology mechanics:
+  Graphify reads `graphify-out/` directly or runs `graphify query`; an MCP-based structural
+  driver's own `mcp__<name>__*` tool gets called; OpenSpec's `/opsx:propose` seeds the REQ and
+  `/opsx:archive` closes it once deployed, with se-harness's own gated implementers still
+  doing the actual coding (`/opsx:apply` deliberately never runs). BMAD and Spec Kit remain
+  install-only, now said plainly rather than implying parity with OpenSpec.
+
+**New commands**: `/harness-mem-graphify` (build/maintain Graphify indexes, per-repo and
+workspace-merged; an opt-in `graphify-update-hook.sh` keeps the per-repo index fresh after
+commits, deliberately not bundled into the plugin's global hooks — the ECC "composable,
+opt-in" doctrine applies to hooks too) and `/harness-methodology-openspec` (gated
+install/init, setup only — `/harness-goal` drives the actual lifecycle). A fourth
+methodology, `se-harness` (displayed as "se-harness (built-in)"), named what was already the
+de facto behavior for any methodology choice that wasn't delegated to.
 
 ## A5 improvements over the literal spec
 

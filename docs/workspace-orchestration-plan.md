@@ -50,7 +50,7 @@ common mono-repo shape that list didn't cover. Fixed in `harness-init.md` Step 3
 both signals, same confirm-before-write discipline either way); see `brainstorm.md`'s A6
 section for the fuller note. Full walkthrough: `se-harness-setup.md` in the finance-portal repo.
 
-**Real-world validation (2026-10-06, FISMA/Copilot, a 20-repo multi-repo product)**: a second
+**Real-world validation (2026-10-06, a 20-repo multi-repo product, Copilot CLI)**: a second
 live trial, this time on Copilot CLI instead of Claude Code, and genuinely multi-repo (20
 separately-cloned repos) rather than mono-repo. Two real gaps surfaced, both in
 `/harness-init`'s workspace-root path, both fixed in `harness-init.md`:

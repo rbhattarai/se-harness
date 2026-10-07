@@ -151,6 +151,19 @@ the evidence you present.
     the whole proposed list with the user before writing it; validate with
     `bash ${CLAUDE_PLUGIN_ROOT}/scripts/workspace-validate.sh workspace.yaml` before reporting
     success.
+  - **Loop into each detected unit**, same shape as Step 1b (the sibling-clone path): ask once
+    whether to bootstrap every detected unit now (recommended), bootstrap specific ones (name
+    them), or leave `workspace.yaml` as the only artifact for now and let the user `/harness-init`
+    each unit manually later. If proceeding, the shared methodology/structural-memory/org
+    choices (Step 1b point 1) get asked **once here**, written to this same repo-root
+    `workspace.yaml`'s `shared:` block (there's no separate workspace root to write them to —
+    the mono-repo's own root *is* the workspace root); write the workspace-level memory
+    scaffold (Step 1b point 2) at this repo's root too, distinct from any unit's own
+    `.harness/memory/`. Then, for each chosen unit, `cd` into it and run Steps 2 through 8 of
+    this same command directly (Step 1b point 3's exact mechanism) — the repo root itself never
+    gets its own `.harness/profile.yaml`, only `workspace.yaml` and the shared memory scaffold;
+    each unit gets its own full bootstrap. Finalize and report the same way Step 1b point 4
+    does, unit | bootstrapped? | stack | methodology | structural_driver | notes.
 - **No markers, but internal module structure is evident** (Spring Modulith
   `@ApplicationModule`/`spring-modulith` dependency, NestJS feature folders each with their own
   `@Module()`, Django-style `INSTALLED_APPS` per-app folders, a `src/modules/`-or-`src/domains/`
