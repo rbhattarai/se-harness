@@ -66,6 +66,10 @@ plugin marketplace.
   (structural/code-graph) is an opt-in driver choice — CodeGraph, codebase-memory-mcp, or
   Graphify (`/harness-mem-graphify` builds and merges its index, per repo and workspace-wide;
   `/harness-goal` queries it for blast radius instead of grepping, when one's configured).
+  Tier 3's domain wiki goes beyond code too: `/harness-mem-wiki` synthesizes Jira, Confluence,
+  SharePoint, and NAS documents/video (transcribed via Graphify's video extra) into the
+  workspace-level wiki — synthesis only, never a raw copy; the live source stays one MCP call
+  or file-open away.
 - **Methodology-aware, not methodology-locked** — pick **se-harness (built-in)** (this
   framework's own loop, zero extra dependencies) or **OpenSpec**, and `/harness-goal` actually
   drives it: OpenSpec's `/opsx:propose` seeds the requirement, se-harness's own gated
@@ -233,6 +237,7 @@ single-unit goals to try first: [`docs/demo/README.md`](./docs/demo/README.md#pa
 | `/harness-export` | Compile agents + hooks for Copilot / Cursor (Codex reads `AGENTS.md` natively); workspace-wide in one pass |
 | `/harness-mem-graphify` | Build/maintain Graphify structural-memory indexes — per-repo, and merged at workspace level |
 | `/harness-methodology-openspec` | Install/init OpenSpec where chosen — `/harness-goal` drives its actual propose/archive lifecycle |
+| `/harness-mem-wiki` | Synthesize Jira/Confluence/SharePoint/NAS docs/NAS video into the workspace-level domain wiki `/harness-goal` queries |
 
 ## Documentation
 
@@ -253,9 +258,10 @@ single-unit goals to try first: [`docs/demo/README.md`](./docs/demo/README.md#pa
 ## Status
 
 **[v1.0.0](https://github.com/rbhattarai/se-harness/releases/tag/v1.0.0)** tagged six
-commands and a 199-test suite; `main` has since grown to **eight commands and a 208-test
-suite** (not yet re-tagged) — `/harness-mem-graphify` and `/harness-methodology-openspec`,
-plus the workspace-wide loop now shared by `/harness-init`/`-bootstrap`/`-sync`/`-export`.
+commands and a 199-test suite; `main` has since grown to **nine commands and a 212-test
+suite** (not yet re-tagged) — `/harness-mem-graphify`, `/harness-methodology-openspec`, and
+`/harness-mem-wiki`, plus the workspace-wide loop now shared by
+`/harness-init`/`-bootstrap`/`-sync`/`-export`.
 **Workspace-level orchestration** — single repo → mono-repo → modulith → multi-repo → hybrid,
 one goal loop that coordinates across repos, with the orchestration overhead scaling to zero
 for the common single/few-component case — is **complete**: see
@@ -289,7 +295,7 @@ plan and research log in [`docs/brainstorm.md`](./docs/brainstorm.md).
 .claude-plugin/marketplace.json      # this repo IS a marketplace — read by Claude Code AND Copilot CLI
 .github/plugin/marketplace.json      # GENERATED mirror (Copilot canonical location) — never edit
 plugins/se-harness/                  # the harness plugin (source of truth)
-  commands/                          # the eight /harness-* commands
+  commands/                          # the nine /harness-* commands
   agents/                            # 12-agent SDLC roster (narrow tools per agent)
   skills/                            # context-injector, stack-detector, memory-keeper, wiki-*,
                                       # requirement-grill, coding-discipline
@@ -300,7 +306,7 @@ registry/recommendations.json        # profile → plugin mappings (recommender 
 templates/                           # profile/env/requirement/AGENTS/CLAUDE/mcp/workspace/
                                       # workspace-plan + memory seeds
 docs/                                # setup guides, interop matrix, platform schema notes, demo guide
-tests/                               # 208-test suite run in CI
+tests/                               # 212-test suite run in CI
 ```
 
 ## Contributing / publishing

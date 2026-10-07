@@ -91,10 +91,29 @@ and submission-review fixes for the Claude plugin directory, a README refresh.
 **New commands**: `/harness-mem-graphify` (build/maintain Graphify indexes, per-repo and
 workspace-merged; an opt-in `graphify-update-hook.sh` keeps the per-repo index fresh after
 commits, deliberately not bundled into the plugin's global hooks — the ECC "composable,
-opt-in" doctrine applies to hooks too) and `/harness-methodology-openspec` (gated
+opt-in" doctrine applies to hooks too; later given an explicit opt-in ask for Graphify's video
+extra too, separate from the base install) and `/harness-methodology-openspec` (gated
 install/init, setup only — `/harness-goal` drives the actual lifecycle). A fourth
 methodology, `se-harness` (displayed as "se-harness (built-in)"), named what was already the
 de facto behavior for any methodology choice that wasn't delegated to.
+
+**Non-code memory, and a real gap in where secrets live.** `wiki-ingest`/`wiki-query` already
+had the right doctrine (synthesis only, never a raw copy, retrieval stays live via MCP) but
+nothing drove it for Jira/Confluence/SharePoint/NAS at workspace scale, and NAS docs/video were
+still `sources.deferred` from before Graphify's PDF/Office/video extras existed to resolve part
+of why. New `/harness-mem-wiki`: gated per source, staleness-diffed against a persisted
+manifest (Jira/Confluence by last-modified; NAS by a recursive walk + file fingerprint, since
+neither has an API), a cost estimate before committing to video transcription (real compute,
+not a cheap operation), and structured Key-Takeaways/Important-Points/Do's-and-Don'ts sections
+for video-sourced pages specifically. Writes to a **workspace-level** wiki, not any one repo's
+own — `wiki-query` (and `/harness-goal`'s Domain step, which calls it) now checks both
+locations. Along the way, a real design bug surfaced in `.env.harness` itself: it bundled
+org-wide credentials (Atlassian, SharePoint, GitHub) alongside genuinely per-repo ones
+(cloud-provider creds, since `cloud:` is itself a per-repo profile field) in one template,
+meaning the same Jira token would've been filled once per repo in a large workspace. Split into
+a repo-level template (cloud creds only) and a new workspace-root template (the shared
+credentials, filled once) — not a workspace-only file, since the cloud-provider block
+genuinely can't move there.
 
 ## A5 improvements over the literal spec
 
