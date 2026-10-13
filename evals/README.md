@@ -5,6 +5,9 @@ Regression protection for the parts of se-harness that `tests/run-tests.sh` can'
 `tests/` proves the plumbing is well-formed; `evals/` proves the harness still *behaves* — gates hold,
 requirements come out falsifiable, stack detection doesn't hallucinate, tests actually catch bugs.
 
+Plan, status and backlog: [`docs/evals-plan.md`](../docs/evals-plan.md). **Manual only** — no CI job or
+hook runs these for you.
+
 Local only. Python 3.10+ standard library, plus `bash` (Git Bash on Windows) and, for the model-backed
 layers, the `claude` CLI. No Docker. The only network traffic is the model API, and only in layers 2–3.
 

@@ -252,6 +252,8 @@ single-unit goals to try first: [`docs/demo/README.md`](./docs/demo/README.md#pa
 - **[Demo walkthroughs](./docs/demo/README.md)** — over the companion
   [demo-loan-app](https://github.com/rbhattarai/demo-loan-app) repo: multi-unit init,
   contract checking, cross-unit goal (and the README GIF recording guide)
+- **[Eval plan & status](./docs/evals-plan.md)** — regression evals for the prompts and hooks
+  (`evals/`): what exists, what's todo, when to run them. Manual, local-only.
 - **[Workspace-orchestration plan](./docs/workspace-orchestration-plan.md)** — single repo →
   mono-repo → modulith → multi-repo → hybrid: the impact map, `workspace-plan.md`, the
   `workspace-orchestrator` agent, and the combined integration check, phase by phase

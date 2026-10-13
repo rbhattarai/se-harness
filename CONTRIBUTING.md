@@ -32,6 +32,10 @@ and two generated artifacts. Editing the wrong file is the most common mistake:
    bash plugins/se-harness/scripts/build-copilot-plugin.sh
    ```
 
+4. **Run the evals if you touched a prompt or a hook script** (manual, local; nothing runs them
+   for you). `bash evals/run-evals.sh` is free and takes ~90 s; model-backed layers and which
+   one to run after which edit are in [`docs/evals-plan.md`](docs/evals-plan.md).
+
    Commit the regenerated `plugins/se-harness-copilot/` and
    `.github/plugin/marketplace.json` together with your source change.
 4. **Validate** (required — CI for the community plugin directory runs the same

@@ -126,3 +126,10 @@ genuinely can't move there.
 | 5. HITL gates only at irreversible steps | `commands/harness-goal.md` gates (steps 3/7/9) + `scripts/gate-check.sh` (PreToolUse hook) |
 | 6. Video/NAS ingestion deferred to v2 | encoded in `templates/profile.yaml` (`sources.deferred`) |
 | 7. Org libraries as generation target (compose-first) + machine-checkable validation | `templates/AGENTS.md.tmpl` org section + `scripts/org-validate.sh` (PostToolUse hook) |
+
+## Evals (2026-10)
+
+Regression evals for the prompts and gating hooks live in [`evals/`](../evals/README.md); plan, status
+and backlog in [`evals-plan.md`](./evals-plan.md). Layer 1 (190 deterministic cases) found and fixed 32
+script bugs (gate bypasses, REQ-009 octal, backslash goals, org-validate over-matching); layers 2–3
+exist and have been smoke-run live (layer 2 fully, layer 3 pressure scenario only).
