@@ -43,7 +43,7 @@ sources:                    # enterprise memory sources (tier-3 wiki ingestion) 
   jira_project: ""
   confluence_spaces: []
   sharepoint_sites: []
-  nas_doc_paths: []         # PDFs/Office docs; /harness-mem-wiki walks these recursively
+  nas_doc_paths: []         # any document format (pdf/docx/pptx/xlsx/md/txt/…); /harness-mem-wiki walks these recursively
   nas_video_paths: []       # transcribed via Graphify's video extra, then wiki-ingested
 
 memory:                     # tier-1 (structural) ONLY — phase 4. Tiers 2/3 are always plain

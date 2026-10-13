@@ -70,16 +70,67 @@ For each in scope:
 
 ## Step 4 — NAS documents (filesystem, not MCP — no "live," the path is the citation)
 
-1. Recursively walk every configured `nas_doc_paths` entry — arbitrary subfolder depth, don't
-   assume a flat directory.
-2. Fingerprint each PDF/Office file (path + mtime + size) and diff against
-   `.ingest-manifest.json`'s doc entries. Report new/changed vs. unchanged-skipped counts before
-   asking whether to process the new/changed ones, name specific ones, or skip.
-3. For each confirmed file: extract text (Graphify's `graphifyy[pdf]`/`[office]` extras if
-   installed — gate this the same way `/harness-mem-graphify` gates the video extra: check
-   first, ask once if missing, never install without approval) → synthesize into a wiki page at
-   the workspace root citing the NAS path (not a link — a path; there's no live refetch for a
-   filesystem source, only re-opening the file) → update the manifest.
+Any document format, not just PDF/Office. The mechanics live in
+`${CLAUDE_PLUGIN_ROOT}/scripts/doc-extract.sh` (registry: `scripts/doc-registry/*.tsv`); the
+default extractor for binary formats is **MarkItDown**. Pass `--registry-extra
+<workspace>/.harness/doc-registry` to every call if that directory exists (it holds the
+user's own added formats/converters, Step 4c).
+
+### 4a — Inventory (read-only, before anything else)
+1. Run `bash ${CLAUDE_PLUGIN_ROOT}/scripts/doc-extract.sh --inventory --skip-ext <skipped
+   extensions from .ingest-manifest.json's formats:> <every nas_doc_paths entry>` — recursive,
+   any depth; it already drops lock/temp/NAS-housekeeping files (`~$x`, `Thumbs.db`, `@eaDir`,
+   `#recycle`…) and reports how many.
+2. Show one table: **extension | files | size | status**. Statuses: `ready` (a reader is
+   installed), `missing` (reader not installed), `unsupported` (no reader known for this
+   extension), `flagged-ocr` (images — never ingested), `declined` (skipped on an earlier run).
+   A path the script reports as `MISSING_PATH` (NAS offline/unmounted) is reported as such, not
+   silently treated as empty.
+
+### 4b — Close the gaps, one format group at a time
+For every `missing` or `unsupported` extension (group by extractor so one install answers
+several formats) ask once (AskUserQuestion), never installing anything unasked:
+- **missing** → show the exact install text (`doc-extract.sh --install-cmd <extractor>`) and
+  what it pulls in. Options: **install it**, **use a different/own converter** (4c), or
+  **skip this format**. For MarkItDown, if `workspace.yaml`'s `shared.package_index` is set, the
+  install must go through it exactly as `/harness-mem-graphify` Step 2 does (private index,
+  `--system-certs`; if unreachable, stop and report — never disable TLS or fall back to public
+  PyPI). Check `uv --version` first; no `uv` → say so and offer the user's own installer or skip.
+  After installing, re-run `--tool-status <extractor>` to confirm; a failed install is reported
+  and treated as **skip**.
+- **unsupported** (an extension with no known reader) → options: **give me a converter
+  command** (4c) or **skip**.
+- **skip** ignores *only that extension*; every other format proceeds. Record each decision in
+  `.ingest-manifest.json` under `formats: {<ext>: {decision: installed|custom|skipped,
+  extractor, decided: <date>}}` so a skipped format is not asked about again on later runs
+  (list them in one line at the end; the user can say "reconsider formats" to re-open them).
+- **flagged-ocr** (images) and scanned PDFs (found at extraction time) are **not offered an
+  install** in this version: OCR is out of scope. They are counted and listed in the report so
+  nothing disappears silently.
+
+### 4c — User-supplied converter (for locked-down machines or exotic formats)
+Ask for a shell command that writes text/markdown to stdout, with `{in}` as the input path
+(e.g. `mytool --to-md {in}`). Run it once on a sample file to prove it works, then append rows
+to `<workspace>/.harness/doc-registry/extractors.tsv` and `formats.tsv` (same columns as the
+built-in files; TAB-separated). Never put a command the user didn't write or approve there.
+
+### 4d — Extract and synthesize
+1. Fingerprint each `ready` file — path + mtime + size **+ extractor id** (so a newly installed
+   or changed extractor re-offers files read poorly before) — and diff against the manifest's
+   doc entries. Report new/changed vs. unchanged-skipped counts, then ask whether to process
+   the new/changed ones, name specific ones, or skip.
+2. For each confirmed file: `bash ${CLAUDE_PLUGIN_ROOT}/scripts/doc-extract.sh --extract
+   <file> --max-chars 200000 --max-bytes 52428800`. Handle the exit code:
+   0 → continue · 7 → flagged (scanned PDF/image): count it, don't retry · 6 → failed
+   (corrupt/encrypted/tool error): report the file and reason, move on · 8 → too large: ask
+   before raising `--max-bytes` · 4 → the reader vanished since 4a: back to 4b for that format.
+   One bad file never aborts the run.
+3. Extracted text is **transient** — not written into the repo or a cache (raw sources stay
+   immutable and un-copied; this also keeps confidential NAS content out of git). Synthesize
+   into a wiki page at the workspace root. **Spreadsheets and CSVs are not prose**: capture
+   sheet/column names, what each sheet is for, notable rules and a small sample — never
+   transcribe rows. Citation: the NAS path (a path, not a link), the extractor id, today's date.
+   Update the manifest with the fingerprint and resulting page.
 
 ## Step 5 — NAS video (transcription first, the expensive one)
 
@@ -109,7 +160,8 @@ For each in scope:
 ## Step 6 — Completion report
 
 Per source: items processed / skipped as unchanged / skipped as not-configured, pages
-created/updated. For NAS video specifically, don't just report "done" — name what actually
+created/updated. For NAS documents also a per-extension table: processed · failed (with reason) ·
+skipped by the user's choice · flagged for OCR (scanned PDFs, images) · unsupported. For NAS video specifically, don't just report "done" — name what actually
 landed: how many pages got a Key Takeaways section, an Important Points section, a Do's/Don'ts
 section, so the user can see what was captured, not just that something ran. Contradictions
 flagged during synthesis get called out explicitly here too, same as `wiki-ingest`'s own rule —

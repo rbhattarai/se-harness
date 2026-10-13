@@ -1,0 +1,36 @@
+# formats.tsv — which extractor(s) can read which file extension.
+# columns (TAB-separated): ext <TAB> category <TAB> extractors (comma-separated, first READY one wins)
+# category "image" is never extracted — it is flagged for OCR (out of scope; see /harness-mem-wiki).
+# Add a row to support a new format; a project/workspace can also add rows through --registry-extra.
+md	text	native
+markdown	text	native
+txt	text	native
+rst	text	native
+adoc	text	native
+csv	data	native
+tsv	data	native
+json	data	native
+yaml	data	native
+yml	data	native
+xml	data	native
+html	web	markitdown,pandoc
+htm	web	markitdown,pandoc
+pdf	document	markitdown
+docx	office	markitdown,pandoc
+pptx	office	markitdown
+xlsx	office	markitdown
+xls	office	markitdown
+doc	legacy-office	lo-doc
+ppt	legacy-office	lo-ppt
+rtf	document	pandoc,lo-doc
+odt	document	pandoc,lo-doc
+ods	office	lo-ods
+odp	office	lo-odp
+epub	ebook	markitdown,pandoc
+msg	email	markitdown
+png	image	-
+jpg	image	-
+jpeg	image	-
+tif	image	-
+tiff	image	-
+bmp	image	-

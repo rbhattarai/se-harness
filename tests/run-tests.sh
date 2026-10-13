@@ -613,6 +613,94 @@ check "harness-update: never auto-confirms (-y/--force/--accept-command)" grep -
 check "harness-update: supports --check" grep -q 'argument-hint: \[--check\]' "$HU"
 check "harness-update: shipped migrate.sh is the one it references" test -f plugins/se-harness/scripts/migrate.sh
 
+# --- doc-extract.sh: any-format NAS docs, readiness gate, scanned-PDF flag ---
+DX="plugins/se-harness/scripts/doc-extract.sh"
+DXR="plugins/se-harness/scripts/doc-registry"
+# real registry integrity: every referenced extractor is defined, every row well-formed
+dx_registry_ok() {
+  local ids x
+  ids=$(awk -F'\t' '!/^#/ && NF {print $1}' "$DXR/extractors.tsv")
+  for x in $(awk -F'\t' '!/^#/ && NF && $2 != "image" {print $3}' "$DXR/formats.tsv" | tr ',' '\n' | sort -u); do
+    echo "$ids" | grep -qx "$x" || { echo "undefined extractor: $x"; return 1; }
+  done
+}
+check "doc-registry: every formats.tsv extractor id exists in extractors.tsv" dx_registry_ok
+dx_cols() { [ -z "$(awk -F'\t' -v n="$2" '!/^#/ && NF && NF!=n' "$1")" ]; }
+check "doc-registry: formats rows have exactly 3 columns" dx_cols "$DXR/formats.tsv" 3
+check "doc-registry: extractors rows have exactly 5 columns" dx_cols "$DXR/extractors.tsv" 5
+for e in pdf doc docx ppt pptx xls xlsx txt md; do
+  check "doc-registry: supports .$e" awk -F'\t' -v e="$e" '$1==e {f=1} END {exit !f}' "$DXR/formats.tsv"
+done
+dx_narrow() {
+  local c; c=$(bash "$DX" --install-cmd markitdown)
+  case "$c" in *'markitdown[pdf,docx,pptx,xlsx,xls,outlook]'*) ;; *) return 1 ;; esac
+  case "$c" in *'[all]'*) return 1 ;; esac
+}
+check "doc-registry: MarkItDown install uses narrow extras, not [all]" dx_narrow
+
+# behavior, against a throwaway registry whose tool readiness we control
+DX_T=$(mktemp -d 2>/dev/null || mktemp -d -t seharness)
+mkdir -p "$DX_T/reg" "$DX_T/extra" "$DX_T/tree/sub/deep" "$DX_T/tree/@eaDir"
+printf 'md\ttext\tnative\ndocx\toffice\tfake\npdf\tdocument\tfake\nxlsx\toffice\tnever\npng\timage\t-\n' > "$DX_T/reg/formats.tsv"
+printf 'native\ttrue\tcat {in}\t-\tplain\nfake\ttest -f "$DX_T/tool"\ttr a-z A-Z < {in}\tINSTALL-FAKE-TOOL\tfake\nnever\tfalse\tcat {in}\tINSTALL-NEVER\tnever ready\n' > "$DX_T/reg/extractors.tsv"
+export DOC_REGISTRY_DIR="$DX_T/reg" DX_T
+echo "hello docs" > "$DX_T/tree/a.md"; echo "word text" > "$DX_T/tree/b.docx"; echo "deep" > "$DX_T/tree/sub/deep/c.DOCX"
+echo x > "$DX_T/tree/pic.png"; echo x > "$DX_T/tree/odd.xyz"; echo x > "$DX_T/tree/sheet.xlsx"
+echo x > "$DX_T/tree/~\$b.docx"; echo x > "$DX_T/tree/Thumbs.db"; echo x > "$DX_T/tree/@eaDir/t.docx"
+TAB=$(printf '\t')
+dx_has() { bash "$DX" --inventory "$@" 2>/dev/null | grep -q "$DX_PAT"; }
+DX_PAT="FORMAT${TAB}docx${TAB}2${TAB}[0-9]*${TAB}missing${TAB}fake";           check "doc-extract: unready tool → missing + recommended extractor, recursive, case-insensitive" dx_has "$DX_T/tree"
+DX_PAT="JUNK${TAB}2";                                                           check "doc-extract: lock/Thumbs/@eaDir junk dropped and counted" dx_has "$DX_T/tree"
+DX_PAT="FORMAT${TAB}md${TAB}1${TAB}[0-9]*${TAB}ready${TAB}native";              check "doc-extract: native format is ready with no install" dx_has "$DX_T/tree"
+DX_PAT="FORMAT${TAB}xyz${TAB}1${TAB}[0-9]*${TAB}unsupported";                   check "doc-extract: unknown extension reported unsupported" dx_has "$DX_T/tree"
+DX_PAT="FORMAT${TAB}png${TAB}1${TAB}[0-9]*${TAB}flagged-ocr${TAB}-";            check "doc-extract: images flagged for OCR, no extractor offered" dx_has "$DX_T/tree"
+DX_PAT="FORMAT${TAB}docx${TAB}2${TAB}[0-9]*${TAB}declined";                     check "doc-extract: --skip-ext marks a declined format" dx_has --skip-ext docx "$DX_T/tree"
+DX_PAT="MISSING_PATH";                                                          check "doc-extract: a missing directory is reported, not silently empty" dx_has "$DX_T/nope"
+check "doc-extract: --install-cmd prints the registry's install text" test "$(bash "$DX" --install-cmd fake)" = INSTALL-FAKE-TOOL
+
+bash "$DX" --extract "$DX_T/tree/b.docx" >/dev/null 2>&1; check "doc-extract: extract with tool missing exits 4" test $? -eq 4
+dx_msg() { bash "$DX" --extract "$DX_T/tree/b.docx" 2>&1 | grep -q INSTALL-FAKE-TOOL; }
+check "doc-extract: exit-4 message names the install text" dx_msg
+touch "$DX_T/tool"
+DX_PAT="FORMAT${TAB}docx${TAB}2${TAB}[0-9]*${TAB}ready${TAB}fake";              check "doc-extract: once the tool exists the format becomes ready" dx_has "$DX_T/tree"
+check "doc-extract: extract returns the extractor's text" test "$(bash "$DX" --extract "$DX_T/tree/b.docx")" = "WORD TEXT"
+bash "$DX" --extract "$DX_T/tree/odd.xyz" >/dev/null 2>&1; check "doc-extract: unsupported extension exits 5" test $? -eq 5
+bash "$DX" --extract "$DX_T/tree/pic.png" >/dev/null 2>&1; check "doc-extract: image exits 7 (flagged, not ingested)" test $? -eq 7
+bash "$DX" --extract "$DX_T/tree/sheet.xlsx" >/dev/null 2>&1; check "doc-extract: extractor that is never ready exits 4" test $? -eq 4
+bash "$DX" --extract "$DX_T/tree/b.docx" --max-bytes 3 >/dev/null 2>&1; check "doc-extract: over --max-bytes exits 8" test $? -eq 8
+printf 'abcdefghij\n' > "$DX_T/tree/long.md"
+dx_trunc() { bash "$DX" --extract "$DX_T/tree/long.md" --max-chars 4 | grep -q 'truncated at 4 of'; }
+check "doc-extract: --max-chars truncates with a marker" dx_trunc
+# scanned PDF: big file, ~no extractable text -> 7 ; text PDF -> 0
+head -c 200000 /dev/zero | tr '\0' '1' > "$DX_T/tree/scan.pdf"
+printf 'fake\ttest -f "$DX_T/tool"\ttr -cd "a-zA-Z \\n" < {in}\tINSTALL-FAKE-TOOL\tfake\nnever\tfalse\tcat {in}\tINSTALL-NEVER\tnever ready\nnative\ttrue\tcat {in}\t-\tplain\n' > "$DX_T/reg/extractors.tsv"
+bash "$DX" --extract "$DX_T/tree/scan.pdf" >/dev/null 2>&1; check "doc-extract: scanned PDF (no letters in 200KB) exits 7" test $? -eq 7
+printf 'The quarterly report describes loan origination and the underwriting rules in detail for all products.\n' > "$DX_T/tree/text.pdf"
+bash "$DX" --extract "$DX_T/tree/text.pdf" >/dev/null 2>&1; check "doc-extract: text PDF extracts fine (exit 0)" test $? -eq 0
+# failing extractor -> 6 (a bad file never aborts a run)
+printf 'docx\toffice\tbroken\n' > "$DX_T/extra/formats.tsv"
+printf 'broken\ttrue\tfalse {in}\tINSTALL-BROKEN\tfails\n' > "$DX_T/extra/extractors.tsv"
+bash "$DX" --extract "$DX_T/tree/b.docx" --registry-extra "$DX_T/extra" >/dev/null 2>&1; check "doc-extract: failing extractor exits 6" test $? -eq 6
+# --registry-extra adds a brand-new format with the user's own converter
+printf 'abc\tcustom\tmine\n' > "$DX_T/extra/formats.tsv"
+printf 'mine\ttrue\ttr a-z A-Z < {in}\t-\tuser converter\n' > "$DX_T/extra/extractors.tsv"
+echo "custom fmt" > "$DX_T/tree/x.abc"
+DX_PAT="FORMAT${TAB}abc${TAB}1${TAB}[0-9]*${TAB}ready${TAB}mine";               check "doc-extract: --registry-extra makes a new format ready" dx_has --registry-extra "$DX_T/extra" "$DX_T/tree"
+check "doc-extract: user converter output is used" test "$(bash "$DX" --extract "$DX_T/tree/x.abc" --registry-extra "$DX_T/extra")" = "CUSTOM FMT"
+echo "spaced" > "$DX_T/tree/we ird 'name'.md"
+check "doc-extract: awkward file names are quoted safely" test "$(bash "$DX" --extract "$DX_T/tree/we ird 'name'.md")" = spaced
+rm -rf "$DX_T"
+unset DOC_REGISTRY_DIR DX_T DX_PAT
+
+# command wiring
+MW=plugins/se-harness/commands/harness-mem-wiki.md
+check "harness-mem-wiki: drives doc-extract.sh" grep -q 'scripts/doc-extract.sh' "$MW"
+check "harness-mem-wiki: no longer limited to PDF/Office" bash -c "! grep -q 'Fingerprint each PDF/Office' $MW"
+check "harness-mem-wiki: skipping a format ignores only that extension" grep -q 'only that extension' "$MW"
+check "harness-mem-wiki: records format decisions in the manifest" grep -q 'formats: {<ext>' "$MW"
+check "harness-mem-wiki: flags scanned PDFs/images, no OCR install offered" grep -q 'OCR is out of scope' "$MW"
+check "harness-mem-wiki: supports user-supplied converters" grep -q 'registry-extra' "$MW"
+
 # --- privacy invariant: plugins make no network calls (see PRIVACY.md) ---
 check "no network calls in plugin scripts" \
   bash -c "! grep -rlE 'curl |wget |Invoke-WebRequest|Invoke-RestMethod' plugins/*/scripts/"

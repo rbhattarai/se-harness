@@ -237,7 +237,7 @@ single-unit goals to try first: [`docs/demo/README.md`](./docs/demo/README.md#pa
 | `/harness-export` | Compile agents + hooks for Copilot / Cursor (Codex reads `AGENTS.md` natively); workspace-wide in one pass |
 | `/harness-mem-graphify` | Build/maintain Graphify structural-memory indexes — per-repo, and merged at workspace level |
 | `/harness-methodology-openspec` | Install/init OpenSpec where chosen — `/harness-goal` drives its actual propose/archive lifecycle |
-| `/harness-mem-wiki` | Synthesize Jira/Confluence/SharePoint/NAS docs/NAS video into the workspace-level domain wiki `/harness-goal` queries |
+| `/harness-mem-wiki` | Synthesize Jira/Confluence/SharePoint/NAS docs (any format — pdf, docx, pptx, xlsx, md, txt… via MarkItDown, asks before installing a reader, skips only declined formats, flags scanned files)/NAS video into the workspace-level domain wiki `/harness-goal` queries |
 | `/harness-update` | Update the plugin (marketplace first, GitHub fallback), then migrate this project's `.harness/` data — backup, whole-run rollback, hand-edited blocks never silently overwritten |
 
 ## Documentation
@@ -259,7 +259,7 @@ single-unit goals to try first: [`docs/demo/README.md`](./docs/demo/README.md#pa
 ## Status
 
 **[v1.0.0](https://github.com/rbhattarai/se-harness/releases/tag/v1.0.0)** tagged six
-commands and a 199-test suite; `main` has since grown to **ten commands and a 278-test
+commands and a 199-test suite; `main` has since grown to **ten commands and a 321-test
 suite** (not yet re-tagged) — `/harness-mem-graphify`, `/harness-methodology-openspec`, and
 `/harness-mem-wiki`, plus the workspace-wide loop now shared by
 `/harness-init`/`-bootstrap`/`-sync`/`-export`.
@@ -307,7 +307,7 @@ registry/recommendations.json        # profile → plugin mappings (recommender 
 templates/                           # profile/env/requirement/AGENTS/CLAUDE/mcp/workspace/
                                       # workspace-plan + memory seeds
 docs/                                # setup guides, interop matrix, platform schema notes, demo guide
-tests/                               # 278-test suite run in CI
+tests/                               # 321-test suite run in CI
 ```
 
 ## Contributing / publishing
