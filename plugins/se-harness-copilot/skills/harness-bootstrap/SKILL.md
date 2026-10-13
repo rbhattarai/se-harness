@@ -106,6 +106,10 @@ For each selected component, by `kind`:
 4. Re-render AGENTS.md/CLAUDE.md blocks via
    `bash tools/harness/render-block.sh <target> <block-file>` so the generated
    block reflects what's now installed.
+   If it exits **3**, the generated block was hand-edited since the last render and was left
+   untouched (`<target>.seaa.proposed` holds the new version): show the user a diff of the two,
+   and ask keep-mine / take-new / merge. Only on take-new re-run with `--force` (the edited block
+   is saved to `<target>.seaa.bak`). Never pass `--force` without asking.
 
 ## Step 5 — Record in the lockfile
 Update `.harness/agentstack.lock`: for every component — name, source, version (if known),

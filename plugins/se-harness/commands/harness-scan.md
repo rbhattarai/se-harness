@@ -116,6 +116,10 @@ to workspace scope. If a workspace manifest exists, compare this repo's current
 4. **AGENTS.md / CLAUDE.md** — re-render the template inner blocks from the updated profile and
    splice via `bash ${CLAUDE_PLUGIN_ROOT}/scripts/render-block.sh <target> <block-file>`
    (never edit these files directly).
+   If it exits **3**, the generated block was hand-edited since the last render and was left
+   untouched (`<target>.seaa.proposed` holds the new version): show the user a diff of the two,
+   and ask keep-mine / take-new / merge. Only on take-new re-run with `--force` (the edited block
+   is saved to `<target>.seaa.bak`). Never pass `--force` without asking.
 5. **`.harness/agentstack.lock`** — set `updated` timestamp and append a `scans:` entry
    (date + one-line summary of what changed).
 

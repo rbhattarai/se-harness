@@ -305,8 +305,14 @@ Order matters; use the exact mechanics below.
    bash ${CLAUDE_PLUGIN_ROOT}/scripts/render-block.sh CLAUDE.md <temp-claude-block>
    ```
    This is the ONLY way to touch these files — never edit them directly, so hand-written
-   content outside the markers survives.
-7. **`.harness/agentstack.lock`** — JSON: `se_harness` version (from plugin.json),
+   content outside the markers survives. The script stamps `sha=<hash>` on the END marker so
+   later syncs can tell a hand-edited block from an untouched one. On a `--update` re-run, exit
+   code **3** means the block was hand-edited and left untouched (`<target>.seaa.proposed` holds
+   the new version): show a diff, ask keep-mine / take-new, and only on take-new re-run with
+   `--force` (edited block saved to `<target>.seaa.bak`). Never pass `--force` unasked.
+7. **`.harness/agentstack.lock`** — JSON: `schema_version: 1` (layout of `.harness/` data;
+   bumped only when a release needs a migration), `se_harness` version (from plugin.json —
+   the version that last wrote this project's generated content),
    `initialized`/`updated` ISO dates, `profile` echo of key choices (methodology, stack,
    cloud, topology, `memory.structural_driver`), `components: {}` (Phase 3 fills this).
 

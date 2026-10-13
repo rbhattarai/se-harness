@@ -477,6 +477,142 @@ bash "$WSE_SCRIPT" "$EMPTY_FIX" >/dev/null 2>&1
 check "workspace-scan-evidence: no manifest at all exits 1" test $? -eq 1
 rm -rf "$EMPTY_FIX" "$WSE_FIX" "$WSE_OUT"
 
+# --- render-block.sh: hash baseline + hand-edit detection (upgrade safety) ---
+RB="plugins/se-harness/scripts/render-block.sh"
+RB_FIX=$(mktemp -d 2>/dev/null || mktemp -d -t seharness)
+printf 'gen-a
+gen-b
+' > "$RB_FIX/v1"; printf 'gen-new
+gen-b
+' > "$RB_FIX/v2"
+bash "$RB" "$RB_FIX/T.md" "$RB_FIX/v1" >/dev/null
+check "render-block: created block records a sha baseline" grep -qE 'SEAA:GENERATED:END sha=[0-9a-f]{16}' "$RB_FIX/T.md"
+check "render-block: --check reports clean after render" test "$(bash "$RB" --check "$RB_FIX/T.md")" = clean
+echo "my hand-written note" >> "$RB_FIX/T.md"
+bash "$RB" "$RB_FIX/T.md" "$RB_FIX/v2" >/dev/null
+check "render-block: untouched block is replaced" grep -q gen-new "$RB_FIX/T.md"
+check "render-block: text outside the markers survives a re-render" grep -q "my hand-written note" "$RB_FIX/T.md"
+sed -i 's/^gen-b$/HAND-EDITED/' "$RB_FIX/T.md"
+check "render-block: --check reports modified after an in-block edit" test "$(bash "$RB" --check "$RB_FIX/T.md")" = modified
+bash "$RB" "$RB_FIX/T.md" "$RB_FIX/v1" >/dev/null 2>&1
+check "render-block: hand-edited block exits 3 (conflict)" test $? -eq 3
+check "render-block: conflict leaves the edited block untouched" grep -q HAND-EDITED "$RB_FIX/T.md"
+check "render-block: conflict writes a .seaa.proposed file" test -s "$RB_FIX/T.md.seaa.proposed"
+bash "$RB" --force "$RB_FIX/T.md" "$RB_FIX/v1" >/dev/null 2>&1
+check "render-block: --force overwrites the edited block" bash -c "! grep -q HAND-EDITED '$RB_FIX/T.md'"
+check "render-block: --force saves the edited block to .seaa.bak" grep -q HAND-EDITED "$RB_FIX/T.md.seaa.bak"
+printf '<!-- SEAA:GENERATED:START -->
+old
+<!-- SEAA:GENERATED:END -->
+mine
+' > "$RB_FIX/L.md"
+check "render-block: pre-baseline block is reported legacy" test "$(bash "$RB" --check "$RB_FIX/L.md")" = legacy
+bash "$RB" "$RB_FIX/L.md" "$RB_FIX/v1" >/dev/null 2>&1
+check "render-block: legacy block is replaced and gains a baseline" grep -qE 'END sha=[0-9a-f]{16}' "$RB_FIX/L.md"
+check "render-block: --check on a missing file reports missing" test "$(bash "$RB" --check "$RB_FIX/none.md")" = missing
+rm -rf "$RB_FIX"
+
+# --- version stamps documented in the commands that write/read the lockfile ---
+check "harness-init writes schema_version into the lockfile" grep -q 'schema_version: 1' plugins/se-harness/commands/harness-init.md
+check "harness-sync checks version stamps (Step 0b)" grep -q 'Step 0b' plugins/se-harness/commands/harness-sync.md
+for c in harness-init harness-bootstrap harness-scan harness-sync; do
+  check "$c handles render-block conflict exit (--force only after asking)" grep -q 'seaa.proposed' plugins/se-harness/commands/$c.md
+done
+
+# --- migrate.sh: schema migration chain (upgrade without losing project changes) ---
+MG="plugins/se-harness/scripts/migrate.sh"
+MFX="tests/fixtures/migrate"
+mg_fresh() { rm -rf "$1"; cp -r "$MFX/v1-project" "$1"; }
+MG_TMP=$(mktemp -d 2>/dev/null || mktemp -d -t seharness)
+
+# real plugin today: schema 1, no migrations — a v1 project is simply "up to date" + baseline stamp
+mg_fresh "$MG_TMP/p"
+check "migrate: real chain reports up to date at schema 1" bash -c "bash '$MG' --status '$MG_TMP/p' | grep -q 'up to date'"
+bash "$MG" "$MG_TMP/p" >/dev/null 2>&1
+check "migrate: up-to-date run stamps schema_version 1 into a legacy lockfile" grep -q '"schema_version": 1' "$MG_TMP/p/.harness/agentstack.lock"
+check "migrate: baseline stamp keeps the lockfile valid JSON" json_valid "$MG_TMP/p/.harness/agentstack.lock"
+check "migrate: no backup created when there is nothing to migrate" test ! -d "$MG_TMP/p/.harness/backup"
+
+# 1 -> 3 chain
+mg_fresh "$MG_TMP/p"
+export HARNESS_MIGRATIONS_DIR="$PWD/$MFX/migrations-ok"
+check "migrate: --dry-run lists the pending chain" bash -c "bash '$MG' --dry-run '$MG_TMP/p' | grep -q '1-to-2: fixture step'"
+check "migrate: --dry-run changes nothing" bash -c "! grep -q schema_version '$MG_TMP/p/.harness/agentstack.lock'"
+bash "$MG" "$MG_TMP/p" >/dev/null 2>&1
+check "migrate: chain runs 1->2->3 (both markers created)" test -f "$MG_TMP/p/.harness/v2.marker" -a -f "$MG_TMP/p/.harness/v3.marker"
+check "migrate: lockfile ends at schema_version 3" grep -q '"schema_version": 3' "$MG_TMP/p/.harness/agentstack.lock"
+check "migrate: lockfile keeps its other fields" grep -q '"se_harness": "1.0.0"' "$MG_TMP/p/.harness/agentstack.lock"
+check "migrate: lockfile stays valid JSON" json_valid "$MG_TMP/p/.harness/agentstack.lock"
+check "migrate: history appended to migrations.log" test "$(wc -l < "$MG_TMP/p/.harness/migrations.log" | tr -d ' ')" = 2
+check "migrate: backup tarball written" test -s "$(ls -d "$MG_TMP"/p/.harness/backup/*/ | head -1)files.tar"
+check "migrate: user memory survives" grep -q 'USER-NOTE: we deploy on Fridays' "$MG_TMP/p/.harness/memory/MEMORY.md"
+check "migrate: user requirement survives" grep -q 'user-written requirement' "$MG_TMP/p/.harness/requirements/REQ-001.md"
+check "migrate: hand-written AGENTS.md text survives" grep -q 'HAND-WRITTEN: never use ORM X' "$MG_TMP/p/AGENTS.md"
+check "migrate: generated block was re-rendered by the migration" grep -q 'v2 generated text' "$MG_TMP/p/AGENTS.md"
+bash "$MG" "$MG_TMP/p" >/dev/null 2>&1
+check "migrate: re-running is a no-op (idempotent)" test "$(wc -l < "$MG_TMP/p/.harness/migrations.log" | tr -d ' ')" = 2
+
+# failure mid-chain rolls the WHOLE run back
+mg_fresh "$MG_TMP/p"
+export HARNESS_MIGRATIONS_DIR="$PWD/$MFX/migrations-fail"
+bash "$MG" "$MG_TMP/p" >/dev/null 2>&1
+check "migrate: failing step exits 1" test $? -eq 1
+check "migrate: rollback restores memory the failed step clobbered" grep -q 'USER-NOTE' "$MG_TMP/p/.harness/memory/MEMORY.md"
+check "migrate: rollback removes files the run created" test ! -e "$MG_TMP/p/.harness/v2.marker" -a ! -e "$MG_TMP/p/.harness/v3.marker"
+check "migrate: rollback restores the earlier-step block change" grep -q 'v1 generated text' "$MG_TMP/p/AGENTS.md"
+check "migrate: rollback leaves schema_version unset" bash -c "! grep -q schema_version '$MG_TMP/p/.harness/agentstack.lock'"
+
+# hand-edited generated block: conflict, rolled back, then --force-blocks takes it
+mg_fresh "$MG_TMP/p"
+export HARNESS_MIGRATIONS_DIR="$PWD/$MFX/migrations-ok"
+printf 'v1 generated text
+' > "$MG_TMP/v1blk"
+bash plugins/se-harness/scripts/render-block.sh "$MG_TMP/p/AGENTS.md" "$MG_TMP/v1blk" >/dev/null
+sed -i 's/^v1 generated text$/MY EDIT INSIDE BLOCK/' "$MG_TMP/p/AGENTS.md"
+bash "$MG" "$MG_TMP/p" >/dev/null 2>&1
+check "migrate: hand-edited block exits 3" test $? -eq 3
+check "migrate: conflict leaves the edit and the schema untouched" bash -c "grep -q 'MY EDIT INSIDE BLOCK' '$MG_TMP/p/AGENTS.md' && ! grep -q schema_version '$MG_TMP/p/.harness/agentstack.lock'"
+bash "$MG" --force-blocks "$MG_TMP/p" >/dev/null 2>&1
+check "migrate: --force-blocks completes the migration" grep -q '"schema_version": 3' "$MG_TMP/p/.harness/agentstack.lock"
+check "migrate: --force-blocks keeps the edit in a .seaa.bak" grep -q 'MY EDIT INSIDE BLOCK' "$MG_TMP/p/AGENTS.md.seaa.bak"
+
+# guards
+mg_fresh "$MG_TMP/p"
+export HARNESS_MIGRATIONS_DIR="$PWD/$MFX/migrations-gap"
+bash "$MG" "$MG_TMP/p" >/dev/null 2>&1
+check "migrate: a gap in the chain exits 1 before changing anything" test $? -eq 1
+export HARNESS_MIGRATIONS_DIR="$PWD/$MFX/migrations-ok"
+sed -i 's/"se_harness"/"schema_version": 9, "se_harness"/' "$MG_TMP/p/.harness/agentstack.lock"
+bash "$MG" "$MG_TMP/p" >/dev/null 2>&1
+check "migrate: project newer than plugin exits 2" test $? -eq 2
+mg_fresh "$MG_TMP/p"
+mkdir -p "$MG_TMP/empty"
+bash "$MG" "$MG_TMP/empty" >/dev/null 2>&1
+check "migrate: un-bootstrapped dir exits 2" test $? -eq 2
+if command -v git >/dev/null 2>&1; then
+  ( cd "$MG_TMP/p" && git init -q . && git add -A 2>/dev/null && git -c user.email=t@t -c user.name=t commit -qm base 2>/dev/null && echo dirty >> AGENTS.md )
+  bash "$MG" "$MG_TMP/p" >/dev/null 2>&1
+  check "migrate: uncommitted harness files are refused (exit 2)" test $? -eq 2
+  bash "$MG" --allow-dirty "$MG_TMP/p" >/dev/null 2>&1
+  check "migrate: --allow-dirty overrides the guard" grep -q '"schema_version": 3' "$MG_TMP/p/.harness/agentstack.lock"
+fi
+unset HARNESS_MIGRATIONS_DIR
+rm -rf "$MG_TMP"
+check "migrations dir ships a contract README" test -s plugins/se-harness/scripts/migrations/README.md
+check "harness-update plumbing: migrate.sh is shipped in the copilot build" test -f plugins/se-harness-copilot/scripts/migrate.sh
+
+# --- /harness-update: wrapper wiring (marketplace first, GitHub fallback, migrate, re-entrant) ---
+HU=plugins/se-harness/commands/harness-update.md
+check "harness-update: tries the marketplace refresh first" grep -q 'claude plugin marketplace update se-harness' "$HU"
+check "harness-update: falls back to the GitHub repo's plugin.json" grep -q 'raw.githubusercontent.com/rbhattarai/se-harness' "$HU"
+check "harness-update: installs via claude plugin update at the project's scope" grep -q 'claude plugin update se-harness@se-harness --scope' "$HU"
+check "harness-update: is re-entrant (restart, then run again)" grep -qi 'restart' "$HU"
+check "harness-update: migrates through migrate.sh" grep -q 'scripts/migrate.sh' "$HU"
+check "harness-update: hands off to /harness-sync" grep -q '/harness-sync' "$HU"
+check "harness-update: never auto-confirms (-y/--force/--accept-command)" grep -q 'accept-command' "$HU"
+check "harness-update: supports --check" grep -q 'argument-hint: \[--check\]' "$HU"
+check "harness-update: shipped migrate.sh is the one it references" test -f plugins/se-harness/scripts/migrate.sh
+
 # --- privacy invariant: plugins make no network calls (see PRIVACY.md) ---
 check "no network calls in plugin scripts" \
   bash -c "! grep -rlE 'curl |wget |Invoke-WebRequest|Invoke-RestMethod' plugins/*/scripts/"

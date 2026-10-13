@@ -28,6 +28,21 @@ user to run `/harness-init` and stop.
 4. Report one consolidated table across all processed units — unit | drift found (axes) |
    applied | skipped — in addition to each unit's own Step 5 report.
 
+### Step 0b — Version stamp check
+Read `schema_version` and `se_harness` from `.harness/agentstack.lock` and `version` from
+the installed plugin's own `plugin.json` (the plugin manifest that ships this command).
+- No `schema_version` (project bootstrapped before stamps existed) → it is a schema-1 project;
+  record `schema_version: 1` in Step 4 and say "baseline recorded".
+- `schema_version` newer than this plugin understands (1) → the plugin is older than the
+  project; tell the user to update the plugin and stop.
+- Run `bash tools/harness/migrate.sh --status`. If it lists pending migrations,
+  don't sync first: tell the user the data layout needs upgrading, show `--dry-run`, and on
+  confirmation run `migrate.sh` (it backs up, rolls back on failure, and exits 3 on a hand-edited
+  generated block — then follow the keep-mine / take-new flow below and re-run with
+  `--force-blocks` only if they choose take-new). Then continue with Step 1.
+- `se_harness` older than the plugin version → note it in the report; Step 4 sets it to the
+  plugin version after a successful sync.
+
 ## Step 1 — Collect drift across four axes
 
 **A. Profile drift (project changed).** Run
@@ -47,6 +62,10 @@ lint-config changes. Only *differences* matter here — don't re-litigate settle
 `bash tools/harness/template-hash.sh` and compare with `template_hashes` in the
 lockfile. Missing map (first sync) → record it now and note "baseline recorded". Changed
 hashes → the corresponding generated blocks need re-rendering even if the profile is unchanged.
+Also run `bash tools/harness/render-block.sh --check <AGENTS.md|CLAUDE.md>`
+for each: `modified` means the block was hand-edited — surface it in the report as a conflict
+to resolve in Step 3 rather than a silent overwrite; `legacy` means no baseline yet (recorded
+on the next splice).
 
 **D. Memory health.** From `.harness/memory/wiki/log.md`: if the last `lint` entry is > 30
 days old (or absent with >5 pages), recommend a wiki-lint pass. If `memory.structural_driver`
@@ -68,10 +87,15 @@ that in one line and stop — no ceremony, no empty tables.
 4. Re-render AGENTS.md/CLAUDE.md inner blocks from the updated profile and splice:
    `bash tools/harness/render-block.sh <target> <block-file>` — also when only
    template drift (axis C) triggered it.
+   If it exits **3**, the generated block was hand-edited since the last render and was left
+   untouched (`<target>.seaa.proposed` holds the new version): show the user a diff of the two,
+   and ask keep-mine / take-new / merge. Only on take-new re-run with `--force` (the edited block
+   is saved to `<target>.seaa.bak`). Never pass `--force` without asking.
 5. `.mcp.json`: merge any new server entries; never remove servers the user added by hand.
 
 ## Step 4 — Update the lockfile
-Set `updated`; refresh `template_hashes`; update component statuses; append to `syncs:`
+Set `updated`; set `schema_version` (if absent: 1) and `se_harness` to the plugin version;
+refresh `template_hashes`; update component statuses; append to `syncs:`
 history — `{date, drift_found: [axes], applied: [...], skipped: [...]}` — so the next sync
 (and the user) can see what happened last time.
 

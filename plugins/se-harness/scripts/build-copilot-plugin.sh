@@ -136,6 +136,7 @@ done
 
 # --- scripts: bundled for reference + easy vendoring (commands expect them at tools/harness/) ---
 cp "$SRC"/scripts/*.sh "$OUT/scripts/"
+rm -rf "$OUT/scripts/migrations" && cp -r "$SRC"/scripts/migrations "$OUT/scripts/"
 cat > "$OUT/scripts/README.md" <<'EOF'
 Vendor these into each repo the harness manages (commands reference `tools/harness/`):
 
