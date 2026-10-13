@@ -29,7 +29,16 @@ CMD=$(printf '%s' "$INPUT" \
 # Classify the command as a shell would (irreversible-cmd.sh): sees through `git -C . push`, odd
 # spacing, sudo/env prefixes and `bash -c '…'`, and ignores commands that only *mention* the words.
 # shellcheck source=irreversible-cmd.sh
-. "$(dirname "${BASH_SOURCE[0]}")/irreversible-cmd.sh"
+if [ -f "$(dirname "${BASH_SOURCE[0]}")/irreversible-cmd.sh" ]; then
+  . "$(dirname "${BASH_SOURCE[0]}")/irreversible-cmd.sh"
+else
+  # Vendored (e.g. tools/harness/) without the helper: fall back to the original substring match
+  # rather than fail OPEN - a missing file must never silently switch the gate off.
+  is_irreversible() {
+    IRR_KIND=push
+    printf '%s' "$1" | grep -qE '(gh pr create|git push|docker push|terraform apply|vercel deploy|aws .* deploy|gcloud .* deploy|az .* (deploy|up))'
+  }
+fi
 is_irreversible "$CMD" || exit 0
 
 # No harness in this repo → not our business.

@@ -61,6 +61,11 @@ def run_hook(case: dict) -> CaseResult:
     res = CaseResult(case["id"], 1, case.get("suite", "hook"), known_gap=case.get("known_gap", ""))
     script = SCRIPTS_DIR / case["script"]
     with Sandbox() as root:
+        if case.get("vendored_alone"):                         # simulate tools/harness/ with only this script copied
+            (root / "_vendored").mkdir(parents=True)
+            import shutil
+            shutil.copyfile(script, root / "_vendored" / script.name)
+            script = root / "_vendored" / script.name
         base_files = case.get("baseline_files")
         build_fixture(case.get("fixture", "empty"), root, init_git=case.get("git", True) and not base_files)
         if base_files:                                         # files that exist at the baseline commit

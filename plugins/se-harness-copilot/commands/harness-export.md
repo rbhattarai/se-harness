@@ -59,7 +59,7 @@ does not block**, other non-zero exits fail-closed. Export via the bundled adapt
 wire the scripts in directly:
 ```
 mkdir -p tools/harness .github/hooks
-cp tools/harness/{copilot-hook-adapter.sh,gate-check.sh,org-validate.sh,memory-log-commit.sh,contract-check.sh} tools/harness/
+cp tools/harness/{copilot-hook-adapter.sh,gate-check.sh,irreversible-cmd.sh,org-validate.sh,memory-log-commit.sh,contract-check.sh} tools/harness/
 cp ../se-harness/plugins/se-harness/templates/copilot-hooks.json .github/hooks/se-harness.json
 ```
 Tell the user to verify the gate actually denies (payload field names differ between the

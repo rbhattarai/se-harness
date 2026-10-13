@@ -330,7 +330,7 @@ In each code repo:
 ```bash
 # 1. Vendor the scripts so the repo is self-contained (CI and the cloud agent can't reach ../)
 mkdir -p tools/harness
-cp ../se-harness/plugins/se-harness/scripts/{copilot-hook-adapter.sh,gate-check.sh,org-validate.sh,memory-log-commit.sh,contract-check.sh} tools/harness/
+cp ../se-harness/plugins/se-harness/scripts/{copilot-hook-adapter.sh,gate-check.sh,irreversible-cmd.sh,org-validate.sh,memory-log-commit.sh,contract-check.sh} tools/harness/
 
 # 2. Install the hook config
 mkdir -p .github/hooks
