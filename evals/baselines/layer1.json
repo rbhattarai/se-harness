@@ -19,11 +19,23 @@
   "score": null,
   "status": "pass"
  },
+ "contract/deploy-does-not-fire": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/echoed-push-does-not-fire": {
+  "score": null,
+  "status": "pass"
+ },
  "contract/exact-path-match-not-prefix": {
   "score": null,
   "status": "pass"
  },
  "contract/gh-pr-create-also-fires": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/git-dash-C-push-also-fires": {
   "score": null,
   "status": "pass"
  },
@@ -127,6 +139,22 @@
   "score": null,
   "status": "pass"
  },
+ "gate/allows/docker-build-without-push": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/allows/gh-api-read-only": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/allows/git-push-in-heredoc-message-word": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/allows/kubectl-get": {
+  "score": null,
+  "status": "pass"
+ },
  "gate/approved-allows-push": {
   "score": null,
   "status": "pass"
@@ -207,57 +235,81 @@
   "score": null,
   "status": "pass"
  },
+ "gate/blocks/env-wrapper": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/gh-api-release": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/inside-if": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/nested-bash-c": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/newline-separated": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/sudo-with-flag": {
+  "score": null,
+  "status": "pass"
+ },
  "gate/body-line-status-approved-does-not-unlock": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/bypass/00": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/bypass/01": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/bypass/02": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/bypass/03": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/bypass/04": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/bypass/05": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/bypass/06": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/bypass/07": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/bypass/08": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/bypass/09": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/bypass/10": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/bypass/11": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/done-only-blocks-new-push": {
   "score": null,
@@ -273,27 +325,27 @@
  },
  "gate/false-positive/00": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/false-positive/01": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/false-positive/02": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/false-positive/03": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/false-positive/04": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/in-progress-after-approval-allows-pr": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/input/command-with-escaped-quotes-still-detected": {
   "score": null,
@@ -313,27 +365,27 @@
  },
  "gate/irreversible/00": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/irreversible/01": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/irreversible/02": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/irreversible/03": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/irreversible/04": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/irreversible/05": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "gate/irreversible/06": {
   "score": null,
@@ -397,7 +449,15 @@
  },
  "gate/plan/status-done-prefix-is-not-done": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
+ },
+ "gate/status/approvedx-is-not-approved": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/status/in-progress-with-incomplete-plan-still-blocks": {
+  "score": null,
+  "status": "pass"
  },
  "grader/design/golden-passes": {
   "score": null,
@@ -577,7 +637,7 @@
  },
  "org/pattern-is-not-substring-of-unrelated-import": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "org/require-style-import-warns": {
   "score": null,
@@ -653,7 +713,7 @@
  },
  "scaffold/goal-with-backslash-path": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "scaffold/goal-with-dollar-and-backtick": {
   "score": null,
@@ -685,18 +745,18 @@
  },
  "scaffold/next-after-008-is-009": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "scaffold/next-after-009-is-010": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "scaffold/next-after-010-is-011": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  },
  "scaffold/next-after-099-is-100": {
   "score": null,
-  "status": "xfail"
+  "status": "pass"
  }
 }

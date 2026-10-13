@@ -29,7 +29,9 @@ else
     CMD=$(printf '%s' "$INPUT" \
       | grep -oE '"command"[[:space:]]*:[[:space:]]*"(\\.|[^"\\])*"' | head -1 \
       | sed -E 's/^"command"[[:space:]]*:[[:space:]]*"//; s/"$//; s/\\"/"/g; s/\\\\/\\/g')
-    printf '%s' "$CMD" | grep -qE '(git push|gh pr create)' || exit 0
+    # shellcheck source=irreversible-cmd.sh
+    . "$(dirname "${BASH_SOURCE[0]}")/irreversible-cmd.sh"
+    is_irreversible "$CMD" && [ "$IRR_KIND" != deploy ] || exit 0
   fi
 fi
 

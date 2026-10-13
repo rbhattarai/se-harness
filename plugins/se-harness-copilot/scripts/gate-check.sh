@@ -26,12 +26,29 @@ INPUT=$(cat)
 CMD=$(printf '%s' "$INPUT" \
   | grep -oE '"command"[[:space:]]*:[[:space:]]*"(\\.|[^"\\])*"' | head -1 \
   | sed -E 's/^"command"[[:space:]]*:[[:space:]]*"//; s/"$//; s/\\"/"/g; s/\\\\/\\/g')
-printf '%s' "$CMD" | grep -qE '(gh pr create|git push|docker push|terraform apply|vercel deploy|aws .* deploy|gcloud .* deploy|az .* (deploy|up))' || exit 0
+# Classify the command as a shell would (irreversible-cmd.sh): sees through `git -C . push`, odd
+# spacing, sudo/env prefixes and `bash -c '…'`, and ignores commands that only *mention* the words.
+# shellcheck source=irreversible-cmd.sh
+. "$(dirname "${BASH_SOURCE[0]}")/irreversible-cmd.sh"
+is_irreversible "$CMD" || exit 0
 
 # No harness in this repo → not our business.
 [ -d ".harness/requirements" ] || exit 0
 
-APPROVED=$(grep -l "^status: *approved" .harness/requirements/REQ-*.md 2>/dev/null)
+# A requirement unlocks the gate only when its FRONTMATTER says approved (or in-progress: the
+# template's lifecycle is draft -> approved -> in-progress -> done, and the human approved it
+# before it moved on). Reading just the frontmatter means a `status: approved` line in the body
+# (a code block, a quoted example) can never unlock anything, and `approvedX` is not `approved`.
+req_status() {
+  awk '/^---\r?$/ { n++; next }
+       n == 1 && /^status:/ { sub(/^status:[ \t]*/, ""); sub(/[ \t]*(#.*)?\r?$/, ""); sub(/\r$/, ""); print; exit }
+       n >= 2 { exit }' "$1"
+}
+APPROVED=""
+for f in .harness/requirements/REQ-*.md; do
+  [ -f "$f" ] || continue
+  case "$(req_status "$f")" in approved|in-progress) APPROVED="${APPROVED}${f} " ;; esac
+done
 if [ -z "$APPROVED" ]; then
   echo "BLOCKED by se-harness gate: no requirement in .harness/requirements/ has status: approved." >&2
   echo "Present the refined requirement to the user and get explicit approval (HITL gate) first." >&2
@@ -47,8 +64,9 @@ for req_file in $APPROVED; do
   [ -f "$plan" ] || continue
   while IFS= read -r row; do
     [ -n "$row" ] || continue
-    case "$row" in
-      *"status: done"*) ;;
+    row_status=$(printf '%s' "$row" | sed -nE 's/.*status:[[:space:]]*([^|[:space:]]*).*/\1/p')
+    case "$row_status" in
+      done) ;;
       *)
         N_INCOMPLETE=$((N_INCOMPLETE + 1))
         [ "$N_INCOMPLETE" -le 5 ] || continue   # cap: keep the message short for any hook

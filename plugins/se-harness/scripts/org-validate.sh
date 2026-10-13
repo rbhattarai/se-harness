@@ -28,7 +28,11 @@ while IFS= read -r rule; do
       body="${rule#banned:}"
       pattern="${body%%:*}"
       hint="${body#*:}"; [ "$hint" = "$body" ] && hint=""
-      if grep -qE "(import|require|from|using)[^\"']*[\"'<]$pattern" "$FILE" 2>/dev/null; then
+      # A pattern ending in a letter/digit names a whole module: `moment` must not also flag
+      # `momentum-js`. A pattern ending in - / . _ @ is a deliberate prefix (`@acme/legacy-`).
+      boundary=""
+      case "$pattern" in *[A-Za-z0-9]) boundary="([\"'/<@]|\$)" ;; esac
+      if grep -qE "(import|require|from|using)[^\"']*[\"'<]${pattern}${boundary}" "$FILE" 2>/dev/null; then
         echo "se-harness org rule: '$pattern' is banned by org conventions in $FILE.${hint:+ Hint: $hint}" >&2
         WARNED=1
       fi
