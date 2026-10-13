@@ -2,7 +2,7 @@
 
 Plan and status log for the harness's regression evals (`evals/`, usage in
 [`evals/README.md`](../evals/README.md)). Written so the work can be picked up later.
-Last updated: 2026-10-13. Status markers follow the other plan docs: ✅ done · 🔄 in progress ·
+Last updated: 2026-10-13 (Layer 1 = 194 cases). Status markers follow the other plan docs: ✅ done · 🔄 in progress ·
 ⚠️ done but partially verified · ⬜ todo · 🚫 decided against.
 
 ## Goal and decisions
@@ -41,7 +41,7 @@ spending: `--dry-run`. Compare to committed scores: `--compare`; accept new scor
 
 | Item | Status | Notes |
 |---|---|---|
-| Gate cases (`gate-check.sh`: states, bypasses, false positives, workspace-plan rows) | ✅ | 92 cases |
+| Gate cases (`gate-check.sh`: states, bypasses, false positives, workspace-plan rows, script vendored alone) | ✅ | 96 cases |
 | Contract cases (`contract-check.sh` on the real demo `workspace.yaml`) | ✅ | 23 cases |
 | Hook cases (`inject-context`, `memory-log-commit`, `org-validate`) | ✅ | 20 cases |
 | `new-requirement.sh` scaffolding cases | ✅ | 14 cases |
@@ -49,7 +49,8 @@ spending: `--dry-run`. Compare to committed scores: `--compare`; accept new scor
 | Hidden-test validity (fail on unsolved repo, pass on reference solution) | ✅ | needs local `node_modules`; skips otherwise |
 | Pipeline self-test with a stand-in `claude` (oracle / null / reckless) | ✅ | 15 cases; proves layers 2–3 plumbing with no model |
 | Bugs found by the above fixed (gate bypasses, REQ-009 octal, backslash goals, org-validate) | ✅ | commit `d90642b`; all `known_gap` flags removed |
-| Layer-1 baseline recorded | ✅ | `evals/baselines/layer1.json`, 190 cases |
+| Gate/contract scripts never fail open when `irreversible-cmd.sh` isn't vendored beside them | ✅ | commit `d517672`; found while reviewing docs, Copilot vendoring lists updated |
+| Layer-1 baseline recorded | ⚠️ | `evals/baselines/layer1.json` has 190 cases; 4 added since — run `--update-baseline` |
 
 ### Layer 2 — one agent/skill, one artifact (live)
 

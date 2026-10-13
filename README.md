@@ -1,6 +1,6 @@
 # se-harness
 
-![se-harness — bootstrap an AI-agentic SDLC around any project: 3 hook-enforced approval gates, 11 SDLC agents, Claude Code + Copilot CLI](./docs/assets/social-preview.png)
+![se-harness — bootstrap an AI-agentic SDLC around any project: 3 hook-enforced approval gates, 12 SDLC agents, Claude Code + Copilot CLI](./docs/assets/social-preview.png)
 
 **An AI-agentic SDLC harness you can bootstrap around any software project — new or
 existing, any stack, from a single repo to a multi-repo product. AI agents do the work;
@@ -56,7 +56,10 @@ plugin marketplace.
   stories → design → parallel implementation in isolated worktrees → unit/integration/e2e
   tests → PR → deploy. Three gates (requirement, PR evidence, deploy) are blocked by a
   `PreToolUse` hook until you approve — exit-2 block on Claude Code, `permissionDecision`
-  deny on Copilot.
+  deny on Copilot. The hook reads a command the way a shell does (`git -C . push`,
+  `sudo git push`, `bash -c 'git push'`, `gh api …/pulls`, `kubectl apply`, `npm publish` are
+  all caught; a commit message that merely mentions `git push` is not), and only a requirement's
+  frontmatter `status:` can unlock it.
 - **A 12-agent SDLC roster** — architect, story-writer, backend/frontend implementers,
   db-engineer, unit + integration testers, e2e planner/generator/healer, release-manager, and
   a workspace-orchestrator for multi-component requirements (used only when one applies).
@@ -95,6 +98,14 @@ plugin marketplace.
   generated blocks.
 - **Exportable** — `/harness-export` compiles the agents and hooks for Copilot and Cursor
   (Codex reads `AGENTS.md` natively).
+- **Upgrade-safe** — `/harness-update` pulls the new plugin version (marketplace first, GitHub
+  fallback) and migrates your project's `.harness/` data: one backup, whole-run rollback, chained
+  schema migrations, and hand-edited generated blocks are proposed, never silently overwritten.
+- **Regression-tested prompts, not just scripts** — [`evals/`](./evals/README.md) holds 194
+  deterministic offline cases (gates, hooks, scaffolding, plus checks of the eval machinery itself) and model-backed evals of the agents, skills, and
+  the full goal loop (hidden acceptance tests, mutation scoring, a "tries to approve its own
+  requirement" pressure scenario). Local and manual by design — see
+  [`docs/evals-plan.md`](./docs/evals-plan.md).
 - **No telemetry, ever** — see [PRIVACY.md](./PRIVACY.md).
 
 ## Install
@@ -112,6 +123,10 @@ plugin marketplace.
 copilot plugin marketplace add rbhattarai/se-harness
 copilot plugin install se-harness-copilot@se-harness
 ```
+
+**Update later:** `/harness-update` (Claude Code) or `copilot harness-update` — updates the
+plugin, then migrates this project's `.harness/` data; safe to re-run around the restart it
+needs.
 
 **Plugin installs restricted in your org?** Both setup guides cover the alternatives —
 internal GitHub Enterprise import (preferred, updates stay pullable) and offline
@@ -260,11 +275,18 @@ single-unit goals to try first: [`docs/demo/README.md`](./docs/demo/README.md#pa
 
 ## Status
 
-**[v1.0.0](https://github.com/rbhattarai/se-harness/releases/tag/v1.0.0)** tagged six
-commands and a 199-test suite; `main` has since grown to **ten commands and a 331-test
-suite** (not yet re-tagged) — `/harness-mem-graphify`, `/harness-methodology-openspec`, and
-`/harness-mem-wiki`, plus the workspace-wide loop now shared by
-`/harness-init`/`-bootstrap`/`-sync`/`-export`.
+**[v1.1.0](https://github.com/rbhattarai/se-harness/releases/tag/v1.1.0)** is the current
+release: ten commands, a 12-agent roster, a 332-test suite in CI, and a separate local eval suite
+(below). Since v1.0.0 (six commands, 199 tests) it added `/harness-mem-graphify`,
+`/harness-methodology-openspec`, `/harness-mem-wiki` (now any-format NAS documents via
+MarkItDown), the workspace-wide loop shared by `/harness-init`/`-bootstrap`/`-sync`/`-export`,
+and `/harness-update` with schema migrations and hand-edit-safe generated blocks — and made the
+plugin **self-contained** (`templates/` and `registry/` now ship inside `plugins/se-harness/`;
+before, a marketplace install lacked them and some scripts failed).
+`main` is ahead of the tag by the eval framework and the gate hardening it drove (not yet
+released): the HITL gate now classifies commands like a shell instead of matching a substring,
+which closed 12 bypass shapes and 5 false positives, plus `new-requirement.sh` could not create
+REQ-009 (octal arithmetic) and mangled backslashes in goals.
 **Workspace-level orchestration** — single repo → mono-repo → modulith → multi-repo → hybrid,
 one goal loop that coordinates across repos, with the orchestration overhead scaling to zero
 for the common single/few-component case — is **complete**: see
@@ -289,6 +311,8 @@ The **structural-memory** (CodeGraph vs. codebase-memory-mcp vs. Graphify) and *
 design — pick one, defer, or mix per project — but Graphify and OpenSpec are now the
 reference implementations with real `/harness-goal` integration; the other four install but
 don't change `/harness-goal`'s behavior yet. Also on the roadmap: a web profile-builder.
+**Evals:** layer 1 (no model, free) and layer 2 are done and passing; layer 3 has only run its
+pressure scenario live — status and backlog in [`docs/evals-plan.md`](./docs/evals-plan.md).
 Full detail, including what's still an open gap: [development history](./docs/development-history.md) ·
 plan and research log in [`docs/brainstorm.md`](./docs/brainstorm.md).
 
@@ -298,24 +322,30 @@ plan and research log in [`docs/brainstorm.md`](./docs/brainstorm.md).
 .claude-plugin/marketplace.json      # this repo IS a marketplace — read by Claude Code AND Copilot CLI
 .github/plugin/marketplace.json      # GENERATED mirror (Copilot canonical location) — never edit
 plugins/se-harness/                  # the harness plugin (source of truth)
-  commands/                          # the nine /harness-* commands
+  commands/                          # the ten /harness-* commands
   agents/                            # 12-agent SDLC roster (narrow tools per agent)
   skills/                            # context-injector, stack-detector, memory-keeper, wiki-*,
                                       # requirement-grill, coding-discipline
-  hooks/hooks.json + scripts/        # gate-check, org-validate, memory-log, contract-check,
-                                      # workspace-clone/-validate/-scan-evidence, splicer
+  hooks/hooks.json + scripts/        # gate-check (+ irreversible-cmd.sh classifier), org-validate,
+                                      # memory-log, contract-check, workspace-clone/-validate/
+                                      # -scan-evidence, render-block (splicer), migrate (+ migrations/),
+                                      # doc-extract (+ doc-registry/), new-requirement
 plugins/se-harness-copilot/          # Copilot CLI variant — GENERATED by build-copilot-plugin.sh
 plugins/se-harness/registry/recommendations.json  # profile → plugin mappings (recommender data; honest gaps)
 plugins/se-harness/templates/             # profile/env/requirement/AGENTS/CLAUDE/mcp/workspace/
                                       # workspace-plan + memory seeds
-docs/                                # setup guides, interop matrix, platform schema notes, demo guide
-tests/                               # 331-test suite run in CI
+docs/                                # setup guides, interop matrix, platform schema notes, demo guide,
+                                      # eval plan/status, development history
+tests/                               # 332-test suite run in CI
+evals/                               # local, manual regression evals for prompts + hooks (see evals/README.md)
 ```
 
 ## Contributing / publishing
 
 Edit only `plugins/se-harness/` (the Claude-first source of truth); regenerate the Copilot
 variant and marketplace mirror with `bash plugins/se-harness/scripts/build-copilot-plugin.sh`.
+Touched a prompt or a hook script? Run `bash evals/run-evals.sh` (free, ~90 s) — nothing runs it for
+you; which layer to run after which edit is in [`docs/evals-plan.md`](./docs/evals-plan.md).
 Full update/extension and marketplace-publishing instructions:
 [Claude guide Parts 5–6](./docs/setup-guide-claude.md) ·
 [Copilot guide Parts 10–11](./docs/setup-guide-copilot.md).

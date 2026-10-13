@@ -127,9 +127,27 @@ genuinely can't move there.
 | 6. Video/NAS ingestion deferred to v2 | encoded in `templates/profile.yaml` (`sources.deferred`) |
 | 7. Org libraries as generation target (compose-first) + machine-checkable validation | `templates/AGENTS.md.tmpl` org section + `scripts/org-validate.sh` (PostToolUse hook) |
 
+## v1.1.0 — upgrades, any-format documents, a self-contained plugin
+
+- **`/harness-update`** + `migrate.sh` + `scripts/migrations/`: marketplace-first update with GitHub
+  fallback, then chained N-to-N+1 schema migrations with one backup, whole-run rollback, a dirty-tree
+  guard and `--dry-run`/`--status`/`--force-blocks`. `render-block.sh` records a hash baseline in each
+  generated block's END marker, so hand-edited blocks are never overwritten (exit 3, `.seaa.proposed`).
+- **Any-format NAS documents** in `/harness-mem-wiki` via `doc-extract.sh` and `doc-registry/`
+  (MarkItDown default; pandoc/LibreOffice fallbacks; scanned PDFs/images flagged, never OCR'd; ask once
+  per missing reader).
+- **Self-contained plugin**: a marketplace install copies only `plugins/se-harness/`, so the repo-root
+  `templates/` and `registry/` never reached users and scripts failed with "templates dir not found".
+  Both moved inside the plugin; a test now simulates a cache install and checks every
+  `${CLAUDE_PLUGIN_ROOT}/<path>` a command names exists there.
+- Registry parsing hardened against CRLF; `.tsv` and test fixtures pinned to LF.
+
 ## Evals (2026-10)
 
 Regression evals for the prompts and gating hooks live in [`evals/`](../evals/README.md); plan, status
-and backlog in [`evals-plan.md`](./evals-plan.md). Layer 1 (190 deterministic cases) found and fixed 32
-script bugs (gate bypasses, REQ-009 octal, backslash goals, org-validate over-matching); layers 2–3
-exist and have been smoke-run live (layer 2 fully, layer 3 pressure scenario only).
+and backlog in [`evals-plan.md`](./evals-plan.md). Layer 1 (194 deterministic cases) found and fixed 32
+script bugs: gate bypasses and false positives (a shell-aware classifier, `irreversible-cmd.sh`,
+replaced a substring regex), REQ-009 unreachable (zero-padded numbers read as octal), backslashes
+mangled in goals, `org-validate.sh` over-matching. A follow-up fix made both gate scripts fall back to
+the old match, never fail open, when the helper isn't vendored next to them. Layer 2 has run live
+(8 cases passing, 1 sample each); layer 3 has run only its pressure scenario.
