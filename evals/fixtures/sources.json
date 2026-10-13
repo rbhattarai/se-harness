@@ -1,0 +1,13 @@
+{
+  "_comment": "Pinned source snapshots. `git archive <sha>` of a local checkout (no network); override the checkout path with EVAL_SRC_<NAME> (upper-case, dashes to underscores). Only tracked files at <sha> are used, so anything untracked in the live repo (.harness/, local settings, node_modules) never leaks in. `remove` is applied after extraction.",
+  "demo-loan-app": {
+    "path": "../demo-loan-app",
+    "sha": "06b9372831946e18d05dd199da3346f45e3d69ee",
+    "remove": [".claude", ".mcp.json", "loan-webapp/src/certs", "*.pem", ".env*"]
+  },
+  "finance-portal": {
+    "path": "../finance-portal",
+    "sha": "e737e80486d668c65c9570d9c689549853da7e4c",
+    "remove": [".claude", "assets", "generated-images", "docs/*.pdf", "**/*.png", "**/*.gif", "**/*.jpg", "**/*.ico", "**/package-lock.json", "k8s/secrets*", ".env*"]
+  }
+}

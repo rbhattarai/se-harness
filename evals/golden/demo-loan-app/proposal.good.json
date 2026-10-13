@@ -1,0 +1,20 @@
+{
+  "languages": [
+    "typescript",
+    "node"
+  ],
+  "frameworks": [
+    "express",
+    "ejs"
+  ],
+  "databases": [],
+  "messaging": [],
+  "ci": "",
+  "containers": "docker-compose",
+  "cloud": "",
+  "topology": "mono-repo",
+  "units": [
+    "loan-webapp",
+    "lending-webapp"
+  ]
+}

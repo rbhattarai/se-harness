@@ -6,3 +6,6 @@
 *.tsv text eol=lf
 # Frozen fixtures must stay byte-stable so hashes and migrations behave the same on every checkout.
 tests/fixtures/** text eol=lf
+
+# Eval datasets, goldens and hidden tests are compared byte-for-byte / by regex; keep them LF everywhere.
+evals/** text eol=lf

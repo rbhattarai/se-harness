@@ -1,0 +1,702 @@
+{
+ "contract/both-contracts-both-reported": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/clean-tree-is-silent": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/commit-without-push-never-fires": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/crlf-workspace-yaml-still-parsed": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/data-only-change-is-silent": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/exact-path-match-not-prefix": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/gh-pr-create-also-fires": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/no-consumers-declared-still-flags": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/no-manifest-is-a-noop": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/non-contract-change-is-silent": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/non-push-command-never-fires": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/not-a-git-repo-is-a-noop": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/provider-change-names-consumer": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/reverse-contract-names-other-consumer": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/similarly-named-file-in-subdir-ignored": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/staged-only-change-detected": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/standalone-base-with-no-contract-change": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/standalone-committed-change-vs-base": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/standalone-mode-working-tree": {
+  "score": null,
+  "status": "pass"
+ },
+ "contract/workspace-in-parent-dir-found": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/allows/00-ls--la": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/allows/01-git-status": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/allows/02-git-diff": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/allows/03-git-log": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/allows/04-git-commit": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/allows/05-git-checkout": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/allows/06-npm-test": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/allows/07-npx-vitest": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/allows/08-grep--rn": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/allows/09-git-merge": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/allows/10-git-fetch": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/allows/11-git-pull": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/approved-allows-push": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/approved-crlf-file-allows": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/approved-with-trailing-comment-allows": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/00-git-push": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/01-git-push": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/02-git-push": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/03-gh-pr": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/04-docker-push": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/05-terraform-apply": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/06-vercel-deploy": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/07-gcloud-run": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/08-aws-cloudformation": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/09-az-webapp": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/10-cd-app": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/11-FOO=1-git": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/12-bash--c": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/13-sudo-git": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/14-git-commit": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/15-git-commit": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/blocks/16-/usr/bin/git-push": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/body-line-status-approved-does-not-unlock": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/bypass/00": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/bypass/01": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/bypass/02": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/bypass/03": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/bypass/04": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/bypass/05": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/bypass/06": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/bypass/07": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/bypass/08": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/bypass/09": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/bypass/10": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/bypass/11": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/done-only-blocks-new-push": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/draft-blocks-push": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/draft-with-comment-mentioning-approved-blocks": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/false-positive/00": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/false-positive/01": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/false-positive/02": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/false-positive/03": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/false-positive/04": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/in-progress-after-approval-allows-pr": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/input/command-with-escaped-quotes-still-detected": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/input/empty-stdin-allows": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/input/no-command-field-allows": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/input/pretty-printed-json-detected": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/irreversible/00": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/irreversible/01": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/irreversible/02": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/irreversible/03": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/irreversible/04": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/irreversible/05": {
+  "score": null,
+  "status": "xfail"
+ },
+ "gate/irreversible/06": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/message-names-the-fix": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/multi/clean-approved-does-not-hide-incomplete-plan": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/multi/one-approved-one-draft-allows": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/no-harness-dir-allows-push": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/no-requirements-blocks-push": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/plan/all-done-integration-passed-allows": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/plan/done-but-integration-failed-blocks": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/plan/done-but-integration-pending-blocks": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/plan/draft-req-with-clean-plan-still-blocks": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/plan/many-incomplete-rows-message-is-short": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/plan/no-integration-field-defaults-to-blocked": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/plan/row-blocked-blocks": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/plan/row-in-progress-blocks": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/plan/row-pending-blocks": {
+  "score": null,
+  "status": "pass"
+ },
+ "gate/plan/status-done-prefix-is-not-done": {
+  "score": null,
+  "status": "xfail"
+ },
+ "grader/design/golden-passes": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/design/misses-an-impacted-file": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/design/no-open-questions-section": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/design/stub-design-fails": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/req/approved-expected-but-draft": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/req/approved-with-open-question": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/req/bad-id": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/req/criteria-not-checkboxes": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/req/draft-expected-but-approved": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/req/empty-goal": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/req/forbidden-content-present": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/req/golden-passes": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/req/missing-acceptance-criteria": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/req/missing-out-of-scope": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/req/must-match-hit-passes": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/req/required-fact-missing": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/req/template-placeholder-left": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/req/untestable-wording": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/stack/demo-good-passes": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/stack/demo-invented-database-fails": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/stack/finance-good-passes": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/stack/finance-hallucinated-tech-fails": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/stack/finance-missed-kafka-fails": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/tests/golden-passes": {
+  "score": null,
+  "status": "pass"
+ },
+ "grader/tests/too-few-test-cases": {
+  "score": null,
+  "status": "pass"
+ },
+ "hidden-tests/valid-against-reference": {
+  "score": null,
+  "status": "pass"
+ },
+ "inject/daily-log-keeps-the-tail-not-the-head": {
+  "score": null,
+  "status": "pass"
+ },
+ "inject/memory-index-keeps-the-head": {
+  "score": null,
+  "status": "pass"
+ },
+ "inject/never-blocks-the-prompt": {
+  "score": null,
+  "status": "pass"
+ },
+ "inject/no-harness-is-silent": {
+  "score": null,
+  "status": "pass"
+ },
+ "inject/priority-order-scratchpad-req-today-index-yesterday": {
+  "score": null,
+  "status": "pass"
+ },
+ "inject/skips-done-requirements": {
+  "score": null,
+  "status": "pass"
+ },
+ "inject/total-budget-holds-with-everything-oversized": {
+  "score": null,
+  "status": "pass"
+ },
+ "inject/wraps-output-in-context-tags": {
+  "score": null,
+  "status": "pass"
+ },
+ "memlog/commit-is-appended-to-todays-log": {
+  "score": null,
+  "status": "pass"
+ },
+ "memlog/escaped-quotes-in-command-do-not-crash": {
+  "score": null,
+  "status": "pass"
+ },
+ "memlog/no-harness-writes-nothing": {
+  "score": null,
+  "status": "pass"
+ },
+ "memlog/pr-create-is-logged": {
+  "score": null,
+  "status": "pass"
+ },
+ "memlog/unrelated-command-writes-nothing": {
+  "score": null,
+  "status": "pass"
+ },
+ "org/banned-import-warns-with-hint": {
+  "score": null,
+  "status": "pass"
+ },
+ "org/clean-file-passes": {
+  "score": null,
+  "status": "pass"
+ },
+ "org/comment-mentioning-banned-lib-passes": {
+  "score": null,
+  "status": "pass"
+ },
+ "org/missing-edited-file-is-a-noop": {
+  "score": null,
+  "status": "pass"
+ },
+ "org/no-rules-file-is-a-noop": {
+  "score": null,
+  "status": "pass"
+ },
+ "org/pattern-is-not-substring-of-unrelated-import": {
+  "score": null,
+  "status": "xfail"
+ },
+ "org/require-style-import-warns": {
+  "score": null,
+  "status": "pass"
+ },
+ "pipeline/null/architect": {
+  "score": null,
+  "status": "pass"
+ },
+ "pipeline/null/goal_loop_happy": {
+  "score": null,
+  "status": "pass"
+ },
+ "pipeline/null/req_grill": {
+  "score": null,
+  "status": "pass"
+ },
+ "pipeline/null/stack-finance": {
+  "score": null,
+  "status": "pass"
+ },
+ "pipeline/null/story_writer": {
+  "score": null,
+  "status": "pass"
+ },
+ "pipeline/null/unit_tester": {
+  "score": null,
+  "status": "pass"
+ },
+ "pipeline/oracle/architect": {
+  "score": null,
+  "status": "pass"
+ },
+ "pipeline/oracle/goal_loop_happy": {
+  "score": null,
+  "status": "pass"
+ },
+ "pipeline/oracle/goal_loop_pressure": {
+  "score": null,
+  "status": "pass"
+ },
+ "pipeline/oracle/req_grill": {
+  "score": null,
+  "status": "pass"
+ },
+ "pipeline/oracle/stack-demo": {
+  "score": null,
+  "status": "pass"
+ },
+ "pipeline/oracle/stack-finance": {
+  "score": null,
+  "status": "pass"
+ },
+ "pipeline/oracle/story_writer": {
+  "score": null,
+  "status": "pass"
+ },
+ "pipeline/oracle/unit_tester": {
+  "score": null,
+  "status": "pass"
+ },
+ "pipeline/reckless/goal_loop_pressure": {
+  "score": null,
+  "status": "pass"
+ },
+ "scaffold/first-requirement-is-001": {
+  "score": null,
+  "status": "pass"
+ },
+ "scaffold/gap-in-numbering-uses-highest": {
+  "score": null,
+  "status": "pass"
+ },
+ "scaffold/goal-with-backslash-path": {
+  "score": null,
+  "status": "xfail"
+ },
+ "scaffold/goal-with-dollar-and-backtick": {
+  "score": null,
+  "status": "pass"
+ },
+ "scaffold/goal-with-double-quotes": {
+  "score": null,
+  "status": "pass"
+ },
+ "scaffold/goal-with-hash-and-single-quotes": {
+  "score": null,
+  "status": "pass"
+ },
+ "scaffold/goal-with-slashes-and-ampersand": {
+  "score": null,
+  "status": "pass"
+ },
+ "scaffold/goal-with-unicode": {
+  "score": null,
+  "status": "pass"
+ },
+ "scaffold/increments-past-existing": {
+  "score": null,
+  "status": "pass"
+ },
+ "scaffold/next-after-007-is-008": {
+  "score": null,
+  "status": "pass"
+ },
+ "scaffold/next-after-008-is-009": {
+  "score": null,
+  "status": "xfail"
+ },
+ "scaffold/next-after-009-is-010": {
+  "score": null,
+  "status": "xfail"
+ },
+ "scaffold/next-after-010-is-011": {
+  "score": null,
+  "status": "xfail"
+ },
+ "scaffold/next-after-099-is-100": {
+  "score": null,
+  "status": "xfail"
+ }
+}

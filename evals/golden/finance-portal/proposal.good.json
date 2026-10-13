@@ -1,0 +1,26 @@
+{
+  "languages": [
+    "Java 21",
+    "JavaScript"
+  ],
+  "frameworks": [
+    "Spring Boot 3.3",
+    "React 19"
+  ],
+  "databases": [
+    "PostgreSQL 15",
+    "Redis 7"
+  ],
+  "messaging": [
+    "Kafka"
+  ],
+  "ci": "github-actions",
+  "containers": "docker-compose",
+  "cloud": "gcp",
+  "topology": "mono-repo",
+  "units": [
+    "finance-portal-backend",
+    "finance-portal-frontend",
+    "finance-portal-news"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "_source": "Distilled from finance-portal's user-confirmed .harness/profile.yaml and workspace.yaml (public facts only). Each `required` entry is an alias group: any alias, case-insensitive substring, satisfies it. `forbidden` tokens are technologies the repo does NOT use - naming one is a hallucination.",
+  "fields": {
+    "languages":  {"required": [["java"], ["javascript", "js"]], "forbidden": ["python", "ruby", "php", "c#", "rust"]},
+    "frameworks": {"required": [["spring"], ["react"]], "forbidden": ["angular", "vue", "django", "express", "laravel", "rails"]},
+    "databases":  {"required": [["postgres"], ["redis"]], "forbidden": ["mongodb", "mysql", "oracle", "cassandra"]},
+    "messaging":  {"required": [["kafka"]], "forbidden": ["rabbitmq", "activemq", "sqs"]},
+    "ci":         {"required": [["github"]], "forbidden": ["jenkins", "gitlab", "circleci"]},
+    "containers": {"required": [["docker"]], "forbidden": []},
+    "cloud":      {"required": [["gcp", "google", "gke"]], "forbidden": ["aws", "azure"]},
+    "topology":   {"required": [["mono"]], "forbidden": ["multi-repo"]},
+    "units":      {"required": [["backend"], ["frontend"], ["news"]], "forbidden": []}
+  }
+}

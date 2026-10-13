@@ -44,3 +44,9 @@ playwright-report/
 # OS cruft
 .DS_Store
 Thumbs.db
+
+# eval harness: pinned fixture snapshots and run output are local-only
+/evals/fixtures/.cache/
+/evals/results/
+__pycache__/
+*.pyc

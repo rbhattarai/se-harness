@@ -1,0 +1,13 @@
+{
+  "_source": "Distilled from demo-loan-app's .harness/profile.yaml: two Express+EJS TypeScript apps over a flat-file JSON store, no database, no messaging, no cloud.",
+  "fields": {
+    "languages":  {"required": [["typescript"]], "forbidden": ["python", "java ", "golang", "ruby", "php"]},
+    "frameworks": {"required": [["express"], ["ejs"]], "forbidden": ["react", "angular", "vue", "nestjs", "next"]},
+    "databases":  {"required": [], "forbidden": ["postgres", "mysql", "mongodb", "redis", "sqlite", "dynamodb"]},
+    "messaging":  {"required": [], "forbidden": ["kafka", "rabbitmq", "sqs", "nats"]},
+    "containers": {"required": [["docker"]], "forbidden": []},
+    "cloud":      {"required": [], "forbidden": ["aws", "azure", "gcp", "vercel"]},
+    "topology":   {"required": [["mono"]], "forbidden": ["multi-repo"]},
+    "units":      {"required": [["loan-webapp"], ["lending-webapp"]], "forbidden": []}
+  }
+}
