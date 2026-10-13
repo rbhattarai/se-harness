@@ -259,7 +259,7 @@ single-unit goals to try first: [`docs/demo/README.md`](./docs/demo/README.md#pa
 ## Status
 
 **[v1.0.0](https://github.com/rbhattarai/se-harness/releases/tag/v1.0.0)** tagged six
-commands and a 199-test suite; `main` has since grown to **ten commands and a 321-test
+commands and a 199-test suite; `main` has since grown to **ten commands and a 322-test
 suite** (not yet re-tagged) — `/harness-mem-graphify`, `/harness-methodology-openspec`, and
 `/harness-mem-wiki`, plus the workspace-wide loop now shared by
 `/harness-init`/`-bootstrap`/`-sync`/`-export`.
@@ -307,7 +307,7 @@ registry/recommendations.json        # profile → plugin mappings (recommender 
 templates/                           # profile/env/requirement/AGENTS/CLAUDE/mcp/workspace/
                                       # workspace-plan + memory seeds
 docs/                                # setup guides, interop matrix, platform schema notes, demo guide
-tests/                               # 321-test suite run in CI
+tests/                               # 322-test suite run in CI
 ```
 
 ## Contributing / publishing

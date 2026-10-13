@@ -1,3 +1,8 @@
 # Shell scripts must always check out with LF endings — CRLF breaks bash
 # (seen: `bash -n` failing on build-copilot-plugin.sh after a Windows edit).
 *.sh text eol=lf
+
+# Registry tables are parsed with awk on TAB columns; a CR at the end of a row corrupts the last column.
+*.tsv text eol=lf
+# Frozen fixtures must stay byte-stable so hashes and migrations behave the same on every checkout.
+tests/fixtures/** text eol=lf

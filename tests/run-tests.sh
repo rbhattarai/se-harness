@@ -691,6 +691,12 @@ echo "spaced" > "$DX_T/tree/we ird 'name'.md"
 check "doc-extract: awkward file names are quoted safely" test "$(bash "$DX" --extract "$DX_T/tree/we ird 'name'.md")" = spaced
 rm -rf "$DX_T"
 unset DOC_REGISTRY_DIR DX_T DX_PAT
+DX_CR=$(mktemp -d 2>/dev/null || mktemp -d -t seharness)
+printf 'md\ttext\tnative\r\n' > "$DX_CR/formats.tsv"
+printf 'native\ttrue\tcat {in}\t-\tplain\r\n' > "$DX_CR/extractors.tsv"
+echo crlf-ok > "$DX_CR/t.md"
+check "doc-extract: CRLF-terminated registry rows still resolve" test "$(DOC_REGISTRY_DIR=$DX_CR bash "$DX" --extract "$DX_CR/t.md")" = crlf-ok
+rm -rf "$DX_CR"
 
 # command wiring
 MW=plugins/se-harness/commands/harness-mem-wiki.md

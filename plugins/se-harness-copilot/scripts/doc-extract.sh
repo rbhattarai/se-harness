@@ -63,7 +63,7 @@ reg_files() { # $1 = formats|extractors → existing registry files, extra first
 lookup() { # $1 = formats|extractors, $2 = key
   local f row
   while IFS= read -r f; do
-    row=$(awk -F'\t' -v k="$2" '/^#/ || NF==0 {next} $1==k {print; exit}' "$f")
+    row=$(tr -d '\r' < "$f" | awk -F'\t' -v k="$2" '/^#/ || NF==0 {next} $1==k {print; exit}')
     [ -n "$row" ] && { printf '%s\n' "$row"; return 0; }
   done < <(reg_files "$1")
   return 1
