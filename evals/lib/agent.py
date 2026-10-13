@@ -190,7 +190,7 @@ def judge(material: str, questions: list[str], *, model: str | None, budget: flo
     prompt = JUDGE_PROMPT.format(material=material[:60000], questions=qs)
     if dry_run:
         return [(q, True, "dry-run") for q in questions], 0.0
-    cmd = [*claude_bin(), "-p", prompt, "--output-format", "json", "--setting-sources", "project",
+    cmd = [*claude_bin(), "-p", "--output-format", "json", "--setting-sources", "project",
            "--strict-mcp-config", "--permission-mode", "dontAsk", "--max-budget-usd", f"{budget:.2f}",
            "--no-session-persistence"]
     if model:
@@ -198,7 +198,7 @@ def judge(material: str, questions: list[str], *, model: str | None, budget: flo
     import tempfile
     with tempfile.TemporaryDirectory(prefix="se-judge-") as td:
         p = subprocess.run(cmd, cwd=td, capture_output=True, text=True, encoding="utf-8", errors="replace",
-                           timeout=300, stdin=subprocess.DEVNULL)
+                           timeout=300, input=prompt)       # via stdin: the material can exceed the Windows argv limit
     cost = 0.0
     try:
         outer = json.loads(p.stdout)

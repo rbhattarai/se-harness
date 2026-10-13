@@ -178,12 +178,13 @@ def test_traceability(test_cases: str, req: str) -> list[Check]:
     """One test case per acceptance criterion: each criterion's key tokens must appear in a TC."""
     c: list[Check] = []
     crit = criteria(req)
-    tcs = re.findall(r"^##\s+TC-\d+", test_cases, re.M)
+    tcs = set(re.findall(r"^#{2,4}\s+.*?\bTC-(\d+)", test_cases, re.M))      # "## TC-3" and "## REQ-001-TC-03"
     c.append(Check("tc.at_least_one_per_criterion", len(tcs) >= len(crit),
                    f"{len(tcs)} test cases for {len(crit)} criteria"))
     for i, item in enumerate(crit, 1):
         toks = [t for t in re.findall(r"`([^`]{3,})`", item)][:3]
-        hit = bool(toks) and any(t in test_cases for t in toks) or not toks
+        by_ref = bool(re.search(rf"\bAC[- ]?0*{i}\b|criterion[- ]0*{i}\b", test_cases, re.I))
+        hit = by_ref or not toks or any(t in test_cases for t in toks)
         c.append(Check(f"tc.covers_criterion_{i}", hit, f"no TC mentions {toks}"))
     return c
 
