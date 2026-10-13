@@ -184,7 +184,7 @@ The workspace manifest, contract-check, and cross-repo reading all assume siblin
 
 ### 3.2 The workspace manifest
 
-Create `acme-loan-platform/workspace.yaml` from `templates/workspace.yaml` — topology, shared org
+Create `acme-loan-platform/workspace.yaml` from the plugin's `templates/workspace.yaml` — topology, shared org
 context, and the **contracts registry** that powers deterministic cross-repo impact checks.
 The full acme-loan-platform example (units, `shared.org` internal libraries, `jira_project`, and a
 `contracts:` stanza with `provider`/`consumers`) is in the
@@ -193,7 +193,7 @@ Two rules: keep the `contracts:` stanza shape exactly as templated (it's machine
 `contract-check.sh`), and commit the manifest to a small meta-repo so teammates get it by
 cloning. Need component granularity finer than one unit per repo (a monorepo or modulith unit)?
 `workspace.yaml` supports an optional, additive `schemaVersion: 2` block for that — see the
-Copilot guide's note at the end of its Part 3, and `templates/workspace.yaml`'s commented
+Copilot guide's note at the end of its Part 3, and the plugin's `templates/workspace.yaml`'s commented
 example. It's opt-in; `contracts:`/`contract-check.sh` are unaffected either way.
 
 ### 3.3 Per-repo bootstrap

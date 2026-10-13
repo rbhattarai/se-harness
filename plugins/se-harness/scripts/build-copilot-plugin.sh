@@ -105,15 +105,15 @@ done
 
 # --- commands: rewrite plugin-root paths for the Copilot context ---
 #   scripts   → tools/harness/           (repo-vendored per setup guide 4.7)
-#   templates → ../se-harness/templates/ (framework repo cloned as sibling per guide Part 2)
-#   registry  → ../se-harness/registry/
+#   templates → ../se-harness/plugins/se-harness/templates/ (framework repo cloned as sibling per guide Part 2)
+#   registry  → ../se-harness/plugins/se-harness/registry/
 COUNT_C=0
 for f in "$SRC"/commands/*.md; do
   cname=$(basename "$f")
   sed -e 's|\${CLAUDE_PLUGIN_ROOT}/\.\./\.\./plugins/se-harness-copilot/scripts/|../se-harness/plugins/se-harness-copilot/scripts/|g' \
       -e 's|\${CLAUDE_PLUGIN_ROOT}/scripts/|tools/harness/|g' \
-      -e 's|\${CLAUDE_PLUGIN_ROOT}/\.\./\.\./templates/|../se-harness/templates/|g' \
-      -e 's|\${CLAUDE_PLUGIN_ROOT}/\.\./\.\./registry/|../se-harness/registry/|g' \
+      -e 's|\${CLAUDE_PLUGIN_ROOT}/templates/|../se-harness/plugins/se-harness/templates/|g' \
+      -e 's|\${CLAUDE_PLUGIN_ROOT}/registry/|../se-harness/plugins/se-harness/registry/|g' \
       "$f" > "$OUT/commands/$cname"
 
   # Also emit as a skill directory (Copilot commands are skill-shaped: SKILL.md registered
@@ -143,7 +143,7 @@ Vendor these into each repo the harness manages (commands reference `tools/harne
 
     mkdir -p tools/harness && cp <plugin-dir>/scripts/*.sh tools/harness/
 
-Enforcement hooks install at repo level: copy `templates/copilot-hooks.json` from the
+Enforcement hooks install at repo level: copy `plugins/se-harness/templates/copilot-hooks.json` from the
 framework repo to `.github/hooks/se-harness.json` (see docs/setup-guide-copilot.md 4.7).
 EOF
 

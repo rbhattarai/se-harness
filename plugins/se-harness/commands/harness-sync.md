@@ -52,7 +52,7 @@ workspace/topology markers; new private-registry scopes or internal imports (org
 lint-config changes. Only *differences* matter here — don't re-litigate settled values.
 
 **B. Recommendation drift (registry or profile changed).** Re-run the Step-1 mapping from
-`/harness-bootstrap` (profile × `registry/recommendations.json`) and diff against the lockfile:
+`/harness-bootstrap` (profile × `${CLAUDE_PLUGIN_ROOT}/registry/recommendations.json`) and diff against the lockfile:
 - newly applicable components (stack additions, registry updates) → propose
 - installed components no longer applicable (stack removals) → propose removal, never auto-remove
 - `declined` items: **stay declined** — list them in one line at the end, don't re-nag

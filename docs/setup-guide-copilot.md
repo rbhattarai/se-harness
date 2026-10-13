@@ -143,7 +143,7 @@ If policy forces offline transfer, or `copilot plugin marketplace add` is blocke
    `tools/harness/` scripts) are plain files driven by prompts — no plugin required.
 
 > One-time org customization worth doing in the internal copy: fill
-> `registry/recommendations.json`'s org-specific entries later as your team learns which
+> `plugins/se-harness/registry/recommendations.json`'s org-specific entries later as your team learns which
 > internal tools map to which stacks.
 
 ---
@@ -171,7 +171,7 @@ assume sibling checkouts (`../workspace.yaml` lookup).
 
 ## Part 3 — The workspace manifest (`workspace.yaml`)
 
-Create `acme-loan-platform/workspace.yaml` from `se-harness/templates/workspace.yaml`. This is the
+Create `acme-loan-platform/workspace.yaml` from `se-harness/plugins/se-harness/templates/workspace.yaml`. This is the
 product-level file: topology, shared org context, and the **contract registry** that powers
 cross-repo impact checking. An acme-loan-platform-shaped example:
 
@@ -223,7 +223,7 @@ get it via clone; until then it can live uncommitted in the `acme-loan-platform/
 **Finer-grained than one unit per repo?** If a unit is itself a monorepo or modulith and you need
 to model components *inside* it (not just the repo as a whole), `workspace.yaml` supports an
 optional, additive `schemaVersion: 2` block with `components:`/`relationships:` sections — see the
-commented example at the bottom of `templates/workspace.yaml` and validate it with
+commented example at the bottom of `plugins/se-harness/templates/workspace.yaml` and validate it with
 `bash se-harness/plugins/se-harness/scripts/workspace-validate.sh`. This is opt-in and only needed
 past the simple one-unit-per-repo case above; `contracts:`/`contract-check.sh` are unaffected
 either way.
@@ -306,7 +306,7 @@ by the harness; this pointer never changes).
 ### 4.5 MCP (Jira/Confluence + GitHub)
 With your firm's approval, add `.vscode/mcp.json` (or user-level MCP config) with the
 Atlassian MCP server so story-writer flows can create Jira stories/XRay test cases. Reference:
-`se-harness/templates/mcp.json.tmpl`. Secrets via environment, never in the file.
+`se-harness/plugins/se-harness/templates/mcp.json.tmpl`. Secrets via environment, never in the file.
 
 ### 4.6 The two non-code repos (lighter treatment)
 - `config`: no `.harness/` needed. Add a short hand-written `AGENTS.md` explaining the
@@ -334,7 +334,7 @@ cp ../se-harness/plugins/se-harness/scripts/{copilot-hook-adapter.sh,gate-check.
 
 # 2. Install the hook config
 mkdir -p .github/hooks
-cp ../se-harness/templates/copilot-hooks.json .github/hooks/se-harness.json
+cp ../se-harness/plugins/se-harness/templates/copilot-hooks.json .github/hooks/se-harness.json
 ```
 What you get: `preToolUse` — HITL gate (denies PR/push/deploy while no REQ is `approved`) and
 contract-check (denies push when a provided contract changed, listing consumers);

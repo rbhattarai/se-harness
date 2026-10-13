@@ -43,7 +43,7 @@ automatically. Check once, up front, instead of letting an arbitrary later step 
         (a) check their own `~/.vscode/agent-plugins/` for the install themselves (path layout
         above) and point you at it, or (b) `git clone <se-harness repo url> se-harness` right
         here as a sibling, then re-run this command — this also covers the
-        `templates/`/`registry/` references used later. Never guess at an install path.
+        `templates/` and `registry/` references used later (they live under `plugins/se-harness/` in that clone). Never guess at an install path.
 
 ## Step 1 — Detect the setup target (workspace-orchestration plan §4.1)
 Run `git rev-parse --is-inside-work-tree`.
@@ -141,12 +141,12 @@ the evidence you present.
 
 - **Either signal found** → propose **mono-repo**, list detected units (name each sibling
   directory and the manifest/marker that identified it), confirm. Create
-  `workspace.yaml` at the repo root from `templates/workspace.yaml` (units with `path:`, one
+  `workspace.yaml` at the repo root from `../se-harness/plugins/se-harness/templates/workspace.yaml` (units with `path:`, one
   per detected unit).
   - Then look for cross-unit relationships with real evidence — a unit's manifest depending on
     another unit's package name, an import crossing unit directories, a `depends_on` in a
     workspace-level compose file. Propose each as a `components:`/`relationships:` entry
-    (schemaVersion 2, additive — see `templates/workspace.yaml`'s commented example) **only
+    (schemaVersion 2, additive — see `../se-harness/plugins/se-harness/templates/workspace.yaml`'s commented example) **only
     with the evidence attached**; a relationship you can't cite stays an open question you
     mention in the report, never a written entry (§3.1 — no evidence, no relationship). Confirm
     the whole proposed list with the user before writing it; validate with
@@ -255,7 +255,7 @@ that; Step 7's memory scaffold below is unconditional and identical regardless o
 it silently, tell the user what was inherited, and skip the question below.
 
 Otherwise, ask once: offer the `memory.structural.choose_one` list from
-`registry/recommendations.json` (currently CodeGraph — two unrelated repos, disambiguate by
+`../se-harness/plugins/se-harness/registry/recommendations.json` (currently CodeGraph — two unrelated repos, disambiguate by
 URL, not name — codebase-memory-mcp, or Graphify), summarizing each option's tradeoff from the
 registry's `note` field in a sentence or two, plus an explicit **defer** choice (valid; this is
 an open bake-off, not a requirement — don't nag about it later). Record the answer:
@@ -275,30 +275,30 @@ the user isn't left wondering why nothing got indexed yet.
 ## Step 7 — Generate artifacts
 Order matters; use the exact mechanics below.
 
-1. **`.harness/profile.yaml`** — render from `../se-harness/templates/profile.yaml`
+1. **`.harness/profile.yaml`** — render from `../se-harness/plugins/se-harness/templates/profile.yaml`
    with all interview answers. Never put secrets here.
-2. **`.env.harness`** — copy `templates/env.harness.example` **only if `.env.harness` doesn't
+2. **`.env.harness`** — copy `../se-harness/plugins/se-harness/templates/env.harness.example` **only if `.env.harness` doesn't
    already exist**; leave existing files untouched. This repo-level file is for this repo's own
    secrets only (cloud-provider creds matching its `cloud:` field, anything else repo-specific)
    — it no longer carries Jira/Confluence/SharePoint/GitHub placeholders; those are org-wide,
    not per-repo, and live in a **workspace-root** `.env.harness` instead
-   (`templates/env.harness.workspace.example`), which `/harness-mem-wiki` creates and reads, not
+   (`../se-harness/plugins/se-harness/templates/env.harness.workspace.example`), which `/harness-mem-wiki` creates and reads, not
    this command. Tell the user which repo-level vars to fill for what this repo actually needs.
-3. **`.gitignore`** — append each line of `templates/gitignore.harness` that isn't already
+3. **`.gitignore`** — append each line of `../se-harness/plugins/se-harness/templates/gitignore.harness` that isn't already
    present (grep before append; create `.gitignore` if missing).
 4. **Memory scaffold** (skip any file that already exists):
    ```
-   .harness/memory/MEMORY.md        (from templates/memory/MEMORY.md)
-   .harness/memory/SCRATCHPAD.md    (from templates/memory/SCRATCHPAD.md)
+   .harness/memory/MEMORY.md        (from ../se-harness/plugins/se-harness/templates/memory/MEMORY.md)
+   .harness/memory/SCRATCHPAD.md    (from ../se-harness/plugins/se-harness/templates/memory/SCRATCHPAD.md)
    .harness/memory/daily/           (empty dir, .gitkeep)
-   .harness/memory/wiki/index.md    (from templates/memory/wiki-index.md)
-   .harness/memory/wiki/log.md      (from templates/memory/wiki-log.md)
+   .harness/memory/wiki/index.md    (from ../se-harness/plugins/se-harness/templates/memory/wiki-index.md)
+   .harness/memory/wiki/log.md      (from ../se-harness/plugins/se-harness/templates/memory/wiki-log.md)
    .harness/requirements/           (empty dir, .gitkeep)
    ```
 5. **`.harness/org-rules.txt`** — one line per banned pair from the org answers:
    `banned:<never>:use <use> (<reason>)`. Empty file if none (the org-validate hook no-ops).
 6. **AGENTS.md and CLAUDE.md** — render the *inner* content of
-   `templates/AGENTS.md.tmpl` / `templates/CLAUDE.md.tmpl` (fill every `{{placeholder}}` from
+   `../se-harness/plugins/se-harness/templates/AGENTS.md.tmpl` / `../se-harness/plugins/se-harness/templates/CLAUDE.md.tmpl` (fill every `{{placeholder}}` from
    the profile; drop sections whose data is empty; **do not include the marker lines** — the
    splice script owns them). Write each rendered block to a temp file, then:
    ```

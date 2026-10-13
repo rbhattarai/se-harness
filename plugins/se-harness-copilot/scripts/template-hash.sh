@@ -6,8 +6,13 @@
 
 set -eu
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TPL_DIR="$SCRIPT_DIR/../../../templates"
-[ -d "$TPL_DIR" ] || { echo "templates dir not found: $TPL_DIR" >&2; exit 1; }
+# Locate templates: the plugin's own dir (marketplace install / repo checkout), an explicit
+# override, or the sibling framework clone Copilot setups use (tools/harness/ -> ../se-harness).
+TPL_DIR=""
+for cand in "${SE_HARNESS_TEMPLATES:-}" "$SCRIPT_DIR/../templates" "$SCRIPT_DIR/../../../se-harness/plugins/se-harness/templates"; do
+  [ -n "$cand" ] && [ -d "$cand" ] && { TPL_DIR="$cand"; break; }
+done
+[ -n "$TPL_DIR" ] || { echo "templates dir not found (looked next to the plugin; set SE_HARNESS_TEMPLATES to override)" >&2; exit 1; }
 
 HASHER="md5sum"
 command -v md5sum >/dev/null 2>&1 || HASHER="shasum -a 256"

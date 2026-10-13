@@ -35,7 +35,7 @@ run `/harness-init` first and stop.
 
 ## Step 1 — Build the recommendation manifest
 Read `.harness/profile.yaml` (guard: must exist — run `/harness-init` first) and
-`../se-harness/registry/recommendations.json`. Map profile → components:
+`../se-harness/plugins/se-harness/registry/recommendations.json`. Map profile → components:
 
 - `methodology` → its entry (plugin or CLI install) — `se-harness` ("se-harness (built-in)" to
   the user) has a `kind: native` registry entry, nothing to install; skip it silently, no
@@ -81,7 +81,7 @@ For each selected component, by `kind`:
   component.** Same reasoning — hand off to `/harness-methodology-openspec` instead of the bare
   `npm install -g` command; it owns the gated install-plus-`openspec init` sequence and the
   lockfile record, and it's what `/harness-goal` later expects to find already set up.
-- **mcp**: render the needed entries from `templates/mcp.json.tmpl` into the project's
+- **mcp**: render the needed entries from `../se-harness/plugins/se-harness/templates/mcp.json.tmpl` into the project's
   `.mcp.json` (merge — never clobber existing servers; secrets stay `${VAR}` references
   to `.env.harness`).
 

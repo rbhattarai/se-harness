@@ -37,7 +37,7 @@ get_field() { awk -v f="$1" '/^---$/{n++; next} n==1 && $0 ~ "^"f": " {sub("^"f"
 # --- manifests: valid JSON ---
 for j in .claude-plugin/marketplace.json .github/plugin/marketplace.json \
          plugins/se-harness/.claude-plugin/plugin.json plugins/se-harness-copilot/plugin.json \
-         plugins/se-harness-copilot/hooks.json registry/recommendations.json \
+         plugins/se-harness-copilot/hooks.json plugins/se-harness/registry/recommendations.json \
          plugins/se-harness/hooks/hooks.json; do
   [ -f "$j" ] && check "valid JSON: $j" json_valid "$j"
 done
@@ -706,6 +706,39 @@ check "harness-mem-wiki: skipping a format ignores only that extension" grep -q 
 check "harness-mem-wiki: records format decisions in the manifest" grep -q 'formats: {<ext>' "$MW"
 check "harness-mem-wiki: flags scanned PDFs/images, no OCR install offered" grep -q 'OCR is out of scope' "$MW"
 check "harness-mem-wiki: supports user-supplied converters" grep -q 'registry-extra' "$MW"
+
+# --- plugin is self-contained: a marketplace install copies ONLY plugins/se-harness/ ---
+# (regression: templates/ and registry/ used to live at the repo root, so installed copies of
+#  template-hash.sh / new-requirement.sh failed and ${CLAUDE_PLUGIN_ROOT}/../../ paths dangled)
+check "plugin ships templates/ and registry/ inside its own directory" \
+  test -f plugins/se-harness/templates/AGENTS.md.tmpl -a -f plugins/se-harness/registry/recommendations.json
+check "no repo-root templates/ or registry/ left behind" test ! -e templates -a ! -e registry
+check "no \${CLAUDE_PLUGIN_ROOT}/../ escape in commands/skills/agents/hooks/scripts" \
+  bash -c "! grep -rF '\${CLAUDE_PLUGIN_ROOT}/../' plugins/se-harness --include=*.md --include=*.json --include=*.sh | grep -v 'build-copilot-plugin.sh'"
+cpr_paths_exist() {
+  local bad=0 p rel
+  while IFS= read -r p; do
+    rel="${p#\$\{CLAUDE_PLUGIN_ROOT\}/}"; rel="${rel%[.,;:)\`]}"; rel="${rel%/}"
+    [ -z "$rel" ] && continue
+    [ -e "plugins/se-harness/$rel" ] || { echo "dangling: $p"; bad=1; }
+  done < <(grep -rhoE '\$\{CLAUDE_PLUGIN_ROOT\}/[A-Za-z0-9_./-]+' plugins/se-harness/commands plugins/se-harness/skills plugins/se-harness/agents 2>/dev/null | sort -u)
+  return $bad
+}
+check "every \${CLAUDE_PLUGIN_ROOT}/<path> the commands name exists inside the plugin" cpr_paths_exist
+INST_T=$(mktemp -d 2>/dev/null || mktemp -d -t seharness)
+cp -r plugins/se-harness "$INST_T/installed"
+mkdir -p "$INST_T/proj"
+check "installed-copy: template-hash.sh works without the repo around it" \
+  bash -c "cd '$INST_T/proj' && bash '$INST_T/installed/scripts/template-hash.sh' | grep -q 'AGENTS.md.tmpl'"
+check "installed-copy: new-requirement.sh finds its template" \
+  bash -c "cd '$INST_T/proj' && bash '$INST_T/installed/scripts/new-requirement.sh' 'smoke goal' | grep -q 'REQ-001'"
+check "installed-copy: SE_HARNESS_TEMPLATES override is honored" \
+  bash -c "mv '$INST_T/installed/templates' '$INST_T/elsewhere' && cd '$INST_T/proj' && SE_HARNESS_TEMPLATES='$INST_T/elsewhere' bash '$INST_T/installed/scripts/template-hash.sh' | grep -q 'AGENTS.md.tmpl'"
+check "installed-copy: a missing templates dir is a clear error, not a crash" \
+  bash -c "cd '$INST_T/proj' && ! bash '$INST_T/installed/scripts/template-hash.sh' 2>&1 | grep -q 'AGENTS.md.tmpl'"
+rm -rf "$INST_T"
+check "copilot commands point templates at the sibling framework clone's plugin dir" \
+  bash -c "grep -rq '../se-harness/plugins/se-harness/templates/' plugins/se-harness-copilot/commands"
 
 # --- privacy invariant: plugins make no network calls (see PRIVACY.md) ---
 check "no network calls in plugin scripts" \

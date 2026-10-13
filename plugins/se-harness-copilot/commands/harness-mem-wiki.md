@@ -32,12 +32,12 @@ This command only ingests sources that are actually configured in `workspace.yam
 ## Step 2 — Credentials
 
 1. Look for a workspace-root `.env.harness`. Missing → offer to create it from
-   `templates/env.harness.workspace.example`, tell the user exactly which vars to fill for the
+   `../se-harness/plugins/se-harness/templates/env.harness.workspace.example`, tell the user exactly which vars to fill for the
    sources actually in scope this run, and **stop this run** until they confirm it's filled —
    never read a partially-filled file and guess at what's missing.
 2. If the workspace root is itself inside a git repo (`git rev-parse --is-inside-work-tree` —
    true for the mono-repo topology, false for a plain sibling-clone folder), make sure
-   `.env.harness` is in *that* repo's `.gitignore` (append from `templates/gitignore.harness`
+   `.env.harness` is in *that* repo's `.gitignore` (append from `../se-harness/plugins/se-harness/templates/gitignore.harness`
    if not already present, same mechanics `/harness-init` Step 7 uses). A sibling-clone
    workspace root that isn't a git repo at all needs no `.gitignore` — there's nothing to
    accidentally commit it to.

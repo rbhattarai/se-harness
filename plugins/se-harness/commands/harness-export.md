@@ -60,7 +60,7 @@ wire the scripts in directly:
 ```
 mkdir -p tools/harness .github/hooks
 cp ${CLAUDE_PLUGIN_ROOT}/scripts/{copilot-hook-adapter.sh,gate-check.sh,org-validate.sh,memory-log-commit.sh,contract-check.sh} tools/harness/
-cp ${CLAUDE_PLUGIN_ROOT}/../../templates/copilot-hooks.json .github/hooks/se-harness.json
+cp ${CLAUDE_PLUGIN_ROOT}/templates/copilot-hooks.json .github/hooks/se-harness.json
 ```
 Tell the user to verify the gate actually denies (payload field names differ between the
 coding agent and CLI surfaces) and that hooks do NOT run in VS Code Chat. Cursor/codex: no
