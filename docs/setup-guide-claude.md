@@ -101,8 +101,8 @@ What happens, in order:
    `scan-evidence.sh` collects manifests/lockfiles/configs (read-only, bounded), the
    `stack-detector` skill reasons over the evidence (usage beats listing), and you're asked
    to **confirm** — high-confidence findings in bulk, low-confidence ones one at a time.
-2. **Interview** — only for what can't be detected: methodology (BMAD / Spec Kit / OpenSpec /
-   none), devops/cloud targets, and the **org-context round**: company-internal libraries
+2. **Interview** — only for what can't be detected: methodology (se-harness built-in /
+   OpenSpec / Spec Kit / BMAD), devops/cloud targets, and the **org-context round**: company-internal libraries
    (with registry + purpose), preferred/mandated libraries, banned libraries ("use X never Y"),
    coding-convention sources.
 3. **Artifact generation** — everything rendered idempotently via the splicer

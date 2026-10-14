@@ -5,10 +5,6 @@
       "kind": "native",
       "note": "Displayed to the user as \"se-harness (built-in)\" — this framework's own grill -> REQ -> story -> design -> implement -> gates loop (see /harness-goal). Nothing to install, nothing for /harness-bootstrap to do for this entry — selecting it just means /harness-goal runs its own loop undelegated. The safe default for anyone who doesn't need a named external methodology."
     },
-    "none": {
-      "kind": "native",
-      "note": "Displayed as \"None\" - the user chose no named methodology. Recorded as `methodology: none` so it is a decision, not a blank: nothing is installed, /harness-bootstrap skips it, and it is not re-asked. /harness-goal behaves as for any non-OpenSpec methodology (its own gated loop); the difference from se-harness (built-in) is intent - 'none' does not adopt the REQ / story / architecture document set as the team's methodology."
-    },
     "bmad": {
       "kind": "plugin",
       "marketplace": "PabloLION/bmad-plugin",

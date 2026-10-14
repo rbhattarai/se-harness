@@ -79,6 +79,8 @@ plugin marketplace.
   implementers still do the work, `/opsx:archive` closes it out once deployed
   (`/harness-methodology-openspec` handles setup). BMAD and Spec Kit install for your own
   parallel use — honestly labeled as not yet delegated to, rather than implying parity.
+  The choice is recorded in the profile (`methodology: se-harness | openspec | spec-kit | bmad`), is
+  inherited from the workspace manifest, and can be revisited with `/harness-bootstrap --reconfigure methodology`.
 - **Multi-repo aware** — declare products in `workspace.yaml` with a contracts registry;
   `contract-check.sh` blocks pushes that change a provided contract and names the consumer
   repos that would break.
@@ -210,7 +212,7 @@ Commands, in order, and what actually happens at each one:
    repo root**: since `workspace.yaml` already declares two sibling units, mono-repo detection
    confirms it rather than proposing it fresh, then asks once whether to bootstrap both units
    now. Say yes, and it asks the shared questions exactly once — methodology (se-harness
-   built-in / OpenSpec / BMAD / Spec Kit), structural-memory driver (CodeGraph /
+   built-in / OpenSpec / Spec Kit / BMAD), structural-memory driver (CodeGraph /
    codebase-memory-mcp / Graphify / defer) — then loops into `loan-webapp` (stack
    auto-detected: Node, TypeScript, Express, EJS, Docker — you confirm, nothing else to ask)
    and `lending-webapp` (same detection, shared choices inherited silently, no re-asking).

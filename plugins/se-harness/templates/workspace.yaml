@@ -51,7 +51,7 @@ workspace:
     # answer back here so every other unit inherits it too. A unit MAY deviate (e.g. a
     # different methodology) — that's a documented exception, recorded as a comment next to
     # the field in that unit's own .harness/profile.yaml, not a silent divergence.
-    methodology: ""          # se-harness | openspec | spec-kit | bmad | none — workspace-wide
+    methodology: ""          # se-harness | openspec | spec-kit | bmad — workspace-wide
                               # default. "se-harness" displays as "se-harness (built-in)" —
                               # only it and openspec are actually delegated to by /harness-goal
                               # today (see profile.yaml's comment).
