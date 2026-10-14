@@ -100,7 +100,21 @@ row observability "$st" "$val" "${dec:--}" "$detail"
 # ---- structural memory driver (null = deferred, valid and not nagged by the older contract —
 # reported here as `deferred` so the sync review can offer it, never forced)
 drv=$(resolve memory.structural_driver workspace.shared.memory.structural_driver)
-if [ -n "$drv" ]; then row memory configured "$drv" - ""; else row memory deferred - - ""; fi
+if [ -n "$drv" ]; then
+  detail=""
+  case "$drv" in
+    [Ss]ourcegraph|[Ss]ourcegraph\ *)
+      sgurl=$(resolve memory.sourcegraph.url workspace.shared.memory.sourcegraph.url)
+      sgauth=$(resolve memory.sourcegraph.auth workspace.shared.memory.sourcegraph.auth)
+      if [ -z "$sgurl" ]; then detail="sourcegraph url not set - run /harness-bootstrap --reconfigure memory"
+      elif [ "$sgauth" = "token" ]; then
+        sgenv=$(resolve memory.sourcegraph.token_env workspace.shared.memory.sourcegraph.token_env); sgenv="${sgenv:-SOURCEGRAPH_ACCESS_TOKEN}"
+        env_has "$sgenv" || detail=".env.harness: missing $sgenv (needed because auth is token)"
+        drv="$drv @ $sgurl"
+      else drv="$drv @ $sgurl"; fi ;;
+  esac
+  row memory configured "$drv" - "$detail"
+else row memory deferred - - ""; fi
 
 # ---- methodology
 m=$(resolve methodology workspace.shared.methodology)

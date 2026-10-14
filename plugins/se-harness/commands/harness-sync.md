@@ -89,7 +89,11 @@ on the next splice).
 **D. Memory health.** From `.harness/memory/wiki/log.md`: if the last `lint` entry is > 30
 days old (or absent with >5 pages), recommend a wiki-lint pass. If `memory.structural_driver`
 is Graphify, check `graphify-out/graph.json`'s mtime against recent commit activity — stale
-next to a large refactor → recommend `/harness-mem-graphify`; any other structural-memory
+next to a large refactor → recommend `/harness-mem-graphify`; Sourcegraph → nothing local to
+refresh; codebase-memory-mcp / CodeGraph → `index_status` or `.codegraph/` freshness vs recent commits, and point
+at `/harness-mem-codebase-memory --refresh` / `/harness-mem-codegraph --refresh` when stale; Sourcegraph → point at `/harness-mem-sourcegraph verify` (MCP tools connected?) and `coverage` (repo still on the
+instance?) — run neither yourself, and surface the `decision-review.sh` detail if `memory.sourcegraph.url` is empty or the token
+variable is missing; any other structural-memory
 server → remind that reindexing is cheap after large refactors. Check MEMORY.md length
 (> ~40 lines → memory-keeper consolidation due).
 

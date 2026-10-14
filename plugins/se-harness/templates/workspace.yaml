@@ -77,6 +77,18 @@ workspace:
                                 # Tiers 2/3 (session log, domain wiki) are always plain markdown
                                 # regardless of this value — see docs/workspace-orchestration-plan.md §4.5/§8.
                                 # Set by /harness-init Step 6; actually installed by /harness-bootstrap.
+      codegraph:               # same shape as profile.yaml memory.codegraph (variant, telemetry) - choose once
+        variant: null
+        telemetry: null
+      codebase_memory:         # same shape as profile.yaml memory.codebase_memory
+        index_mode: full
+      sourcegraph:             # same shape as profile.yaml memory.sourcegraph - the instance is org-wide, set once
+        deployment: null       # cloud | self-hosted
+        url: ""
+        endpoint: "/.api/mcp"
+        auth: oauth            # oauth | token
+        token_env: SOURCEGRAPH_ACCESS_TOKEN
+        repo_scope: ""
     observability:           # same shape as profile.yaml observability: - set once here, every unit inherits
       status: unset          # unset | deferred | declined | configured (see profile.yaml)
       provider: null         # langfuse | dash0 | other

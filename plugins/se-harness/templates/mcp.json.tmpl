@@ -3,8 +3,22 @@
   "mcpServers": {
     "codebase-memory": {
       "command": "codebase-memory-mcp",
-      "args": ["serve"],
-      "_note": "structural memory tier — swap for CodeGraph per the A7 bake-off outcome; remove if neither installed. Graphify (Graphify-Labs/graphify) is skill-first, not MCP-first — prefer `graphify install --project` over an .mcp.json entry; only add one here if running its optional `graphifyy[mcp]` server (`python -m graphify.serve graphify-out/graph.json`) instead of the skill"
+      "args": [],
+      "_note": "structural memory tier - only when memory.structural_driver is codebase-memory-mcp (written by /harness-mem-codebase-memory). The server is the binary's default entry point; the project's README shows args [] (no serve subcommand). Remove if unused. Graphify (Graphify-Labs/graphify) is skill-first, not MCP-first — prefer `graphify install --project` over an .mcp.json entry; only add one here if running its optional `graphifyy[mcp]` server (`python -m graphify.serve graphify-out/graph.json`) instead of the skill"
+    },
+    "codegraph": {
+      "type": "stdio",
+      "command": "codegraph",
+      "args": ["serve", "--mcp"],
+      "alwaysLoad": true,
+      "env": { "CODEGRAPH_MCP_TOOLS": "explore,search,node,callers,callees,impact,files,status" },
+      "_note": "only when memory.structural_driver is codegraph and memory.codegraph.variant is colbymchenry (written by /harness-mem-codegraph). By default only codegraph_explore is listed; the env var enables the callers/callees/impact tools the goal loop's impact map needs. The codegraph-ai variant registers a codegraph-server binary instead - see that command."
+    },
+    "sourcegraph": {
+      "type": "http",
+      "url": "<memory.sourcegraph.url><memory.sourcegraph.endpoint>",
+      "headers": { "Authorization": "token ${SOURCEGRAPH_ACCESS_TOKEN}" },
+      "_note": "only when memory.structural_driver is sourcegraph. For auth: oauth OMIT the headers key entirely (the client does a browser login). The token value comes from .env.harness via ${VAR}, never inline."
     },
     "atlassian": {
       "url": "https://mcp.atlassian.com/v1/sse",

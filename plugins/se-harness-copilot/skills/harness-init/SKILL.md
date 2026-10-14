@@ -279,7 +279,9 @@ it silently, tell the user what was inherited, and skip the question below.
 
 Otherwise, ask once: offer the `memory.structural.choose_one` list from
 `../se-harness/plugins/se-harness/registry/recommendations.json` (currently CodeGraph — two unrelated repos, disambiguate by
-URL, not name — codebase-memory-mcp, or Graphify), summarizing each option's tradeoff from the
+URL, not name — codebase-memory-mcp, Graphify, or **Sourcegraph**; each has its own
+`/harness-mem-*` command that bootstrap hands off to, so init only records the choice — and for CodeGraph, which
+project, as `memory.codegraph.variant`), summarizing each option's tradeoff from the
 registry's `note` field in a sentence or two, plus an explicit **defer** choice (valid; this is
 an open bake-off, not a requirement — don't nag about it later). Record the answer:
 - **Workspace exists** → write it to `shared.memory.structural_driver` in the workspace
@@ -288,6 +290,14 @@ an open bake-off, not a requirement — don't nag about it later). Record the an
   visibility.
 - **No workspace** (single repo) → write directly to this repo's `profile.yaml`
   (`memory.structural_driver`).
+
+**If Sourcegraph is chosen**, it is a remote service, not something to install, and its details are
+owned by **`/harness-mem-sourcegraph`**. Here, record only the driver (`sourcegraph`) and ask the
+instance questions it defines in its Step 1 (deployment, URL, endpoint, OAuth vs token — read that
+step and ask them once; in a workspace they go to `shared.memory.sourcegraph`, inherited by every
+unit). Leave the registration scope, the `.mcp.json` wiring, the connection check and the coverage
+report to `/harness-bootstrap` (which hands off to `/harness-mem-sourcegraph`). Say plainly: it needs
+an Enterprise plan with MCP enabled, and the repos must already be on that instance.
 
 A deferred choice is recorded as `null`, not skipped silently — `/harness-bootstrap` and
 `/harness-scan` both check this field before falling back to asking or probing generically.

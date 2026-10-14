@@ -58,6 +58,19 @@ memory:                     # tier-1 (structural) ONLY — phase 4. Tiers 2/3 ar
                              # Inherited from workspace.yaml's shared.memory.structural_driver
                              # when a workspace manifest exists. Set by /harness-init Step 6;
                              # actually installed by /harness-bootstrap, never by init itself.
+  codegraph:                # only meaningful when structural_driver is codegraph. See /harness-mem-codegraph.
+    variant: null           # colbymchenry (codegraph CLI, .codegraph/ SQLite) | codegraph-ai (codegraph-server, RocksDB)
+    telemetry: null         # on | off - colbymchenry/codegraph sends telemetry unless turned off; recorded, never assumed
+  codebase_memory:          # only meaningful when structural_driver is codebase-memory-mcp. See /harness-mem-codebase-memory.
+    index_mode: full        # full | moderate | fast  (cross-repo linking is offered separately, workspace only)
+  sourcegraph:              # only meaningful when structural_driver is sourcegraph (remote MCP; nothing installed locally).
+                             # Inherited from workspace.yaml's shared.memory.sourcegraph. No secrets here.
+    deployment: null        # cloud (managed single-tenant instance) | self-hosted
+    url: ""                 # https://sourcegraph.example.com  (instance root, no path, no token)
+    endpoint: "/.api/mcp"   # /.api/mcp (search, navigation, history) | /.api/mcp/all (adds Deep Search)
+    auth: oauth             # oauth (browser login, no secret) | token
+    token_env: SOURCEGRAPH_ACCESS_TOKEN   # NAME of the env var in .env.harness; used only when auth: token
+    repo_scope: ""          # optional repo-name prefix agents add to queries, e.g. "github.com/acme/"
 
 observability:              # agent-session tracing (Langfuse / OpenTelemetry-style). A recorded DECISION,
                              # not just a plugin: `status` says what happens next.

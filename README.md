@@ -170,7 +170,8 @@ Run these in order the first time; after that you mostly just run `/harness-goal
 | 2 | Existing code, after init (and after big refactors) | `/harness-scan` | Detects stack, devops, cloud, internal libraries and conventions from the code; you confirm before anything is merged into the profile. |
 | 3 | Once, then whenever the stack or libraries change | `/harness-conventions` | Writes per-area convention docs (rules + internal-library catalog) the agents follow and the PR gate checks. Run **library repos first** in a multi-repo product. `--refresh` re-checks stale docs. |
 | 4 | After init | `/harness-bootstrap` | Opt-in companion tooling (plugins, MCP servers, Playwright, observability). Can run the conventions step inline, and ends with a "Next commands" list. |
-| 5 | If you chose **Graphify** as structural memory | `/harness-mem-graphify` | Builds the code index (per repo, plus one merged workspace graph). Re-run after large refactors. Not needed for other memory drivers. |
+| 5 | If you chose **codebase-memory-mcp** or **CodeGraph** | `/harness-mem-codebase-memory`, `/harness-mem-codegraph` | Install (with confirmation), register with your client, index each repo, refresh. CodeGraph is two unrelated projects — it asks which. |
+| 5 | If you chose **Graphify** as structural memory | `/harness-mem-graphify` | Builds the code index (per repo, plus one merged workspace graph). Re-run after large refactors. Not needed for other memory drivers. **Sourcegraph** (Cloud or self-hosted) has no index to build: use `/harness-mem-sourcegraph` instead (connect, verify, and which repos are on the instance). |
 | 6 | If you configured **Jira / Confluence / SharePoint / NAS** sources | `/harness-mem-wiki [source]` | Synthesizes those non-code sources into the domain wiki `/harness-goal` queries. Needs credentials in the workspace `.env.harness`; asks before ingesting. |
 | 7 | If you chose **OpenSpec** as methodology | `/harness-methodology-openspec` | Installs and initializes OpenSpec so `/harness-goal` can drive its propose/archive lifecycle. |
 | 8 | **Every change** | `/harness-goal "<what you want>"` | The delivery loop. Starts with a preflight (conventions + memory ready?), sizes the change, then grill → requirement → story → implement → tests → PR → deploy, with 3 human approval gates. |
@@ -290,6 +291,9 @@ single-unit goals to try first: [`docs/demo/README.md`](./docs/demo/README.md#pa
 | `/harness-export` | Compile agents + hooks for Copilot / Cursor (Codex reads `AGENTS.md` natively); workspace-wide in one pass |
 | `/harness-mem-graphify` | Build/maintain Graphify structural-memory indexes — per-repo, and merged at workspace level |
 | `/harness-methodology-openspec` | Install/init OpenSpec where chosen — `/harness-goal` drives its actual propose/archive lifecycle |
+| `/harness-mem-codebase-memory` | Install/register/index/refresh codebase-memory-mcp per repo, with optional cross-repo linking |
+| `/harness-mem-codegraph` | Install/register/index/refresh CodeGraph (colbymchenry fully; codegraph-ai register-and-verify), with the telemetry choice asked, not assumed |
+| `/harness-mem-sourcegraph` | Connect the Sourcegraph structural-memory driver (Cloud or self-hosted; user-scope, per-repo or Copilot wiring), verify it works, and report which workspace repos the instance has indexed. Builds nothing — the instance indexes |
 | `/harness-mem-wiki` | Synthesize Jira/Confluence/SharePoint/NAS docs (any format — pdf, docx, pptx, xlsx, md, txt… via MarkItDown, asks before installing a reader, skips only declined formats, flags scanned files)/NAS video into the workspace-level domain wiki `/harness-goal` queries |
 | `/harness-update` | Update the plugin (marketplace first, GitHub fallback), then migrate this project's `.harness/` data — backup, whole-run rollback, hand-edited blocks never silently overwritten |
 
@@ -330,9 +334,10 @@ tried.
 
 ## Status
 
-**[v1.2.0](https://github.com/rbhattarai/se-harness/releases/tag/v1.2.0)** is the current
-release: eleven commands, a 12-agent roster, a 381-test suite in CI, and a separate local eval suite
-(below). Since v1.1.0 it added **`/harness-conventions`** and the convention docs the agents and the PR
+**[v1.3.0](https://github.com/rbhattarai/se-harness/releases/tag/v1.3.0)** is the current
+release: fourteen commands, a 12-agent roster, a 402-test suite in CI, and a separate local eval suite
+(below). Since v1.2.0 it added lifecycle commands for the Sourcegraph (Cloud or self-hosted), codebase-memory-mcp
+and CodeGraph structural-memory drivers. v1.2.0 had added **`/harness-conventions`** and the convention docs the agents and the PR
 gate use; a **`/harness-goal` preflight** that checks conventions and memory readiness (code index, domain
 wiki) before the grill; **scope triage** that sizes a goal and, for large changes, analyzes in Plan mode and
 splits into phases implemented one at a time; optional **`org.guardrails`** (pick from a preset list or write
@@ -363,7 +368,7 @@ and `/harness-goal` querying structural memory and driving a chosen methodology 
 (Graphify, OpenSpec) rather than falling back to Grep/Glob or running its own loop
 undelegated.
 
-The **structural-memory** (CodeGraph vs. codebase-memory-mcp vs. Graphify) and **methodology**
+The **structural-memory** (CodeGraph vs. codebase-memory-mcp vs. Graphify vs. Sourcegraph) and **methodology**
 (BMAD vs. Spec Kit vs. OpenSpec vs. se-harness's own loop) bake-offs are both still open by
 design — pick one, defer, or mix per project — but Graphify and OpenSpec are now the
 reference implementations with real `/harness-goal` integration; the other four install but

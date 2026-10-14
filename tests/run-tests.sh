@@ -821,6 +821,28 @@ check "decision-review: configured without a provider is flagged invalid" \
   test "$(dr_get "$DR_FIX/def" observability 2)" = "invalid(configured-without-provider)"
 check "decision-review: a null structural driver is reported as deferred, a set one as configured" \
   bash -c "test \"\$(printf 'memory:\n  structural_driver: null\n' > '$DR_FIX/def/.harness/profile.yaml'; bash '$DR_SCRIPT' '$DR_FIX/def' | awk -F'\t' '\$1==\"memory\"{print \$2}')\" = deferred && test \"\$(printf 'memory:\n  structural_driver: Graphify\n' > '$DR_FIX/def/.harness/profile.yaml'; bash '$DR_SCRIPT' '$DR_FIX/def' | awk -F'\t' '\$1==\"memory\"{print \$2}')\" = configured"
+mkdir -p "$DR_FIX/sg/.harness"
+printf 'memory:\n  structural_driver: sourcegraph\n  sourcegraph:\n    url: "https://sg.example.com"\n    auth: token\n' > "$DR_FIX/sg/.harness/profile.yaml"
+check "decision-review: sourcegraph shows its instance URL" \
+  bash -c "dr='$DR_SCRIPT'; bash \"\$dr\" '$DR_FIX/sg' | awk -F'\t' '\$1==\"memory\"{print \$3}' | grep -qx 'sourcegraph @ https://sg.example.com'"
+check "decision-review: token auth with no token variable is flagged" \
+  bash -c "bash '$DR_SCRIPT' '$DR_FIX/sg' | awk -F'\t' '\$1==\"memory\"{print \$5}' | grep -q 'missing SOURCEGRAPH_ACCESS_TOKEN'"
+printf 'SOURCEGRAPH_ACCESS_TOKEN=x\n' > "$DR_FIX/sg/.env.harness"
+check "decision-review: token auth with the variable set is not flagged" \
+  bash -c "! bash '$DR_SCRIPT' '$DR_FIX/sg' | awk -F'\t' '\$1==\"memory\"{print \$5}' | grep -q 'missing'"
+rm -f "$DR_FIX/sg/.env.harness"
+printf 'memory:\n  structural_driver: sourcegraph\n  sourcegraph:\n    url: "https://sg.example.com"\n    auth: oauth\n' > "$DR_FIX/sg/.harness/profile.yaml"
+check "decision-review: OAuth never asks for a token variable" \
+  bash -c "! bash '$DR_SCRIPT' '$DR_FIX/sg' | awk -F'\t' '\$1==\"memory\"{print \$5}' | grep -q 'missing'"
+printf 'memory:\n  structural_driver: sourcegraph\n' > "$DR_FIX/sg/.harness/profile.yaml"
+check "decision-review: sourcegraph without a URL is flagged" \
+  bash -c "bash '$DR_SCRIPT' '$DR_FIX/sg' | awk -F'\t' '\$1==\"memory\"{print \$5}' | grep -q 'url not set'"
+check "registry: Sourcegraph is a structural-memory choice and its note covers Cloud, self-hosted and token auth" \
+  bash -c "grep -q 'Sourcegraph (sourcegraph/sourcegraph' plugins/se-harness/registry/recommendations.json && grep -q 'self-hosted' plugins/se-harness/registry/recommendations.json && grep -q 'SOURCEGRAPH_ACCESS_TOKEN' plugins/se-harness/registry/recommendations.json"
+check "templates carry memory.sourcegraph (profile + workspace) and only the token variable NAME" \
+  bash -c "grep -q 'sourcegraph:' plugins/se-harness/templates/profile.yaml && grep -q 'sourcegraph:' plugins/se-harness/templates/workspace.yaml && grep -qx 'SOURCEGRAPH_ACCESS_TOKEN=' plugins/se-harness/templates/env.harness.example && grep -q 'Authorization.*token \${SOURCEGRAPH_ACCESS_TOKEN}' plugins/se-harness/templates/mcp.json.tmpl"
+check "mcp.json.tmpl is valid JSON and registers codebase-memory with no serve arg and codegraph with the impact tools enabled"   bash -c "python -c \"import json,sys; d=json.load(open('plugins/se-harness/templates/mcp.json.tmpl'))['mcpServers']; assert d['codebase-memory']['args']==[]; assert 'impact' in d['codegraph']['env']['CODEGRAPH_MCP_TOOLS']; assert d['sourcegraph']['type']=='http'\" 2>/dev/null || python3 -c \"import json; d=json.load(open('plugins/se-harness/templates/mcp.json.tmpl'))['mcpServers']; assert d['codebase-memory']['args']==[]; assert 'impact' in d['codegraph']['env']['CODEGRAPH_MCP_TOOLS']; assert d['sourcegraph']['type']=='http'\""
+check "every structural-memory driver has a lifecycle command that confirms before installing"   bash -c "for c in codebase-memory codegraph sourcegraph graphify; do test -f plugins/se-harness/commands/harness-mem-\$c.md || exit 1; done; grep -qi 'confirm\|ask' plugins/se-harness/commands/harness-mem-codebase-memory.md && grep -qi 'telemetry' plugins/se-harness/commands/harness-mem-codegraph.md"
 rm -rf "$DR_FIX"
 
 check "profile template carries the observability decision block" \

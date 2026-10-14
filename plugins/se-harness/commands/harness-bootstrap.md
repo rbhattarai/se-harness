@@ -53,7 +53,9 @@ stop. Only that topic's profile fields and components are touched — never the 
      run it).
    - **memory** → write `memory.structural_driver` (and `shared.memory.structural_driver` if the
      user wants the workspace default changed); Graphify → hand off to `/harness-mem-graphify`,
-     others → this command's Step 3 install for that one driver.
+     codebase-memory-mcp → `/harness-mem-codebase-memory`, CodeGraph → `/harness-mem-codegraph`,
+     Sourcegraph → `/harness-mem-sourcegraph connect` (also how to change the URL, endpoint or auth later), others → this
+     command's Step 3 install for that one driver.
    - **methodology** → write `methodology` (a value that differs from the workspace default gets
      the trailing "documented exception" comment); OpenSpec → hand off to
      `/harness-methodology-openspec`. The choices are se-harness (built-in) / OpenSpec / Spec Kit /
@@ -165,10 +167,12 @@ Read `.harness/profile.yaml` (guard: must exist — run `/harness-init` first) a
   `/harness-init` Step 6 already recorded a non-null choice, skip the question entirely and
   add that one driver's install command straight to the manifest as `kind: cli`, labeled
   "chosen at init." Only if it's still `null`/unset, ask fresh: note the A7 bake-off; offer
-  codebase-memory-mcp's installer, one of the two unrelated "CodeGraph" projects
-  (codegraph-ai/CodeGraph or colbymchenry/codegraph — disambiguate by repo, not name), or
+  codebase-memory-mcp (`/harness-mem-codebase-memory`), one of the two unrelated "CodeGraph" projects
+  (codegraph-ai/CodeGraph or colbymchenry/codegraph — disambiguate by repo, not name;
+  `/harness-mem-codegraph`), or
   Graphify (Graphify-Labs/graphify — CLI + `/graphify` skill, not MCP-first: `uv tool install
-  graphifyy` then `graphify install --project`), or defer
+  graphifyy` then `graphify install --project`), **Sourcegraph** (remote MCP, Cloud or self-hosted —
+  see Step 3b — `/harness-mem-sourcegraph` asks the connection questions and records `memory.sourcegraph`), or defer
 
 Present as a table: **component | why (profile key that triggered it) | source | install method**.
 Never recommend a name not present in the registry file — gaps are stated, not improvised.
@@ -190,13 +194,26 @@ For each selected component, by `kind`:
   first, same as any third-party install). It owns the fuller gated sequence this step doesn't
   (Python/uv prerequisite checks, an org's private package index from
   `shared.package_index` if set, the first index build, and the lockfile record) — running
-  the bare command here would both duplicate and undercut it. **Exception: the OpenSpec
+  the bare command here would both duplicate and undercut it. **Exception: codebase-memory-mcp and
+  CodeGraph.** Same reasoning — hand off to `/harness-mem-codebase-memory` / `/harness-mem-codegraph`
+  (confirm first): they own the install-with-confirmation, explicit client registration (the
+  installers otherwise auto-configure many clients), per-repo indexing and refresh, and CodeGraph's
+  variant and telemetry choices. **Exception: the OpenSpec
   component.** Same reasoning — hand off to `/harness-methodology-openspec` instead of the bare
   `npm install -g` command; it owns the gated install-plus-`openspec init` sequence and the
   lockfile record, and it's what `/harness-goal` later expects to find already set up.
 - **mcp**: render the needed entries from `${CLAUDE_PLUGIN_ROOT}/templates/mcp.json.tmpl` into the project's
   `.mcp.json` (merge — never clobber existing servers; secrets stay `${VAR}` references
   to `.env.harness`).
+
+## Step 3b — Sourcegraph (only if `memory.structural_driver` is sourcegraph)
+Nothing is installed and nothing is indexed by se-harness: Sourcegraph hosts the MCP server and the
+index. Hand off to **`/harness-mem-sourcegraph`** (confirm first, same as the Graphify hand-off) — it
+owns the connection questions, the `.mcp.json` / user-scope / Copilot wiring, the verify step and the
+per-repo coverage report. In a workspace run it once for the whole workspace (the instance is
+org-wide; it asks about registration scope once, not per unit). Record the component in each unit's
+lockfile as `kind: mcp`, status `pending-manual` until `/harness-mem-sourcegraph verify` has proved the
+connection.
 
 ## Step 4 — Wire the harness pieces
 1. Confirm the se-harness **agents roster** is active (ships with this plugin — architect,
@@ -240,7 +257,11 @@ in `profile.yaml`'s `observability:` block — the lockfile alone can't carry th
 ## Step 6 — Report
 Installed / pending-manual / declined table; exact manual commands for anything pending;
 then a **Next commands** list built from what happened, in this order, only the lines that apply:
-1. `/harness-mem-graphify` — if the structural driver is Graphify and the first index wasn't built
+1. `/harness-mem-codebase-memory` or `/harness-mem-codegraph` — if that is the driver and the install,
+   registration or first index did not complete (declined, or a unit failed).
+   `/harness-mem-sourcegraph` — if the driver is Sourcegraph and the connection is not yet proved
+   (`pending-manual`); `coverage` there tells you which workspace repos the instance has indexed.
+   `/harness-mem-graphify` — if the structural driver is Graphify and the first index wasn't built
    in Step 3 (declined, or a unit failed); for a workspace with no `repo_name`, also the merge.
 2. `/harness-mem-wiki [source]` — if non-code sources are configured and the wiki is empty
    (name the sources; remind that credentials go in the workspace `.env.harness`).

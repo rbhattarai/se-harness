@@ -52,11 +52,15 @@ Either way, check `profile.yaml`'s `memory.structural_driver` (phase 4) first �
 driver was chosen at init, look for *that one* specifically rather than probing generically
 (per unit, at the workspace root). If it's still unset, fall back to checking for any
 available code-graph MCP server or the Graphify skill (CodeGraph / codebase-memory-mcp /
-Graphify) as before. Either way, if found, index and pull its architecture summary (Graphify:
+Graphify) as before. A driver that is chosen but not connected or not indexed gets pointed at its
+command (`/harness-mem-codebase-memory`, `/harness-mem-codegraph`), never fixed from here. Either way, if found, index and pull its architecture summary (Graphify:
 `graphify-out/GRAPH_REPORT.md` or `graphify query`) — richer structure, but the scan MUST
 work without it. If the driver is Graphify and `graphify-out/` is missing or looks stale next
 to recent commits, say so and point at `/harness-mem-graphify` to build/refresh it — don't run
-`graphify` commands yourself here, this command only ever reads what already exists.
+`graphify` commands yourself here, this command only ever reads what already exists. If the driver
+is Sourcegraph and its tools are connected, a read-only `list_repos` call confirms this repo is on the
+instance and `keyword_search` can corroborate cross-repo usage of an internal library; if it isn't
+connected, say so (`/harness-mem-sourcegraph verify`) and continue without it.
 
 ## Step 2 — Detect (stack-detector skill)
 Reason over the evidence per the **stack-detector** skill: usage beats listing; version-aware;

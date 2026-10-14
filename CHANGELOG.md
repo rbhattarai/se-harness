@@ -3,9 +3,25 @@
 All notable changes to se-harness. Format follows [Keep a Changelog](https://keepachangelog.com/);
 versions follow [SemVer](https://semver.org/). Full release notes for tagged versions are on the
 [Releases page](https://github.com/rbhattarai/se-harness/releases); release notes for each version are also kept in
-[docs/release-notes-v1.2.0.md](./docs/release-notes-v1.2.0.md).
+[docs/](./docs/) (`release-notes-vX.Y.Z.md`).
 
 ## [Unreleased]
+
+## [1.3.0] — 2026-10-14
+
+Structural-memory drivers: Sourcegraph, codebase-memory-mcp and CodeGraph get lifecycle commands. [Release notes](./docs/release-notes-v1.3.0.md).
+
+### Added
+- **`/harness-mem-codebase-memory` and `/harness-mem-codegraph`** — lifecycle commands for the other two structural-memory
+  drivers, like `/harness-mem-graphify`: install only with confirmation, register explicitly (the vendors' installers
+  otherwise auto-configure many clients), index per repo, refresh. CodeGraph asks which of the two unrelated projects
+  (colbymchenry fully supported; codegraph-ai register-and-verify), enables the callers/callees/impact tools, and asks the
+  telemetry question instead of assuming. Fixed the `.mcp.json` template for codebase-memory-mcp (`args: []`, no `serve`).
+- **Sourcegraph as a structural-memory option** (Cloud or self-hosted, via its hosted MCP endpoint). `/harness-init` records
+  `memory.sourcegraph` (deployment, URL, endpoint, OAuth or token auth); the new **`/harness-mem-sourcegraph`** command connects it
+  (user-scope, per-repo `.mcp.json` with the token only as a `${SOURCEGRAPH_ACCESS_TOKEN}` reference, or the Copilot
+  equivalents), verifies it, and reports which workspace repos the instance has indexed; `/harness-bootstrap` hands off to it; `/harness-goal`'s preflight and
+  impact map use its cross-repo search; `decision-review.sh` shows the instance and a missing token variable.
 
 ## [1.2.0] — 2026-10-14
 

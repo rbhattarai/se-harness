@@ -32,7 +32,18 @@ mid-run that it was never built. Check, without building or ingesting anything:
   - Graphify → `graphify-out/graph.json` + `GRAPH_REPORT.md` exist? mtime older than the latest
     commits → stale.
   - MCP drivers (codebase-memory-mcp, CodeGraph) → is that server's tool actually among your
-    tools this session?
+    tools this session? Not connected → `/harness-mem-codebase-memory` / `/harness-mem-codegraph`
+    (registration and restart). codebase-memory-mcp: `index_status` / `list_projects` shows whether this
+    repo is indexed; its watcher only covers the project of the open session, so other repos can be
+    stale — suggest `--refresh`. CodeGraph (colbymchenry): `codegraph_status`, if enabled, or a missing
+    `.codegraph/` means not indexed. Note CodeGraph lists only `codegraph_explore` unless
+    `CODEGRAPH_MCP_TOOLS` is set.
+  - Sourcegraph → are its tools (`mcp__sourcegraph__*`: `keyword_search`, `find_references`,
+    `list_repos`, ...) connected this session? If so call `list_repos` for this repo (and each
+    unit in `workspace.yaml`): a repo that is **not on the instance** is a gap — Sourcegraph
+    cannot answer for it. Not connected → "not connected: run `/harness-mem-sourcegraph verify`". Repo
+    not on the instance → point at `/harness-mem-sourcegraph coverage`. There is no local index to be stale, but it reflects the instance's
+    default branch, not this working tree.
   - `null`/deferred → "none configured" (valid; Grep/Glob fallback, said plainly later).
   - Any other memory tool the project wired in `.mcp.json` (e.g. a mem0-style server) counts as
     available if its tools are present; use it, don't assume its semantics beyond its tool docs.
@@ -71,6 +82,13 @@ stop when testable — over-grilling erodes trust.
     tool in your available tools (`mcp__<server-name>__*`) and call it. If the configured
     driver's MCP server isn't actually connected this session, that's the same kind of gap as
     Graphify above — flag it, don't silently fall back without saying so.
+  - **Sourcegraph** (remote MCP): use its tools for the impact map — `keyword_search` /
+    `nls_search` for callers and usages **across every repo on the instance in one query** (this
+    is its strength for a multi-repo workspace), `go_to_definition` / `find_references` for symbol
+    blast radius, `read_file` / `list_files` for a repo you haven't cloned, `commit_search` /
+    `diff_search` for history. Prefix queries with `memory.sourcegraph.repo_scope` if set. Treat
+    results as an index of the instance's default branch: confirm against the local files before
+    citing them, and say so for any repo not on the instance (Grep/Glob for those, stated plainly).
   - **`null`/deferred, or the configured driver is unavailable**: Grep/Glob is the honest
     fallback here — say so in the impact map rather than presenting it as equivalent to a real
     structural query.
