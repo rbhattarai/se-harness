@@ -318,6 +318,17 @@ secret key in your OS keychain) and restart Claude Code. Needs `uv` on PATH, or 
 TLS in front of it. Avoid `--config LANGFUSE_SECRET_KEY=…` — it lands in shell history. The keys are **not** read from
 `.env.harness` on this surface.
 
+**Dash0 (hosted).** `/harness-bootstrap --reconfigure observability` → Dash0 runs
+`claude plugin install dash0@claude-plugins-official --scope user` after you confirm. Dash0 recommends **user** scope
+(a project-scoped install breaks in a second worktree/clone, and project-level `pluginConfigs` is silently ignored); to
+share it with the team commit only `enabledPlugins` in `.claude/settings.json`. Then `/plugin` → dash0 → Configure
+(or `/dash0-configure`): OTLP URL (`https://ingress.<region>.aws.dash0.com`, from Dash0's Endpoints page), an
+**ingest-only** auth token (kept in the OS keychain; there is no env-var fallback), dataset, optional team name; run
+`/reload-plugins` and look for `dash0: connected`. Enable only one identity (`dash0@claude-plugins-official` **or**
+`dash0-agent-plugin@dash0`) or every span is exported twice. Prompts and tool I/O are stripped by default (`OMIT_IO`).
+Dash0 is not a local stack — the Docker/Jaeger recipe sometimes quoted alongside it is a different, generic OTel
+setup (choose "Another backend" for that). There is no Dash0 plugin for Copilot.
+
 ## Part 5 — Updating or extending the plugin
 
 ### 5.1 Consuming an update

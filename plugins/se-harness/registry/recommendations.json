@@ -122,14 +122,43 @@
       },
       "dash0": {
         "label": "Dash0 (OpenTelemetry)",
-        "kind": "plugin",
-        "plugin": "dash0",
-        "marketplace": null,
-        "verified": false,
+        "kind": "per-surface",
+        "verified": true,
+        "verified_against": "github.com/dash0hq/dash0-agent-plugin .claude-plugin/README.md and dash0.com/hub/integrations/int_claude_code/setup, checked 2026-10-13",
         "host_default": "",
-        "host_note": "Endpoint/dataset per the plugin's own README.",
-        "env_secret": [],
-        "note": "Name and required variables are not verified by this registry - read the plugin's README, add the variables to .env.harness by name, and if `claude plugin install` fails mark pending-manual."
+        "host_note": "Dash0 is a hosted service - there is no localhost default. The OTLP URL is on the Dash0 Endpoints settings page (OTLP via HTTP tab), shaped like https://ingress.<region>.aws.dash0.com. A local Docker collector (Jaeger/Prometheus) is NOT Dash0 - choose 'Another backend' for that.",
+        "surfaces": {
+          "claude": {
+            "kind": "plugin",
+            "marketplace": "claude-plugins-official",
+            "plugin": "dash0@claude-plugins-official",
+            "install": [
+              "claude plugin install dash0@claude-plugins-official --scope user"
+            ],
+            "install_in_session": "/plugin install dash0@claude-plugins-official",
+            "alt_identity": "dash0-agent-plugin@dash0 (marketplace dash0hq/claude-marketplace) - enable only ONE identity or every span is exported twice",
+            "scope_note": "Dash0 recommends USER scope: a project-scoped install fails in a second git worktree/clone, and pluginConfigs in project settings is silently ignored (Claude Code >= 2.1.207). If the team wants it on by default, commit only `enabledPlugins` in .claude/settings.json and let each developer configure locally.",
+            "configure": "/plugin -> dash0 -> Configure (or /dash0-configure), then /reload-plugins",
+            "config_keys": {
+              "OTLP_URL": "required - https://ingress.<region>.aws.dash0.com",
+              "AUTH_TOKEN": "required, sensitive - the plugin stores it in the OS keychain; there is no DASH0_AUTH_TOKEN env fallback. Use an ingest-only token scoped to one dataset",
+              "DATASET": "optional",
+              "TEAM_NAME": "optional - sets dash0.team.name on every span; set it per developer, not centrally",
+              "OMIT_IO": "optional, default true - prompts and tool I/O are stripped",
+              "OMIT_USER_INFO": "optional, default false"
+            },
+            "config_file": ".claude/dash0-agent-plugin.local.md (project) or ~/.claude/dash0-agent-plugin.local.md (user) - YAML front matter: otlp_url, auth_token, dataset, team_name. Gitignore the project one: it can hold the token.",
+            "requires": "Git for Windows (Git Bash) on Windows; bash + curl/wget on macOS/Linux; amd64 or arm64; HTTPS to github.com (binary download) and to the Dash0 OTLP ingress",
+            "restart_required": true,
+            "keys_in_env_harness": false,
+            "verify": "session start prints `dash0: connected`; `claude plugin list` shows which identity is active",
+            "note": "Network: besides telemetry, the plugin downloads a binary from github.com at first run. Org-wide rollout is a claude.ai admin task (managed settings / Organization plugins page, Team or Enterprise plan) - se-harness does not do it."
+          },
+          "copilot": {
+            "kind": "manual",
+            "note": "No Dash0 plugin for Copilot (Dash0's docs only mention Copilot as reading DASH0_TEAM_NAME). Dash0 does accept OTLP, so Copilot's native OpenTelemetry export could be pointed at it, but that setup is not verified here - record provider + host and wire it by hand from Dash0's docs."
+          }
+        }
       },
       "other": {
         "label": "Another tracing backend",

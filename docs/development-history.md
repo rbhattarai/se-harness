@@ -163,8 +163,8 @@ by the plugin in the OS keychain, base URL variable `LANGFUSE_BASE_URL`, not `LA
 Langfuse plugin — it exports OpenTelemetry natively, so `scripts/langfuse-otel-env.sh` turns the keys in `.env.harness`
 into `COPILOT_OTEL_ENABLED` / `OTEL_EXPORTER_OTLP_ENDPOINT=<host>/api/public/otel` / a Basic-auth header, with prompt
 content capture opt-in. (A first draft assumed one plugin and `.env.harness` keys for both surfaces; a Copilot
-"plugin settings" recipe pasted from a chat answer turned out not to exist.) Dash0's plugin name stays
-`verified: false`. `/harness-init` was deliberately left alone: it does not ask about observability.
+"plugin settings" recipe pasted from a chat answer turned out not to exist.) Dash0 was then verified the same way (official-marketplace
+plugin `dash0@claude-plugins-official`, user scope recommended, token in the keychain, Claude Code only). `/harness-init` was deliberately left alone: it does not ask about observability.
 
 ## Evals (2026-10)
 

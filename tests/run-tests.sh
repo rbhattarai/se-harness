@@ -849,6 +849,25 @@ check "sync re-asks deferred decisions and points at --reconfigure" \
 check "copilot variant carries decision-review.sh and the reconfigure docs" \
   bash -c "test -f plugins/se-harness-copilot/scripts/decision-review.sh && grep -q -- '--reconfigure' plugins/se-harness-copilot/commands/harness-bootstrap.md"
 
+check "registry: Dash0 for Claude Code = official-marketplace plugin, user scope, token kept out of .env.harness"   "$PY" -c "
+import json
+p = json.load(open('plugins/se-harness/registry/recommendations.json', encoding='utf-8'))['observability']['providers']['dash0']
+c = p['surfaces']['claude']
+assert p['kind'] == 'per-surface' and p['verified'] is True
+assert c['plugin'] == 'dash0@claude-plugins-official' and '--scope user' in c['install'][0]
+assert c['keys_in_env_harness'] is False and 'AUTH_TOKEN' in c['config_keys'] and 'OTLP_URL' in c['config_keys']
+assert 'worktree' in c['scope_note'] and 'twice' in c['alt_identity']
+assert p['surfaces']['copilot']['kind'] == 'manual'"
+check "bootstrap documents the Dash0 flow (official marketplace, one identity, keychain token)"   bash -c "f=plugins/se-harness/commands/harness-bootstrap.md; grep -q 'dash0@claude-plugins-official' \$f && grep -q 'dash0-agent-plugin@dash0' \$f && grep -q 'ingest-only' \$f && ! grep -q 'unverified plugin name' \$f"
+DR_D=$(mktemp -d 2>/dev/null || mktemp -d -t seharness); mkdir -p "$DR_D/.harness"
+printf 'observability:
+  status: configured
+  provider: dash0
+  host: "https://ingress.eu-west-1.aws.dash0.com"
+' > "$DR_D/.harness/profile.yaml"
+check "decision-review: Dash0 says its token lives in the plugin, not .env.harness"   bash -c "bash '$DR_SCRIPT' '$DR_D' | awk -F'\t' '\$1==\"observability\"{print \$5}' | grep -q 'keychain/config'"
+rm -rf "$DR_D"
+
 # --- langfuse-otel-env.sh: Copilot CLI -> Langfuse via native OpenTelemetry (no plugin exists) ---
 OT_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/plugins/se-harness/scripts/langfuse-otel-env.sh"
 OT_FIX=$(mktemp -d 2>/dev/null || mktemp -d -t seharness)

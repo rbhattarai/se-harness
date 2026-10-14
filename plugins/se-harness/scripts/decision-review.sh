@@ -87,7 +87,10 @@ if [ "$st" = configured ]; then
       if [ -z "$host" ]; then detail="host: not recorded (observability.host)"
       elif [ -z "$miss" ]; then detail=".env.harness: ok"
       else detail=".env.harness: missing${miss} (only the Copilot CLI path needs them there; the Claude Code plugin keeps its own in the OS keychain)"; fi ;;
-    dash0|other) detail="check the plugin's own README for required variables" ;;
+    dash0)
+      if [ -z "$host" ]; then detail="host: not recorded (observability.host = the Dash0 OTLP URL)"
+      else detail="token and dataset live in the plugin's keychain/config (/plugin -> dash0 -> Configure), not .env.harness"; fi ;;
+    other) detail="check the backend's own docs for required variables" ;;
     "") st="invalid(configured-without-provider)" ;;
   esac
 fi
