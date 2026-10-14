@@ -110,7 +110,7 @@ plugin marketplace.
   the full goal loop (hidden acceptance tests, mutation scoring, a "tries to approve its own
   requirement" pressure scenario). Local and manual by design — see
   [`docs/evals-plan.md`](./docs/evals-plan.md).
-- **No telemetry, ever** — see [PRIVACY.md](./PRIVACY.md).
+- **No telemetry from se-harness itself** — the plugin makes no network calls and collects nothing. The one exception is *yours to opt into*: if you choose an observability backend (Langfuse, Dash0), that third-party plugin or your own OpenTelemetry export sends session traces to the backend you picked. Declining or deferring sends nothing. See [PRIVACY.md](./PRIVACY.md).
 
 ## Install
 
