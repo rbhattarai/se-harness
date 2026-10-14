@@ -1,6 +1,6 @@
 ---
 name: harness-bootstrap
-description: Recommend and install the harness components matching this project's profile — methodology, stack plugins, MCP servers, observability — opt-in per item, recorded in the lockfile.
+description: Recommend and install the harness components matching this project's profile — methodology, stack plugins, MCP servers, observability — opt-in per item, recorded in the lockfile. `--reconfigure <topic>` revisits an earlier choice (observability, memory, methodology).
 ---
 
 
@@ -8,7 +8,8 @@ description: Recommend and install the harness components matching this project'
 
 Turn the profile into an installed harness. **Composable, opt-in** (the ECC lesson: users
 cherry-pick; never install everything). Read `--dry-run` from `$ARGUMENTS`: if present, produce
-the recommendation manifest and stop before installing anything.
+the recommendation manifest and stop before installing anything. `--reconfigure <topic>` in
+`$ARGUMENTS` → skip the manifest entirely and go to **Reconfigure mode** (after Step 0).
 
 ## Step 0 — Guard & workspace scope
 `.harness/profile.yaml` in the current directory → normal per-repo run, continue at Step 1,
@@ -34,6 +35,55 @@ is a **workspace root**, not a repo to bootstrap directly:
 Neither `.harness/profile.yaml` nor a workspace manifest/inventory present → tell the user to
 run `/harness-init` first and stop.
 
+## Reconfigure mode — `--reconfigure <topic>`
+Revisit a choice made earlier without re-running anything else. Topics: `observability`,
+`memory` (the structural-memory driver), `methodology`. No/unknown topic → list the three and
+stop. Only that topic's profile fields and components are touched — never the rest of the manifest.
+
+1. Run `bash tools/harness/decision-review.sh` and show the topic's row in words:
+   "**Currently:** Langfuse @ http://localhost:3000 — configured 2026-10-13" (or `declined`,
+   `deferred`, `unset`). If it reports `missing: …`, name the missing variables (names only; never
+   read or print a secret value) — that is often the whole reason for reconfiguring.
+2. Ask (AskUserQuestion): **Keep it** / **Change it** (list the registry's alternatives, current one
+   marked) / **Turn it off** (`declined`) / **Decide later** (`deferred`). Keep → say so and stop.
+3. Change, by topic:
+   - **observability** → run **Observability setup** below with the new provider. If it replaces
+     an installed provider, say the old plugin stays installed (propose the removal command, never
+     run it).
+   - **memory** → write `memory.structural_driver` (and `shared.memory.structural_driver` if the
+     user wants the workspace default changed); Graphify → hand off to `/harness-mem-graphify`,
+     others → this command's Step 3 install for that one driver.
+   - **methodology** → write `methodology` (a value that differs from the workspace default gets
+     the trailing "documented exception" comment); OpenSpec → hand off to
+     `/harness-methodology-openspec`. Remind that only se-harness (built-in) and OpenSpec are
+     delegated to by `/harness-goal`.
+4. At a workspace root (no `.harness/profile.yaml`, but `workspace.yaml`): change the `shared:`
+   value once, then list any unit whose own profile deviates (they keep theirs unless the user
+   says otherwise) — don't loop every unit.
+5. Re-render AGENTS.md/CLAUDE.md blocks (Step 4 item 4, including the exit-3 hand-edit rule), then
+   record in the lockfile (Step 5) and report (Step 6). `--dry-run` → show what would change and stop.
+
+## Observability setup
+Shared by Step 2 and Reconfigure mode; `<p>` = the chosen entry in the registry's
+`observability.providers`.
+1. **Host** (non-secret). Offer `<p>.host_default` first (for Langfuse: the self-hosted default),
+   then the `host_note` alternatives, then "other URL". Dash0/other: ask for the endpoint if
+   the plugin needs one.
+2. **Record the decision** in `.harness/profile.yaml` (and `shared.observability` if the user
+   agreed): `observability: {status: configured, provider: <p>, host: <host>, decided: <today>}`.
+3. **Secrets stay out of chat and out of git.** For each name in `<p>.env_secret`, make sure
+   `.env.harness` (the workspace root's when the choice is shared, else this repo's — create it from
+   the matching template if missing) has an empty `NAME=` line — append only, never touch existing
+   values. Tell the user where to create the keys (Langfuse: project settings → API keys) and to fill
+   them in themselves. Never ask them to paste a key here.
+4. **Install** per `<p>.kind`: `plugin` → Step 3's plugin mechanics. The registry marks these names
+   `verified: false`: say so, and if `claude plugin install` fails, record `pending-manual` and
+   point at `/plugin` rather than guessing a marketplace. `manual` → nothing to install.
+5. **Optional reachability check** (non-fatal): if `<p>.health_path` exists and the host is local
+   (`localhost`/`127.0.0.1`), offer `curl -s -o /dev/null -w "%{http_code}" <host><health_path>` —
+   200 means the server is up. Skip remote hosts unless the user opts in (it's a network call).
+6. Lockfile: component `<p>.plugin` with its status.
+
 ## Step 1 — Build the recommendation manifest
 Read `.harness/profile.yaml` (guard: must exist — run `/harness-init` first) and
 `../se-harness/plugins/se-harness/registry/recommendations.json`. Map profile → components:
@@ -45,7 +95,21 @@ Read `.harness/profile.yaml` (guard: must exist — run `/harness-init` first) a
   `note` so the user knows why nothing is recommended)
 - `cloud` → its plugins
 - `always` + `testing.e2e` → recommended for every project
-- `observability.choose_one` → ask which (or neither)
+- `observability` → run `bash tools/harness/decision-review.sh` and read its
+  `observability` row (it resolves this repo's profile, then the workspace default). Never ask a
+  question that was already answered:
+  - `configured` → no question. Add that provider's `observability.providers.<provider>` entry to
+    the manifest, labeled "chosen earlier (<decided date>)", and say the choice can be changed
+    with `--reconfigure observability`.
+  - `declined` → skip silently; one line in the Step 6 report: "observability: declined on
+    <date> — `/harness-bootstrap --reconfigure observability` to change".
+  - `unset` or `deferred` → ask once via AskUserQuestion: **Langfuse** / **Dash0** / **Another
+    backend** / **Not yet** (records `deferred` — `/harness-sync` asks again) / **No thanks**
+    (records `declined` — never re-asked). Run **Observability setup** below for a provider; for
+    the last two just record the status in `profile.yaml`'s `observability:` block with today's
+    date. If a workspace manifest exists, offer once to write the answer to
+    `shared.observability` so every unit inherits it (same scoped-configuration rule as
+    `/harness-init`'s methodology choice).
 - `sources`: Jira/Confluence set → `atlassian`; GitHub remote detected → `github`;
   `org.conventions_url` on Figma-backed design orgs → `figma`
 - `memory.structural` → first check `profile.yaml`'s `memory.structural_driver` (and
@@ -113,8 +177,10 @@ For each selected component, by `kind`:
 
 ## Step 5 — Record in the lockfile
 Update `.harness/agentstack.lock`: for every component — name, source, version (if known),
-install method, status (`installed` / `pending-manual` / `declined`), date. Declined items are
-recorded too, so `/harness-sync` doesn't re-nag about them.
+install method, status (`installed` / `pending-manual` / `declined` / `deferred`), date. Declined items are
+recorded too, so `/harness-sync` doesn't re-nag about them; `deferred` means "not yet" and
+`/harness-sync` asks again. Decisions that aren't components (observability: none / not yet) live
+in `profile.yaml`'s `observability:` block — the lockfile alone can't carry them.
 
 ## Step 6 — Report
 Installed / pending-manual / declined table; exact manual commands for anything pending;

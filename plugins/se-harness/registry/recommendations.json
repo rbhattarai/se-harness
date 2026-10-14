@@ -63,8 +63,45 @@
     "e2e": { "plugins": ["playwright"], "note": "pairs with the se-harness e2e planner/generator/healer agents" }
   },
   "observability": {
-    "choose_one": ["dash0", "langfuse-observability"],
-    "note": "OpenTelemetry for agent sessions/tool calls — the Observability engine. Ask the user which (or neither)."
+    "choose_one": [
+      "dash0",
+      "langfuse-observability"
+    ],
+    "note": "Agent-session tracing (OpenTelemetry/Langfuse-style) - the Observability engine. A DECISION recorded in profile.yaml/workspace.yaml observability: {status, provider, host, decided}; ask the user which provider (or not yet / no thanks) only while status is unset or deferred. choose_one is kept for older readers; providers is authoritative.",
+    "providers": {
+      "langfuse": {
+        "label": "Langfuse (self-hosted or cloud)",
+        "kind": "plugin",
+        "plugin": "langfuse-observability",
+        "marketplace": null,
+        "verified": false,
+        "host_default": "http://localhost:3000",
+        "host_note": "Self-hosted Langfuse serves on http://localhost:3000 by default; Langfuse Cloud is https://cloud.langfuse.com (EU) or https://us.cloud.langfuse.com (US).",
+        "env_secret": [
+          "LANGFUSE_PUBLIC_KEY",
+          "LANGFUSE_SECRET_KEY"
+        ],
+        "health_path": "/api/public/health",
+        "note": "The plugin name and marketplace are NOT verified by this registry (verified: false) - if `claude plugin install` fails, mark pending-manual and point the user at /plugin to locate it; never improvise a marketplace. The plugin may need variables beyond the two keys: its own README is authoritative. Keys are never asked for in chat and never written to a committed file."
+      },
+      "dash0": {
+        "label": "Dash0 (OpenTelemetry)",
+        "kind": "plugin",
+        "plugin": "dash0",
+        "marketplace": null,
+        "verified": false,
+        "host_default": "",
+        "host_note": "Endpoint/dataset per the plugin's own README.",
+        "env_secret": [],
+        "note": "Required variables are not recorded here - read the plugin's README and add them to .env.harness by name. Same unverified-name caveat as langfuse."
+      },
+      "other": {
+        "label": "Another tracing backend",
+        "kind": "manual",
+        "env_secret": [],
+        "note": "Record provider + host only. se-harness installs nothing for this choice; the user wires it up."
+      }
+    }
   },
   "sources": {
     "jira_or_confluence": { "plugins": ["atlassian"] },

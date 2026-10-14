@@ -56,7 +56,24 @@ lint-config changes. Only *differences* matter here — don't re-litigate settle
 - newly applicable components (stack additions, registry updates) → propose
 - installed components no longer applicable (stack removals) → propose removal, never auto-remove
 - `declined` items: **stay declined** — list them in one line at the end, don't re-nag
+- `deferred` items ("not yet"): re-ask — see **Decisions** just below
 - `pending-manual` items: check whether they got installed since; update status
+
+**Decisions (part of B).** Run `bash ${CLAUDE_PLUGIN_ROOT}/scripts/decision-review.sh` — one row
+per revisitable choice (observability, memory driver, methodology), already resolved against the
+workspace default. Projects created before a question existed have no recorded answer: that reads
+as `unset`, which is how an older project gets asked about something it was never asked. Per row:
+- `observability` is `unset` or `deferred` → **ask now**, once per sync (in a workspace-root run,
+  once for the whole run when the unit inherits it from `shared:`): AskUserQuestion — *configure
+  now* (follow `/harness-bootstrap`'s **Observability setup** directly) / *keep deferring*
+  (records `deferred` + today's date) / *no thanks* (records `declined`). `--dry-run` reports only.
+- `configured` or `declined` → never a question. One report line that says what is in force and how
+  to change it: "observability: Langfuse @ http://localhost:3000 (configured 2026-10-13) —
+  change with `/harness-bootstrap --reconfigure observability`". A detail starting `missing:` is
+  drift worth surfacing (variable **names** only — never read a secret value).
+- `memory` and `methodology` are shown the same one-line way and **never re-asked**: a `null`
+  structural driver stays "valid, not nagged", as before. Only observability is re-asked today.
+- `invalid(...)` → drift: show the raw value and propose the nearest valid one.
 
 **C. Template drift (plugin updated).** Run
 `bash ${CLAUDE_PLUGIN_ROOT}/scripts/template-hash.sh` and compare with `template_hashes` in the
@@ -92,10 +109,13 @@ that in one line and stop — no ceremony, no empty tables.
    and ask keep-mine / take-new / merge. Only on take-new re-run with `--force` (the edited block
    is saved to `<target>.seaa.bak`). Never pass `--force` without asking.
 5. `.mcp.json`: merge any new server entries; never remove servers the user added by hand.
+6. Decision changes → write the `observability:` block in `profile.yaml` (`status`, `provider`, `host`,
+   `decided`; and `shared.observability` when inherited) exactly as `/harness-bootstrap`'s
+   Observability setup does, including keeping secrets out of every committed file.
 
 ## Step 4 — Update the lockfile
 Set `updated`; set `schema_version` (if absent: 1) and `se_harness` to the plugin version;
-refresh `template_hashes`; update component statuses; append to `syncs:`
+refresh `template_hashes`; update component statuses (`installed` / `pending-manual` / `declined` / `deferred`); append to `syncs:`
 history — `{date, drift_found: [axes], applied: [...], skipped: [...]}` — so the next sync
 (and the user) can see what happened last time.
 

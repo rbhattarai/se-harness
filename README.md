@@ -95,7 +95,11 @@ plugin marketplace.
   detail in [`docs/workspace-orchestration-plan.md`](./docs/workspace-orchestration-plan.md).
 - **Drift-aware sync** — `/harness-sync` detects drift on four axes (profile,
   recommendations, templates, memory health), shows the diff first, and refreshes only
-  generated blocks.
+  generated blocks. Choices you made (or skipped) earlier are remembered, not forgotten:
+  observability is recorded as a decision — `unset`, `deferred` ("not yet", asked again at the next
+  sync), `declined` (never re-asked) or `configured` (e.g. Langfuse @ `http://localhost:3000`) — and
+  `/harness-bootstrap --reconfigure <observability|memory|methodology>` shows what's in force
+  and lets you change it later. Secrets stay in `.env.harness`, never in the profile.
 - **Exportable** — `/harness-export` compiles the agents and hooks for Copilot and Cursor
   (Codex reads `AGENTS.md` natively).
 - **Upgrade-safe** — `/harness-update` pulls the new plugin version (marketplace first, GitHub
@@ -246,9 +250,9 @@ single-unit goals to try first: [`docs/demo/README.md`](./docs/demo/README.md#pa
 |---|---|
 | `/harness-init` | Intake interview (+ scan for existing repos) → generates all per-project artifacts; clones/loops a whole workspace in one pass |
 | `/harness-scan` | Brownfield detection: evidence collector → confirm → merge into profile; workspace-wide in one pass |
-| `/harness-bootstrap` | Recommends companion plugins/CLIs/MCP servers from your profile; opt-in install + lockfile; workspace-wide in one pass |
+| `/harness-bootstrap` | Recommends companion plugins/CLIs/MCP servers from your profile; opt-in install + lockfile; workspace-wide in one pass. `--reconfigure <observability\|memory\|methodology>` revisits an earlier choice |
 | `/harness-goal` | The goal loop: supervisor over the agent roster, 3 hook-enforced approval gates |
-| `/harness-sync` | Four-axis drift detection → diff-first report → confirmed refresh of generated blocks; workspace-wide in one pass |
+| `/harness-sync` | Four-axis drift detection → diff-first report → confirmed refresh of generated blocks; re-asks decisions you deferred; workspace-wide in one pass |
 | `/harness-export` | Compile agents + hooks for Copilot / Cursor (Codex reads `AGENTS.md` natively); workspace-wide in one pass |
 | `/harness-mem-graphify` | Build/maintain Graphify structural-memory indexes — per-repo, and merged at workspace level |
 | `/harness-methodology-openspec` | Install/init OpenSpec where chosen — `/harness-goal` drives its actual propose/archive lifecycle |
@@ -276,7 +280,7 @@ single-unit goals to try first: [`docs/demo/README.md`](./docs/demo/README.md#pa
 ## Status
 
 **[v1.1.0](https://github.com/rbhattarai/se-harness/releases/tag/v1.1.0)** is the current
-release: ten commands, a 12-agent roster, a 332-test suite in CI, and a separate local eval suite
+release: ten commands, a 12-agent roster, a 355-test suite in CI, and a separate local eval suite
 (below). Since v1.0.0 (six commands, 199 tests) it added `/harness-mem-graphify`,
 `/harness-methodology-openspec`, `/harness-mem-wiki` (now any-format NAS documents via
 MarkItDown), the workspace-wide loop shared by `/harness-init`/`-bootstrap`/`-sync`/`-export`,
@@ -336,7 +340,7 @@ plugins/se-harness/templates/             # profile/env/requirement/AGENTS/CLAUD
                                       # workspace-plan + memory seeds
 docs/                                # setup guides, interop matrix, platform schema notes, demo guide,
                                       # eval plan/status, development history
-tests/                               # 332-test suite run in CI
+tests/                               # 355-test suite run in CI
 evals/                               # local, manual regression evals for prompts + hooks (see evals/README.md)
 ```
 

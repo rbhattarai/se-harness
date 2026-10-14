@@ -142,6 +142,23 @@ genuinely can't move there.
   `${CLAUDE_PLUGIN_ROOT}/<path>` a command names exists there.
 - Registry parsing hardened against CRLF; `.tsv` and test fixtures pinned to LF.
 
+## Observability as a recorded decision (2026-10)
+
+Found by a real run: a user who skipped observability at first setup was never asked again, and had
+nowhere to record a Langfuse instance they stood up later. Cause: observability was only a one-shot
+question inside `/harness-bootstrap`, "not now" and "no thanks" were stored identically (`declined`,
+which `/harness-sync` deliberately never re-nags), "neither" left no record at all, and nothing held
+the host. Fix: an `observability:` block (`status` unset / deferred / declined / configured, `provider`,
+non-secret `host`, `decided`) in `profile.yaml` and `workspace.yaml`'s `shared:`; `deferred` as a
+lockfile/profile status distinct from `declined`; `scripts/decision-review.sh` (read-only; resolves
+profile then workspace default; reports missing secret *names*, never values);
+`/harness-bootstrap --reconfigure <observability|memory|methodology>` plus a shared "Observability
+setup" sequence; `/harness-sync` re-asks `unset`/`deferred` observability once per sync and shows
+every other decision in one line with how to change it. Projects created before the field existed
+read as `unset`, so they are asked on their next sync. Registry: per-provider entries
+(host default, secret variable names, health path) with the plugin names flagged `verified: false`.
+`/harness-init` was deliberately left alone: it does not ask about observability.
+
 ## Evals (2026-10)
 
 Regression evals for the prompts and gating hooks live in [`evals/`](../evals/README.md); plan, status

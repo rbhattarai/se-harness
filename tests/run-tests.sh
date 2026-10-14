@@ -740,6 +740,101 @@ rm -rf "$INST_T"
 check "copilot commands point templates at the sibling framework clone's plugin dir" \
   bash -c "grep -rq '../se-harness/plugins/se-harness/templates/' plugins/se-harness-copilot/commands"
 
+# --- observability as a recorded decision: decision-review.sh + the contract the commands rely on ---
+DR_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/plugins/se-harness/scripts/decision-review.sh"
+DR_FIX=$(mktemp -d 2>/dev/null || mktemp -d -t seharness)
+# dr_get <dir> <topic> <field#>: 2=status 3=value 4=decided 5=detail
+dr_get() { bash "$DR_SCRIPT" "$1" | awk -F'\t' -v t="$2" -v n="$3" '$1 == t { print $n }'; }
+
+mkdir -p "$DR_FIX/none/.harness"
+printf 'methodology: openspec\n' > "$DR_FIX/none/.harness/profile.yaml"
+check "decision-review: a project with no observability block reads as unset (asked on the next sync)" \
+  test "$(dr_get "$DR_FIX/none" observability 2)" = "unset"
+
+mkdir -p "$DR_FIX/lf/.harness"
+cat > "$DR_FIX/lf/.harness/profile.yaml" <<'EOF'
+methodology: openspec
+observability:
+  status: configured
+  provider: langfuse        # comment must not leak into the value
+  host: "http://localhost:3000"
+  decided: 2026-10-13
+EOF
+printf 'LANGFUSE_PUBLIC_KEY=pk-lf-secret-value\nLANGFUSE_SECRET_KEY=\n' > "$DR_FIX/lf/.env.harness"
+check "decision-review: configured Langfuse is reported as provider @ host" \
+  test "$(dr_get "$DR_FIX/lf" observability 3)" = "langfuse @ http://localhost:3000"
+check "decision-review: configured decision carries its date" \
+  test "$(dr_get "$DR_FIX/lf" observability 4)" = "2026-10-13"
+check "decision-review: reports a missing secret by NAME" \
+  test "$(dr_get "$DR_FIX/lf" observability 5)" = "missing: LANGFUSE_SECRET_KEY"
+check "decision-review: never prints a secret value" \
+  bash -c "! bash '$DR_SCRIPT' '$DR_FIX/lf' | grep -q 'pk-lf-secret-value'"
+printf 'LANGFUSE_PUBLIC_KEY=a\nLANGFUSE_SECRET_KEY=b\n' > "$DR_FIX/lf/.env.harness"
+check "decision-review: both keys present -> env ok" \
+  test "$(dr_get "$DR_FIX/lf" observability 5)" = "env: ok"
+
+mkdir -p "$DR_FIX/ws/unit/.harness"
+cat > "$DR_FIX/ws/workspace.yaml" <<'EOF'
+workspace:
+  name: demo
+  shared:
+    methodology: openspec
+    observability:
+      status: configured
+      provider: langfuse
+      host: http://localhost:3000
+      decided: 2026-10-13
+EOF
+printf 'project: {}\n' > "$DR_FIX/ws/unit/.harness/profile.yaml"
+check "decision-review: a unit inherits the workspace's shared.observability" \
+  test "$(dr_get "$DR_FIX/ws/unit" observability 3)" = "langfuse @ http://localhost:3000"
+check "decision-review: a unit inherits the workspace methodology" \
+  test "$(dr_get "$DR_FIX/ws/unit" methodology 3)" = "openspec"
+
+mkdir -p "$DR_FIX/def/.harness"
+printf 'observability:\n  status: deferred\n' > "$DR_FIX/def/.harness/profile.yaml"
+check "decision-review: deferred is reported as deferred" \
+  test "$(dr_get "$DR_FIX/def" observability 2)" = "deferred"
+printf 'observability:\n  status: declined\n  decided: 2026-10-01\n' > "$DR_FIX/def/.harness/profile.yaml"
+check "decision-review: declined is distinct from deferred" \
+  test "$(dr_get "$DR_FIX/def" observability 2)" = "declined"
+check "decision-review: declined carries its date" \
+  test "$(dr_get "$DR_FIX/def" observability 4)" = "2026-10-01"
+printf 'observability:\n  status: maybe\n' > "$DR_FIX/def/.harness/profile.yaml"
+check "decision-review: an unknown status is flagged invalid, not silently accepted" \
+  test "$(dr_get "$DR_FIX/def" observability 2)" = "invalid(maybe)"
+printf 'observability:\n  status: configured\n' > "$DR_FIX/def/.harness/profile.yaml"
+check "decision-review: configured without a provider is flagged invalid" \
+  test "$(dr_get "$DR_FIX/def" observability 2)" = "invalid(configured-without-provider)"
+check "decision-review: a null structural driver is reported as deferred, a set one as configured" \
+  bash -c "test \"\$(printf 'memory:\n  structural_driver: null\n' > '$DR_FIX/def/.harness/profile.yaml'; bash '$DR_SCRIPT' '$DR_FIX/def' | awk -F'\t' '\$1==\"memory\"{print \$2}')\" = deferred && test \"\$(printf 'memory:\n  structural_driver: Graphify\n' > '$DR_FIX/def/.harness/profile.yaml'; bash '$DR_SCRIPT' '$DR_FIX/def' | awk -F'\t' '\$1==\"memory\"{print \$2}')\" = configured"
+rm -rf "$DR_FIX"
+
+check "profile template carries the observability decision block" \
+  bash -c "grep -q '^observability:' plugins/se-harness/templates/profile.yaml && grep -q 'status: unset' plugins/se-harness/templates/profile.yaml"
+check "workspace template carries shared.observability" \
+  bash -c "grep -q '^    observability:' plugins/se-harness/templates/workspace.yaml"
+check "workspace env template names the Langfuse keys (values empty)" \
+  bash -c "grep -qx 'LANGFUSE_PUBLIC_KEY=' plugins/se-harness/templates/env.harness.workspace.example && grep -qx 'LANGFUSE_SECRET_KEY=' plugins/se-harness/templates/env.harness.workspace.example"
+check "registry: every observability provider has a kind and a secrets list" \
+  "$PY" -c "
+import json
+o = json.load(open('plugins/se-harness/registry/recommendations.json', encoding='utf-8'))['observability']
+for n, p in o['providers'].items():
+    assert p['kind'] in ('plugin', 'manual') and isinstance(p['env_secret'], list), n
+assert {'langfuse', 'dash0', 'other'} <= set(o['providers'])"
+check "registry: langfuse provider records a default host, health path and its unverified status" \
+  "$PY" -c "
+import json
+p = json.load(open('plugins/se-harness/registry/recommendations.json', encoding='utf-8'))['observability']['providers']['langfuse']
+assert p['host_default'] == 'http://localhost:3000' and p['health_path'] and p['verified'] is False"
+check "bootstrap documents --reconfigure for observability, memory and methodology" \
+  bash -c "f=plugins/se-harness/commands/harness-bootstrap.md; grep -q -- '--reconfigure' \$f && grep -q 'Reconfigure mode' \$f && grep -q 'Observability setup' \$f && grep -q 'deferred' \$f"
+check "sync re-asks deferred decisions and points at --reconfigure" \
+  bash -c "f=plugins/se-harness/commands/harness-sync.md; grep -q 'decision-review.sh' \$f && grep -q -- '--reconfigure observability' \$f"
+check "copilot variant carries decision-review.sh and the reconfigure docs" \
+  bash -c "test -f plugins/se-harness-copilot/scripts/decision-review.sh && grep -q -- '--reconfigure' plugins/se-harness-copilot/commands/harness-bootstrap.md"
+
 # --- privacy invariant: plugins make no network calls (see PRIVACY.md) ---
 check "no network calls in plugin scripts" \
   bash -c "! grep -rlE 'curl |wget |Invoke-WebRequest|Invoke-RestMethod' plugins/*/scripts/"

@@ -73,6 +73,11 @@ workspace:
                                 # Tiers 2/3 (session log, domain wiki) are always plain markdown
                                 # regardless of this value — see docs/workspace-orchestration-plan.md §4.5/§8.
                                 # Set by /harness-init Step 6; actually installed by /harness-bootstrap.
+    observability:           # same shape as profile.yaml observability: - set once here, every unit inherits
+      status: unset          # unset | deferred | declined | configured (see profile.yaml)
+      provider: null         # langfuse | dash0 | other
+      host: ""               # non-secret endpoint, e.g. http://localhost:3000; keys live in the workspace-root .env.harness
+      decided: ""            # YYYY-MM-DD
 
   units:
     - name: example-service

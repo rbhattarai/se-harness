@@ -53,3 +53,17 @@ memory:                     # tier-1 (structural) ONLY — phase 4. Tiers 2/3 ar
                              # Inherited from workspace.yaml's shared.memory.structural_driver
                              # when a workspace manifest exists. Set by /harness-init Step 6;
                              # actually installed by /harness-bootstrap, never by init itself.
+
+observability:              # agent-session tracing (Langfuse / OpenTelemetry-style). A recorded DECISION,
+                             # not just a plugin: `status` says what happens next.
+  status: unset             # unset      never decided (also: projects made before this field existed)
+                             # deferred   "not yet" - /harness-sync asks again
+                             # declined   "no thanks" - never re-asked (change: --reconfigure observability)
+                             # configured a provider is chosen
+  provider: null            # langfuse | dash0 | other - meaningful once configured
+  host: ""                  # NON-SECRET endpoint, e.g. http://localhost:3000 (self-hosted Langfuse).
+                             # Keys and tokens are never here: .env.harness (workspace root when shared).
+  decided: ""               # YYYY-MM-DD of the last decision
+                             # Inherited from workspace.yaml's shared.observability when a workspace
+                             # manifest exists. Set/changed by /harness-bootstrap [--reconfigure
+                             # observability]; surfaced and re-asked (if deferred) by /harness-sync.

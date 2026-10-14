@@ -85,6 +85,7 @@ spending: `--dry-run`. Compare to committed scores: `--compare`; accept new scor
 | `/harness-init` and `/harness-scan` command-level evals (beyond the stack-detector skill) | ⬜ | scripted intake answers, golden `profile.yaml` |
 | Same dataset against the Copilot variant (`se-harness-copilot`) | ⬜ | cross-ecosystem parity |
 | Optional: run Layer 1 in CI and/or a pre-push hook | ⬜ | free and fast, so low-risk; deferred because the decision was "local only for now" |
+| Layer 2 eval for `/harness-bootstrap --reconfigure observability` and the `/harness-sync` decision re-ask (scripted answers: configure Langfuse @ localhost:3000, defer, decline) | ⬜ | the helper script and the static contract are unit-tested (`tests/run-tests.sh`); the prompt flow itself has no eval yet |
 | Cloud-hosted / nightly Layers 2–3 | 🚫 | out of scope while evals are local-only |
 
 ## Known limits
