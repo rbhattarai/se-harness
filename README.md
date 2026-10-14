@@ -277,6 +277,20 @@ single-unit goals to try first: [`docs/demo/README.md`](./docs/demo/README.md#pa
   mono-repo → modulith → multi-repo → hybrid: the impact map, `workspace-plan.md`, the
   `workspace-orchestrator` agent, and the combined integration check, phase by phase
 
+## Where it has been used
+
+The harness has been run on all three project shapes it supports:
+
+- **Single repo and mono repo** — the companion [demo-loan-app](https://github.com/rbhattarai/demo-loan-app)
+  and `finance-portal`, which also serve as the pinned fixtures for the [eval suite](./docs/evals-plan.md).
+- **Multi-repo** — enterprise applications split across several repositories, using the workspace
+  manifest, shared scoped configuration and the workspace-wide `/harness-init`, `/harness-bootstrap`,
+  `/harness-scan` and `/harness-sync` flow. That is where the observability re-ask and the
+  `--reconfigure` mode came from.
+
+"Used" here means real runs by the maintainer, not a formal certification: the multi-repo runs are
+not reproducible from this repo, and the automated evidence is the 371-test suite plus the eval suite.
+
 ## Status
 
 **[v1.1.0](https://github.com/rbhattarai/se-harness/releases/tag/v1.1.0)** is the current
