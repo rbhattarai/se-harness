@@ -47,8 +47,8 @@ METHOD=$(awk '
 ' "$MANIFEST")
 if [ -n "$METHOD" ]; then
   case "$METHOD" in
-    bmad|spec-kit|openspec) ;;
-    *) fail "shared.methodology '$METHOD' is not one of bmad|spec-kit|openspec" ;;
+    se-harness|openspec|spec-kit|bmad|none) ;;
+    *) fail "shared.methodology '$METHOD' is not one of se-harness|openspec|spec-kit|bmad|none" ;;
   esac
 fi
 

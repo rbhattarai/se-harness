@@ -8,11 +8,12 @@ project:
   topology: single          # single | mono-repo | modulith | multi-repo | hybrid
                              # (see workspace.yaml for every value except single)
 
-methodology: openspec       # bmad | spec-kit | openspec | se-harness — inherited from
+methodology: openspec       # se-harness | openspec | spec-kit | bmad | none — inherited from
                              # workspace.yaml's shared.methodology when a workspace manifest
                              # exists (phase 3); a value that deviates from it should carry a
                              # trailing comment explaining why (a documented exception, not a
-                             # silent one). "se-harness" displays as "se-harness (built-in)" —
+                             # silent one). "se-harness" displays as "se-harness (built-in)"; "none" = no named
+                             # methodology (nothing installed, never re-asked) —
                              # only it and openspec are actually delegated to by /harness-goal
                              # today — bmad/spec-kit install but don't change /harness-goal's
                              # own behavior yet (registry note).

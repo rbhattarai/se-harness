@@ -209,6 +209,19 @@ WV_METHOD_CODE=$?
 check "workspace-validate: invalid shared.methodology exits 2" test "$WV_METHOD_CODE" -eq 2
 check "workspace-validate: invalid shared.methodology is reported" \
   grep -qF "shared.methodology 'scrum-of-scrums' is not one of" "$WV_OUT"
+for m in se-harness openspec spec-kit bmad none; do
+  printf 'workspace:\n  name: acme\n  shared:\n    methodology: %s\n' "$m" > "$WV_FIX/method-$m.yaml"
+  check "workspace-validate: shared.methodology '$m' is accepted" \
+    bash plugins/se-harness/scripts/workspace-validate.sh "$WV_FIX/method-$m.yaml"
+done
+check "init offers all five methodology choices, including se-harness (built-in) and None" \
+  bash -c "f=plugins/se-harness/commands/harness-init.md; grep -q 'se-harness (built-in)' \$f && grep -q 'OpenSpec' \$f && grep -q 'Spec Kit' \$f && grep -q 'BMAD' \$f && grep -q 'None' \$f && grep -q 'methodology: none' \$f"
+check "registry: methodologies include se-harness and none as native entries" \
+  "$PY" -c "
+import json
+m = json.load(open('plugins/se-harness/registry/recommendations.json', encoding='utf-8'))['methodologies']
+assert m['se-harness']['kind'] == 'native' and m['none']['kind'] == 'native'
+assert {'se-harness', 'none', 'openspec', 'spec-kit', 'bmad'} <= set(m)"
 
 # violations: bad boundary.type, path outside any unit, missing evidence, unknown component id
 cat > "$WV_FIX/bad.yaml" <<'EOF'

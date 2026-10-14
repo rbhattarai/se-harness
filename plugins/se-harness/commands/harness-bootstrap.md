@@ -56,8 +56,9 @@ stop. Only that topic's profile fields and components are touched — never the 
      others → this command's Step 3 install for that one driver.
    - **methodology** → write `methodology` (a value that differs from the workspace default gets
      the trailing "documented exception" comment); OpenSpec → hand off to
-     `/harness-methodology-openspec`. Remind that only se-harness (built-in) and OpenSpec are
-     delegated to by `/harness-goal`.
+     `/harness-methodology-openspec`. The choices are se-harness (built-in) / OpenSpec / Spec Kit /
+     BMAD / None. Remind that only se-harness (built-in) and OpenSpec are delegated to by
+     `/harness-goal`; None installs nothing and is never re-asked.
 4. At a workspace root (no `.harness/profile.yaml`, but `workspace.yaml`): change the `shared:`
    value once, then list any unit whose own profile deviates (they keep theirs unless the user
    says otherwise) — don't loop every unit.
@@ -125,8 +126,8 @@ Read `.harness/profile.yaml` (guard: must exist — run `/harness-init` first) a
 `${CLAUDE_PLUGIN_ROOT}/registry/recommendations.json`. Map profile → components:
 
 - `methodology` → its entry (plugin or CLI install) — `se-harness` ("se-harness (built-in)" to
-  the user) has a `kind: native` registry entry, nothing to install; skip it silently, no
-  manifest row
+  the user) and `none` ("None") have `kind: native` registry entries, nothing to install; skip
+  them silently, no manifest row
 - each `stack.*` value → its `plugins` list (skip entries with empty lists; surface their
   `note` so the user knows why nothing is recommended)
 - `cloud` → its plugins
