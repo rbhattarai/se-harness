@@ -33,6 +33,11 @@ org:                        # organization context (A1 intake; compose-first, A5
   preferred_libraries: []   # - { use: "dayjs", never: "moment", reason: "org standard" }
   conventions_url: ""       # Confluence/SharePoint page holding org guidelines (wiki-ingest pulls it)
   conventions: []           # inline rules, e.g. "errors: never swallow; wrap in AppError"
+  guardrails: []            # org policy on what the agent should/shouldn't help with, one rule per line; empty = no section.
+                            # /harness-init lets you pick from templates/guardrails.preset.txt and/or write your own. A soft instruction, not enforcement.
+  convention_docs: []       # written by /harness-conventions: - { area: "angular", path: ".harness/conventions/angular.md", applies_to: ["**/*.ts"], status: "confirmed", scope: "repo" }
+                            # scope: "workspace" entries are inherited from workspace.yaml shared.org.convention_docs;
+                            # their path is relative to THIS repo (e.g. ../.harness/conventions/lib-ui.md)
 
 sources:                    # enterprise memory sources (tier-3 wiki ingestion) — inherited
                              # from workspace.yaml's shared.{jira_project,confluence_spaces,

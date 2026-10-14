@@ -231,7 +231,10 @@ Ask only what wasn't detected and isn't already inherited. Cover:
 `shared.org` in the workspace manifest already has `internal_libraries`/`preferred_libraries`/
 `conventions`, inherit them and tell the user what was inherited — skip asking about anything
 already covered. Ask only about what's missing, then offer to write new answers back into
-`shared.org` (confirm first) so later repos inherit them too.
+`shared.org` (confirm first) so later repos inherit them too. If `shared.org.convention_docs`
+lists workspace-scope convention docs, copy each into this repo's `org.convention_docs` with
+`scope: workspace` and the path rewritten relative to this repo (see `/harness-conventions`,
+"Workspace ↔ unit docs"); don't re-ask about them.
 
 Ask explicitly — for new projects this is the only source; for existing projects collect what
 the user knows now (Phase 2 `/harness-scan` will verify/extend it):
@@ -241,6 +244,25 @@ the user knows now (Phase 2 `/harness-scan` will verify/extend it):
 3. **Coding conventions/guidelines** — inline rules and/or a Confluence/SharePoint URL
    (the wiki-ingest skill will pull the URL's content into domain memory later).
 None of these are required — record empty lists if the org has none; don't nag.
+
+4. **Guardrails** (optional, off by default) — policy on what the agent should and shouldn't help
+   with. Read `${CLAUDE_PLUGIN_ROOT}/templates/guardrails.preset.txt` (`id | label | rule` per line)
+   and ask in two steps: (a) AskUserQuestion, multiSelect, one option per preset line using its label
+   (the ones marked "(recommended)" first) plus **None — no guardrails**; (b) then ask whether to
+   **add rules of their own** (free text, one per line) or **reword** any selected rule. Write the final
+   rule texts to `org.guardrails`, one rule per line. The rule text carries deliberate carve-outs
+   (business-domain questions, authorized security work) — if the user rewrites a rule, don't
+   silently strengthen or weaken it. Never invent guardrails and never infer them from the code. Say
+   plainly that this is an instruction in AGENTS.md, not enforcement. In a workspace it is a
+   `shared.org` field: ask once, inherit silently in every unit; a unit may add its own lines.
+
+Whatever the answers, tell the user these three only seed the profile: the **detailed,
+per-area rules and the library catalog** (what to use for what, import paths, examples) are
+captured separately by `/harness-conventions`, which reads the code and the libraries' own
+sources. For an existing project that runs best after `/harness-scan`; if the user says they
+have existing instruction files (e.g. `copilot-instructions.md`), note that it will use them as
+input. Do not run it from here — init has not scanned the code yet. For the one-pass workspace
+paths (Step 1b / mono-repo loop), do not ask again per unit; the Step 8 report lists it once.
 
 ## Step 6 — Structural memory (tier 1 only — workspace-orchestration plan §4.5)
 
@@ -320,7 +342,12 @@ Order matters; use the exact mechanics below.
 ## Step 8 — Report & next steps
 Summarize what was created vs. skipped (already existed). Then:
 - **Existing project** → "run `/harness-scan` to detect stack/devops/org conventions from the
-  code" (Phase 2 — if not yet available, say so and note the profile can be completed manually).
+  code, then `/harness-conventions` to write them up as per-area convention docs the agents follow" (Phase 2 — if not yet available, say so and note the profile can be completed manually).
+- **Memory**: if a structural driver was chosen in Step 6, bootstrap installs it and (for
+  Graphify) hands off to `/harness-mem-graphify` to build the first index. If Step 4 recorded
+  non-code sources (Jira/Confluence/SharePoint/NAS), nothing is ingested yet — `/harness-mem-wiki`
+  does that, separately, after bootstrap, because it needs credentials in the workspace
+  `.env.harness`. Say which of the two applies so the user knows what comes next.
 - Both → next: Phase 3 bootstrap (methodology + stack plugins + the structural-memory driver
   chosen in Step 6, if any), then `/harness-goal <goal>`.
 - Remind: fill `.env.harness`, commit `.harness/` + AGENTS.md/CLAUDE.md, DON'T commit `.env.harness`.

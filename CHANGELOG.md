@@ -8,6 +8,28 @@ versions follow [SemVer](https://semver.org/). Full release notes for tagged ver
 ## [Unreleased]
 
 ### Added
+- **`org.guardrails`** — optional org policy rendered as a "Guardrails" section in AGENTS.md (omitted when empty).
+  `/harness-init` lets you pick any of the preset rules (`templates/guardrails.preset.txt`: scope, security, secrets,
+  ambiguity, honesty, destructive actions, licensing) and/or write your own; inherited via `shared.org` in a
+  workspace. A soft instruction, not enforcement.
+- **Workspace ↔ unit convention docs** — workspace-scope docs (`shared.org.convention_docs`) are mirrored into each
+  unit's profile with a unit-relative path; `/harness-sync` axis E detects index/file/workspace drift, stale docs and
+  missing inherited guardrails.
+- Version 1.2.0 (plugin, marketplaces and build script in lockstep).
+- **Scope triage in `/harness-goal`** (steps 2b/2c) — sizes the change (S/M/L) from cited signals before Gate 1. S/M run
+  the loop as before; L offers a read-only Plan-mode analysis first, and if it is still large, splits into
+  prioritized phases (an `epic` parent REQ plus one child REQ per phase) implemented one at a time, each with its
+  own gates. `requirement.md` gains `size`, `parent`, `phase`.
+- **`/harness-goal` preflight** (step 0) — checks conventions and memory readiness (code index fresh? wiki built for
+  the configured sources?) before the grill, offers the fixing command, and runs a light memory lookup so the grill is
+  informed. `/harness-bootstrap` now ends with a "Next commands" list (`/harness-mem-graphify`, `/harness-mem-wiki`,
+  `/harness-conventions`) and offers the wiki build as a row (never run inline).
+- **`/harness-conventions`** — turns detected libraries and code conventions into per-area convention docs
+  (`.harness/conventions/<area>.md`: MUST/SHOULD rules, internal-library catalog, golden examples) indexed in
+  `org.convention_docs` and AGENTS.md. Agents load the matching doc before writing code; `/harness-goal` flags
+  areas without a confirmed doc and adds a convention review to the automated gate. `scan-evidence.sh` now
+  reports existing AI instruction files and library source locations. Optional Copilot export to
+  `.github/instructions/*.instructions.md`.
 - **Local regression evals (`evals/`)** — offline, manual, no Docker; the model API is the only network use.
   Layer 1 (194 deterministic cases against the real hook and script code, plus grader self-tests and an
   oracle/null/reckless pipeline self-test), Layer 2 (headless single agent/skill evals: requirement grill,

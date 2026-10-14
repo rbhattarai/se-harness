@@ -17,3 +17,5 @@ Rules:
 - Update schema docs/fixtures the repo already maintains. Commit with the REQ/story ID.
 - Destructive operations (drops, truncates) are never run against non-local databases — they
   ship as migrations for the gated deploy pipeline.
+
+- **Load the conventions first**: before writing or reviewing code, read the convention docs listed in AGENTS.md (org section → Convention docs) whose `applies_to` matches the files you touch — rules, library catalog, golden examples. MUST rules are enforced at the PR gate; if a doc is `draft` or `stale`, say so in your handoff. No matching doc: follow the nearest existing code and flag the gap.

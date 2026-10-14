@@ -55,7 +55,11 @@ workspace:
                               # default. "se-harness" displays as "se-harness (built-in)" —
                               # only it and openspec are actually delegated to by /harness-goal
                               # today (see profile.yaml's comment).
-    org: {}                  # same shape as profile.yaml org: — conventions, internal libs
+    org: {}                  # same shape as profile.yaml org: — conventions, internal libs, guardrails.
+                             # convention_docs: written by /harness-conventions for docs that span units
+                             # (an internal library's catalog, org-wide rules). path is relative to THIS
+                             # file's directory; each unit's profile gets the same entry with scope:
+                             # workspace and a path rewritten relative to that unit.
     # package_index:            OPTIONAL, additive to org: — set only if this org requires
     #   url: ""                 installs (uv/pip) to come from a private index rather than
     #   allow_insecure_host: "" public PyPI. Read by /harness-mem-graphify when installing

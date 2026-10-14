@@ -11,10 +11,53 @@ you orchestrate the phase agents, own the artifacts, and stop at the three ⛔ g
 human explicitly approves. Never skip, reorder, or merge gates. Every phase output is a file
 with status frontmatter — never chat-only.
 
+## 0. Preflight — conventions & memory  *(before anything else — cheap, read-only)*
+### 0a. Conventions
+Read `org.convention_docs` in `profile.yaml` — it already includes the workspace-scope docs, each
+with a path relative to this repo. If `workspace.yaml` exists and its `shared.org.convention_docs`
+has an area missing here, treat that as sync drift: use it for this run and suggest `/harness-sync`. From the goal text and the stack, guess the areas it will touch (UI → `angular`,
+tests → `e2e-playwright`, API → `dotnet`, schema → `db-*`, plus any `lib-*` it names).
+- **Every touched area has a `confirmed` doc** → read those docs now (rules + library catalog)
+  and carry them into steps 1-6: the grill asks about library choices they already settle
+  instead of re-asking, and the architect/implementers start from them. Say which docs you loaded.
+- **Any touched area has no doc, a `draft`, or a `stale` one** → ask once (AskUserQuestion):
+  run `/harness-conventions <areas>` now (recommended — then continue) / proceed without. Proceeding
+  is allowed; record "no confirmed conventions for <areas>" in the REQ's impact map and repeat it
+  in the PR evidence. Never block the goal on it, and don't re-ask within the same run.
+- **No `org.convention_docs` at all** (never run) → same question, worded as a first-time setup.
+
+### 0b. Memory readiness
+Establish what memory actually exists, so the grill and deep-dive use it instead of discovering
+mid-run that it was never built. Check, without building or ingesting anything:
+- **Code memory (tier 1)** — `memory.structural_driver` (or `shared.memory.structural_driver`):
+  - Graphify → `graphify-out/graph.json` + `GRAPH_REPORT.md` exist? mtime older than the latest
+    commits → stale.
+  - MCP drivers (codebase-memory-mcp, CodeGraph) → is that server's tool actually among your
+    tools this session?
+  - `null`/deferred → "none configured" (valid; Grep/Glob fallback, said plainly later).
+  - Any other memory tool the project wired in `.mcp.json` (e.g. a mem0-style server) counts as
+    available if its tools are present; use it, don't assume its semantics beyond its tool docs.
+- **Non-code memory (tier 3 wiki)** — workspace-root and repo `.harness/memory/wiki/index.md`
+  exist and list pages? Compare with `workspace.yaml`'s `shared:` sources
+  (`jira_project`, `confluence_spaces`, `sharepoint_sites`, `nas_*_paths`): sources configured
+  but wiki empty/no log entry for them = never ingested.
+- **Session memory (tier 2)** — `MEMORY.md`/SCRATCHPAD present (the context-injector hook already
+  loads these; just note if missing).
+
+Print one compact status (tier | driver/source | state: ready / stale / not built / not
+configured). For **stale or not built** items that this goal plausibly needs, ask once
+(AskUserQuestion) whether to run the fix now — `/harness-mem-graphify` (code) and/or
+`/harness-mem-wiki <source>` (non-code) — or continue; both are opt-in and may be slow, so
+continuing is always allowed. Don't re-ask within the run, and never build or ingest silently.
+Then do a **light pre-grill lookup** with whatever is ready: a quick structural query for the
+goal's key nouns and `wiki-query` on its domain terms, so the grill asks code-aware, domain-aware
+questions (and skips what memory already answers) rather than interrogating from a blank slate.
+Carry the status into step 2 and into the REQ's impact map ("memory gaps: ...").
+
 ## 1. Grill the requirement  *(requirement-grill skill)*
 Interrogate until falsifiable: outcome, explicit scope exclusions, testable acceptance
 criteria (no "fast/better/robust"), the non-functionals this change can violate, failure
-behavior, conflicts with prior decisions (wiki-query + org conventions). Batch questions,
+behavior, conflicts with prior decisions (wiki-query + org conventions + the step 0 lookups). Batch questions,
 stop when testable — over-grilling erodes trust.
 
 ## 2. Deep-dive memory — build the impact map (workspace-orchestration plan §5.2)
@@ -40,11 +83,64 @@ stop when testable — over-grilling erodes trust.
   own — the skill handles both locations) for related PRDs, decisions, contradictions.
 - **Session**: `MEMORY.md` + recent daily logs for prior attempts (`[[...]] causes [[...]]` chains).
 
+- **Conventions**: apply the step 0 result — list the docs that govern each impacted component
+  and any area still without a confirmed one.
+
 Record each candidate component in an **impact map**: component, why it's included, evidence
 source, confidence. Check current code before treating indexed memory as authoritative; drop
 anything whose name merely sounds relevant with no cited evidence. No `workspace.yaml` at all
 means the impact map is trivially "this repo" — one component, skip straight to step 3's fast
 path. The **distinct component count** from this map feeds step 3's fast-path decision.
+
+## 2b. Scope triage — size the change before committing to the loop
+Nothing below step 2 changes code until Gate 1, but the loop *after* it runs end to end, so size
+the change now, from the impact map and the grill — not from a gut feel. Score these signals
+(each is evidence you can cite, not a vibe):
+
+| Signal | Points toward large |
+|---|---|
+| Components / layers touched | 3+ components, or db + backend + frontend + e2e together |
+| Breadth | roughly 15+ files, or a change that fans out through many callers (graph blast radius) |
+| Contracts / schema | a provided contract or DB schema changes with consumers to migrate |
+| Risk class | data migration, auth/permissions, payments, anything hard to reverse |
+| Novelty | no existing pattern to extend; a new layer, paradigm or library |
+| Clarity | 8+ acceptance criteria, or open questions about the *approach* (not just details) |
+
+**Size**: **S** = one component, one layer, few files, clear pattern, ≤3 acceptance criteria ·
+**L** = any one *critical* signal (irreversible data migration, new architectural paradigm) or
+any two other signals · **M** = everything between. These thresholds are heuristics; show your
+evidence and let the user overrule the size either way. Record it as `size:` in the REQ.
+
+- **S or M** → continue to step 3 unchanged. Say the size in one line and move on; don't add
+  ceremony to ordinary work.
+- **L** → stop and tell the user plainly, with the signals that drove it: *"This change looks
+  large/complex, so I'll do the analysis first in Plan mode — no code will be changed in the
+  loop."* Ask (AskUserQuestion): **analyze first in Plan mode** (recommended) / **proceed with the
+  full loop anyway** / **narrow the goal** (back to step 1).
+
+### 2c. Plan-mode analysis (large changes only)
+Enter the surface's plan mode if it has one (Claude Code: `EnterPlanMode`; Copilot: Plan mode /
+the Plan agent). Without one, hold yourself to the same rule: **read-only — no edits outside
+`.harness/`, no worktrees, no commands that change state.** Work from the impact map and the
+step 0 conventions/memory: approach options and the chosen one, the sequence of changes, risks,
+unknowns, what can ship independently. Delegate to **architect** for the design questions.
+Present the analysis, get approval to leave plan mode, then write it to
+`.harness/requirements/REQ-NNN/analysis.md`. Re-score the size with what the analysis learned.
+
+- **Now S or M** → proceed to step 3 for the whole goal.
+- **Still L** → break it into **phases**: each independently shippable and testable, each sized S
+  or M, each with its own acceptance-criteria subset, ordered by dependency first, then value and
+  risk (cheap/de-risking first). Create the parent via `new-requirement.sh` with `status: epic`
+  (never `approved`: `gate-check.sh` only unlocks on approved/in-progress, so an epic can't
+  unlock push/PR/deploy) and write `REQ-NNN/phases.md`: a table of phase | outcome | size | depends
+  on | status (`pending`). Present it and ask which phase to implement in the loop — and which
+  order, if they want to reprioritize. Phases can be dropped, merged or reordered by the user.
+- **Per phase**: create a child REQ with `new-requirement.sh "<phase goal>"`, set `parent:
+  REQ-NNN` and `phase:` in its frontmatter, and run steps 3-10 for it, scoped to that phase's
+  acceptance criteria only. Every child has its own Gate 1, PR and deploy gates. When the child
+  reaches step 10, mark the phase `done` in `phases.md`, then return here and ask whether to
+  continue with the next phase, reorder, or stop. Never start the next phase without asking.
+  The epic becomes `done` only when every phase is `done` or explicitly dropped.
 
 ## 3. Refined requirement  ⛔ HITL GATE 1
 ```
@@ -127,14 +223,18 @@ sibling repo from here, it says so and falls back to the step-5 handoff: tell th
    ```
 3. Delegate each task to its agent (**db-engineer**, **implementer-backend**,
    **implementer-frontend**) — each works only in its worktree, compose-first, tests included,
-   commits tagged with the REQ id.
+   commits tagged with the REQ id. Name the convention docs that match the task in the
+   delegation message so the agent loads them first.
 4. Merge task branches back sequentially into the REQ integration branch; run **unit-tester**
    then **integration-tester** on the merged result. `worktree-task.sh remove` each done task
    (it refuses on uncommitted work — that's deliberate).
 5. Automated gate (no human needed): full test suite green, lint clean, org-validate clean,
    and `bash tools/harness/contract-check.sh --` clean — if a provided contract
    changed, list the impacted consumer units in the REQ and create linked consumer tasks
-   before proceeding. Red anything → back to the owning agent, not onward.
+   before proceeding. **Convention review**: check the diff against the matching convention
+   docs' MUST rules and library catalog (hand-rolled code where a catalog entry exists is a
+   violation); list each finding with the rule number it cites. Red anything → back to the
+   owning agent, not onward.
 
 ## 6. E2E tests  *(planner → generator → healer)*
 **OpenSpec REQ**: `openspec/changes/<change-id>/specs/`'s scenarios are already written in a
@@ -149,7 +249,7 @@ workspace-orchestrator's integration check (step 5, item 4) exercises — don't 
 narrower e2e suite that only covers this repo's slice.
 
 ## 7. Pull request  ⛔ HITL GATE 2
-Present the evidence table: diff summary, unit/integration/e2e results, org-rule compliance,
+Present the evidence table: diff summary, unit/integration/e2e results, org-rule compliance, convention-doc compliance (rule numbers cited; areas with no confirmed doc),
 anything hand-rolled because no internal component fit. If `workspace-plan.md` exists, include
 its current row statuses **and** `integration:` result in the evidence — `gate-check.sh` blocks
 the PR itself while any row isn't `done` or `integration:` isn't `passed` (phase 8, §5.4: rows
@@ -169,7 +269,7 @@ Approval must be explicit **in this session** — prior approvals don't carry ov
 profile's provider plugin, watch rollout, documented rollback on failure.
 
 ## 10. Close the loop  *(memory-keeper skill)*
-Set REQ status `done`. If `workspace-plan.md` exists, confirm every row is already `done` (it
+Set REQ status `done`. **Child REQ** (has `parent:`): mark its phase `done` in the epic's `phases.md` and go back to step 2c's per-phase prompt before anything else. If `workspace-plan.md` exists, confirm every row is already `done` (it
 must be, or gate-check.sh would have blocked step 7/9) and add a closing line to its
 Integration notes. **OpenSpec REQ**: now that the change has actually shipped (deploy gate
 passed), locate and follow the installed `/opsx:archive` command the same way step 3 found

@@ -67,7 +67,8 @@ Produce the proposal table (field | proposed value | evidence | confidence) cove
 `project.topology` (+ units if mono-repo/modulith — same detection rules as `/harness-init`
 Step 3, including modulith candidates and evidenced `components:`/`relationships:` entries),
 `stack.*`, `devops.*`, `cloud`, and the full `org:` section (internal libraries, preferred
-libraries, conventions — explicit from configs AND implicit inferred from code).
+libraries, conventions — explicit from configs AND implicit inferred from code; `org.guardrails` is
+policy the user states, so never propose it).
 
 Re-scans can find **new or changed** cross-unit relationships since the last run (a new
 import, a new compose `depends_on`) — propose additions/removals the same evidence-required
@@ -141,5 +142,6 @@ Report any units that were skipped (not ready) and any undeclared directories th
 not to add yet, so they're findable next run.
 
 Either way: flag anything deferred (low-confidence rows the user skipped) at the end so it's
-findable next run. Suggest follow-ups: `wiki-ingest` for any conventions URL; Phase 3 bootstrap
+findable next run. Suggest follow-ups: **`/harness-conventions`** (turns detected libraries and inferred
+conventions into scoped, enforced convention docs; scan itself never edits them); `wiki-ingest` for any conventions URL; Phase 3 bootstrap
 to install stack-matched plugins for newly detected tech.

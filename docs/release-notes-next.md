@@ -1,10 +1,41 @@
-# Release notes — next release (draft)
+# Release notes — v1.2.0 (draft)
 
-> Draft for the next tagged release. The version number is not decided yet (no version bump or tag has
-> been made); copy this into the GitHub release when it is cut and delete this file's "draft" banner.
+> Draft for the v1.2.0 release (versions are bumped to 1.2.0; no tag has been made). Copy this into the
+> GitHub release when it is cut and delete this file's "draft" banner.
 
-Observability becomes something you can change after init, the gates stop trusting substring matches, and
+The agents now follow your organization's coding conventions and internal libraries, `/harness-goal` checks
+conventions and memory and sizes a change before it starts, observability becomes something you can change after init, the gates stop trusting substring matches, and
 the repo gains a local eval suite that protects the prompts and hooks from regressions.
+
+## Conventions the agents actually follow (new)
+
+- **`/harness-conventions`** captures coding conventions and internal-library usage as per-area docs
+  (`.harness/conventions/<area>.md`: MUST/SHOULD rules with evidence, a "use this library for X" catalog,
+  golden example files, a review checklist). It detects from lint configs, library sources, how code calls
+  the libraries and existing instruction files (all optional), and asks you to confirm each inferred rule.
+- The docs are indexed in `org.convention_docs` and in AGENTS.md; the nine implementer, tester and architect
+  agents read the matching doc before writing code, and the `/harness-goal` automated gate reviews the diff
+  against the MUST rules.
+- **Workspace docs sync into units**: a shared library's catalog is written once at the workspace root and
+  mirrored into each unit's profile with a unit-relative path. `/harness-sync` has a new axis E that detects
+  index/file drift, stale docs and missing inherited guardrails.
+- Optional export to `.github/instructions/*.instructions.md` for Copilot.
+
+## `/harness-goal` looks before it leaps (new)
+
+- **Preflight**: checks conventions and memory readiness (code index present and fresh, domain wiki built
+  for the configured sources) before the grill, offers the fixing command (`/harness-mem-graphify`,
+  `/harness-mem-wiki`, `/harness-conventions`) and runs a light memory lookup so the grill is informed.
+- **Scope triage**: sizes the goal S/M/L from cited signals. Small and medium goals run as before; a large
+  one is analyzed first in Plan mode (no code changes) and, if still large, split into prioritized phases
+  implemented one at a time, each with its own gates (`epic` parent REQ plus one child REQ per phase).
+- `/harness-bootstrap` ends with a "Next commands" list and offers conventions and the domain wiki as rows.
+
+## Guardrails (new, optional)
+
+`org.guardrails` is rendered as a "Guardrails" section in AGENTS.md when set. `/harness-init` lets you pick
+from a preset list (scope, security, secrets, ask-when-unclear, honesty, destructive actions, licensing)
+and/or write your own; in a workspace it is asked once and inherited. An instruction, not enforcement.
 
 ## Observability you can revisit (new)
 
@@ -42,7 +73,7 @@ The evals found 32 bugs in the harness; the important ones are in the gates:
 - `new-requirement.sh` numbered REQ-008 to REQ-010 wrongly and mangled goals containing backslashes.
 - Pattern boundaries in `org-validate.sh`.
 
-377 tests in CI (331 at v1.1.0).
+381 tests in CI (331 at v1.1.0).
 
 ## Upgrading
 
@@ -52,4 +83,6 @@ The evals found 32 bugs in the harness; the important ones are in the gates:
 ```
 
 Restart Claude Code, then run `/harness-update` in each project. Existing projects show observability as
-`unset`; the next `/harness-sync` asks once. Copilot CLI: `copilot plugin update se-harness-copilot`.
+`unset`; the next `/harness-sync` asks once, and reports AGENTS.md template drift (re-render to get the
+convention-docs and guardrails sections). New profile keys are additive; no migration. Run
+`/harness-conventions` per repo, library repos first. Copilot CLI: `copilot plugin update se-harness-copilot`.

@@ -93,14 +93,33 @@ next to a large refactor → recommend `/harness-mem-graphify`; any other struct
 server → remind that reindexing is cheap after large refactors. Check MEMORY.md length
 (> ~40 lines → memory-keeper consolidation due).
 
+**E. Conventions & org policy.** Read-only checks; never rewrites a convention doc's content.
+- *Index vs files*: every `org.convention_docs` entry's `path` must exist (relative to this repo);
+  a missing file = drift (propose removing the entry or restoring the file). A file in
+  `.harness/conventions/` with no index entry = propose adding it.
+- *Workspace ↔ unit*: in a workspace, compare `shared.org.convention_docs` with this unit's
+  `scope: workspace` entries — missing, extra, wrong relative path, or status that differs
+  from the workspace copy = drift (propose the corrected entry). A unit doc that overrides a
+  workspace area without `overrides: workspace` = flag.
+- *Staleness*: apply `/harness-conventions` Step 5's checks (library version in the doc's
+  `libraries` frontmatter vs the manifest, `evidence_hash` vs the lint/format configs,
+  `applies_to` vs new top-level folders). Stale → propose `status: stale` in the index and
+  recommend `/harness-conventions --refresh <area>` — sync does not redraft.
+- *Coverage*: a stack area with source files and no doc at all → one line recommending
+  `/harness-conventions <area>` (report once; not re-nagged if the user declined before).
+- *Guardrails*: in a workspace, `shared.org.guardrails` lines missing from this unit's
+  `org.guardrails` = drift (propose adding); unit-only extra lines are fine. Never ask about
+  guardrails otherwise, and never infer them.
+
 ## Step 2 — Present the drift report
-One table: **axis | item | current → proposed | action**. If everything is clean, say exactly
+One table: **axis (A-E) | item | current → proposed | action**. If everything is clean, say exactly
 that in one line and stop — no ceremony, no empty tables.
 
 ## Step 3 — Apply (only confirmed items; skip entirely on --dry-run)
 1. Profile updates → `.harness/profile.yaml` (user-entered values win unless explicitly
    overridden in Step 2).
-2. Org changes → regenerate `.harness/org-rules.txt`.
+2. Org changes → regenerate `.harness/org-rules.txt`. Axis E fixes (convention-doc index entries,
+   inherited guardrails) go to `.harness/profile.yaml` here and are rendered in step 4 below.
 3. Component installs/removals → same mechanics as `/harness-bootstrap` Step 3 (CLI with
    `pending-manual` fallback; confirm before running any third-party CLI install).
 4. Re-render AGENTS.md/CLAUDE.md inner blocks from the updated profile and splice:
@@ -117,7 +136,7 @@ that in one line and stop — no ceremony, no empty tables.
 
 ## Step 4 — Update the lockfile
 Set `updated`; set `schema_version` (if absent: 1) and `se_harness` to the plugin version;
-refresh `template_hashes`; update component statuses (`installed` / `pending-manual` / `declined` / `deferred`); append to `syncs:`
+refresh `template_hashes`; record convention-doc statuses seen (`conventions:` entry: date, areas, stale ones); update component statuses (`installed` / `pending-manual` / `declined` / `deferred`); append to `syncs:`
 history — `{date, drift_found: [axes], applied: [...], skipped: [...]}` — so the next sync
 (and the user) can see what happened last time.
 

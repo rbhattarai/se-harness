@@ -5,6 +5,12 @@
 
 {{project.description}}
 
+{{#org.guardrails}}
+## Guardrails
+<!-- Whole section omitted when org.guardrails is empty. Org policy; a soft instruction, not a security control. -->
+- {{.}}
+{{/org.guardrails}}
+
 ## Stack
 - Languages: {{stack.languages}}
 - Frameworks: {{stack.frameworks}}
@@ -31,6 +37,14 @@ Org guidelines: {{org.conventions_url}} (ingested into `.harness/memory/wiki/` �
 {{#org.conventions}}
 - {{.}}
 {{/org.conventions}}
+
+Convention docs (scoped rules + internal-library catalog — **read the matching doc before you write or review code**):
+{{#org.convention_docs}}
+- `{{area}}` ({{status}}) — `{{path}}` — applies to {{applies_to}}
+{{/org.convention_docs}}
+{{^org.convention_docs}}
+- None captured yet — run `/harness-conventions`. Until then, follow the nearest existing code and say so in the PR.
+{{/org.convention_docs}}
 
 These rules are machine-checked by a post-edit hook (`.harness/org-rules.txt`) — violations warn
 and must be resolved or justified before PR.

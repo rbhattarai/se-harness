@@ -11,7 +11,7 @@ uses **GitHub Copilot** (not Claude Code). Written for a first-time user.
 **se-harness** wraps an AI-agentic SDLC harness around any software project — new or
 existing, any stack. Installing it gives your Copilot sessions:
 
-- **10 commands** — `harness-init` (intake interview → generates AGENTS.md/CLAUDE.md,
+- **11 commands** — `harness-init` (intake interview → generates AGENTS.md/CLAUDE.md,
   `.harness/profile.yaml`, memory seeds), `harness-scan` (brownfield stack/org detection),
   `harness-bootstrap` (recommends & installs companion plugins/MCP servers),
   `harness-goal` (the delivery loop: grill → requirement → stories → implement → test →
@@ -20,12 +20,14 @@ existing, any stack. Installing it gives your Copilot sessions:
   Graphify structural-memory indexes, per-repo and workspace-merged), `harness-methodology-openspec`
   (install/init OpenSpec where chosen — `harness-goal` drives its actual propose/archive lifecycle),
   `harness-mem-wiki` (synthesize Jira/Confluence/SharePoint/NAS docs/NAS video into the
-  workspace-level domain wiki `harness-goal` queries).
+  workspace-level domain wiki `harness-goal` queries), `harness-conventions` (capture per-area
+  coding conventions and internal-library catalogs as docs the agents follow; optional export to
+  `.github/instructions/`).
 - **12 SDLC agents** — architect, story-writer, backend/frontend implementers, db-engineer,
   unit/integration testers, e2e planner/generator/healer, release-manager, and a
   workspace-orchestrator for multi-component requirements (used only when one applies).
 - **17 skills** — stack-detector, requirement-grill, memory-keeper, wiki-ingest/query/lint,
-  context-injector conventions, coding-discipline, plus the ten commands as CLI skills.
+  context-injector conventions, coding-discipline, plus the eleven commands as CLI skills.
 - **Enforcement hooks** — a human-in-the-loop gate that denies PR/push/deploy until a
   requirement is `approved`, org-rules validation on edits, contract-impact checking across
   repos, and automatic memory logging of commits/PRs.

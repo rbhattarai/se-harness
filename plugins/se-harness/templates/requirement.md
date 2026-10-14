@@ -1,6 +1,9 @@
 ---
 id: REQ-000            # unique, threads through branch / commits / PR / story
 status: draft          # draft → approved (HUMAN ONLY flips this) → in-progress → done
+size: ""              # S | M | L — scope triage result (step 2b)
+parent: ""            # epic REQ id when this is one phase of a larger change
+phase: ""             # phase number/name within the parent
 story: ""              # Jira story key once created (system of record — A5 #4)
 test_cases: []         # XRay/Zephyr keys once created
 created: YYYY-MM-DD

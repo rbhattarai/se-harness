@@ -252,6 +252,7 @@ single-unit goals to try first: [`docs/demo/README.md`](./docs/demo/README.md#pa
 |---|---|
 | `/harness-init` | Intake interview (+ scan for existing repos) → generates all per-project artifacts; clones/loops a whole workspace in one pass |
 | `/harness-scan` | Brownfield detection: evidence collector → confirm → merge into profile; workspace-wide in one pass |
+| `/harness-conventions` | Turns detected libraries and code conventions into per-area convention docs (rules, internal-library catalog, golden examples) that agents load before writing code and the PR gate reviews against; workspace-level docs sync into every unit; optional Copilot export |
 | `/harness-bootstrap` | Recommends companion plugins/CLIs/MCP servers from your profile; opt-in install + lockfile; workspace-wide in one pass. `--reconfigure <observability\|memory\|methodology>` revisits an earlier choice |
 | `/harness-goal` | The goal loop: supervisor over the agent roster, 3 hook-enforced approval gates |
 | `/harness-sync` | Four-axis drift detection → diff-first report → confirmed refresh of generated blocks; re-asks decisions you deferred; workspace-wide in one pass |
@@ -299,7 +300,7 @@ tried.
 ## Status
 
 **[v1.1.0](https://github.com/rbhattarai/se-harness/releases/tag/v1.1.0)** is the current
-release: ten commands, a 12-agent roster, a 371-test suite in CI, and a separate local eval suite
+release: ten commands (`main` adds an eleventh, `/harness-conventions`), a 12-agent roster, a 371-test suite in CI, and a separate local eval suite
 (below). Since v1.0.0 (six commands, 199 tests) it added `/harness-mem-graphify`,
 `/harness-methodology-openspec`, `/harness-mem-wiki` (now any-format NAS documents via
 MarkItDown), the workspace-wide loop shared by `/harness-init`/`-bootstrap`/`-sync`/`-export`,
@@ -310,6 +311,11 @@ before, a marketplace install lacked them and some scripts failed).
 released): the HITL gate now classifies commands like a shell instead of matching a substring,
 which closed 12 bypass shapes and 5 false positives, plus `new-requirement.sh` could not create
 REQ-009 (octal arithmetic) and mangled backslashes in goals.
+Also on `main`, for the next release (1.2.0): **`/harness-conventions`** and the convention docs the agents
+and the PR gate use; a **`/harness-goal` preflight** that checks conventions and memory readiness (code index,
+domain wiki) before the grill; **scope triage** that sizes a goal and, for large changes, analyzes in Plan
+mode and splits into phases implemented one at a time; optional **`org.guardrails`** (pick from a preset list
+or write your own) rendered into AGENTS.md; and `/harness-sync` checking convention docs and guardrails.
 **Workspace-level orchestration** — single repo → mono-repo → modulith → multi-repo → hybrid,
 one goal loop that coordinates across repos, with the orchestration overhead scaling to zero
 for the common single/few-component case — is **complete**: see

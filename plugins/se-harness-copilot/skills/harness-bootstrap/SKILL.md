@@ -133,6 +133,17 @@ Read `.harness/profile.yaml` (guard: must exist — run `/harness-init` first) a
   `note` so the user knows why nothing is recommended)
 - `cloud` → its plugins
 - `always` + `testing.e2e` → recommended for every project
+- **domain wiki** (not a plugin) → if `workspace.yaml`'s `shared:` has any configured non-code
+  source (`jira_project`, `confluence_spaces`, `sharepoint_sites`, `nas_doc_paths`,
+  `nas_video_paths`) and the workspace wiki has no pages for it: add one row, "Build the domain
+  wiki from <sources> (`/harness-mem-wiki`)". **Not recommended by default and never run inline**
+  — it needs MCP credentials in the workspace `.env.harness`, can take long, and asks for
+  confirmation per source. If selected, don't run it; list it under "Next commands" in Step 6
+  with the sources named. No configured source → no row.
+- **conventions** (not a plugin — a harness setup step) → if the repo has source code and
+  `org.convention_docs` is empty, or any doc is `draft`/`stale`, add one row: "Capture coding
+  conventions + internal-library catalog (`/harness-conventions`)". Recommended by default.
+  Skip the row when every doc is `confirmed`.
 - `observability` → run `bash tools/harness/decision-review.sh` and read its
   `observability` row (it resolves this repo's profile, then the workspace default). Never ask a
   question that was already answered:
@@ -165,7 +176,7 @@ Never recommend a name not present in the registry file — gaps are stated, not
 
 ## Step 2 — User selection
 AskUserQuestion with multiSelect over the manifest (group: methodology / stack / cloud /
-core / observability / memory). Default-recommend the `always` group; everything else neutral.
+core / observability / memory / conventions). Default-recommend the `always` group and the conventions row; everything else neutral.
 
 ## Step 3 — Install (only selected items)
 For each selected component, by `kind`:
@@ -213,6 +224,13 @@ For each selected component, by `kind`:
    and ask keep-mine / take-new / merge. Only on take-new re-run with `--force` (the edited block
    is saved to `<target>.seaa.bak`). Never pass `--force` without asking.
 
+## Step 4b — Conventions (only if selected in Step 2)
+Run the `/harness-conventions` flow directly, in this same run, for this repo (for a workspace,
+once per unit; docs for an internal library shared by several units are written once at the
+workspace root). It is interactive by design — it asks you to confirm rules — so tell the user
+up front that this part takes a few minutes. If they declined it, say it can be run any time and
+that `/harness-goal` will offer it again when a goal touches an area without a confirmed doc.
+
 ## Step 5 — Record in the lockfile
 Update `.harness/agentstack.lock`: for every component — name, source, version (if known),
 install method, status (`installed` / `pending-manual` / `declined` / `deferred`), date. Declined items are
@@ -222,4 +240,11 @@ in `profile.yaml`'s `observability:` block — the lockfile alone can't carry th
 
 ## Step 6 — Report
 Installed / pending-manual / declined table; exact manual commands for anything pending;
-next step: `/harness-goal <your first goal>`.
+then a **Next commands** list built from what happened, in this order, only the lines that apply:
+1. `/harness-mem-graphify` — if the structural driver is Graphify and the first index wasn't built
+   in Step 3 (declined, or a unit failed); for a workspace with no `repo_name`, also the merge.
+2. `/harness-mem-wiki [source]` — if non-code sources are configured and the wiki is empty
+   (name the sources; remind that credentials go in the workspace `.env.harness`).
+3. `/harness-conventions` — if skipped.
+4. `/harness-goal <your first goal>` — `/harness-goal` runs a preflight that re-checks 1-3 and
+   offers to fix any that are still missing.
