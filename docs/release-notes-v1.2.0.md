@@ -1,7 +1,4 @@
-# Release notes — v1.2.0 (draft)
-
-> Draft for the v1.2.0 release (versions are bumped to 1.2.0; no tag has been made). Copy this into the
-> GitHub release when it is cut and delete this file's "draft" banner.
+# Release notes — v1.2.0
 
 The agents now follow your organization's coding conventions and internal libraries, `/harness-goal` checks
 conventions and memory and sizes a change before it starts, observability becomes something you can change after init, the gates stop trusting substring matches, and

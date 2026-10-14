@@ -330,23 +330,20 @@ tried.
 
 ## Status
 
-**[v1.1.0](https://github.com/rbhattarai/se-harness/releases/tag/v1.1.0)** is the current
-release: ten commands (`main` adds an eleventh, `/harness-conventions`), a 12-agent roster, a 371-test suite in CI, and a separate local eval suite
-(below). Since v1.0.0 (six commands, 199 tests) it added `/harness-mem-graphify`,
-`/harness-methodology-openspec`, `/harness-mem-wiki` (now any-format NAS documents via
-MarkItDown), the workspace-wide loop shared by `/harness-init`/`-bootstrap`/`-sync`/`-export`,
-and `/harness-update` with schema migrations and hand-edit-safe generated blocks — and made the
-plugin **self-contained** (`templates/` and `registry/` now ship inside `plugins/se-harness/`;
-before, a marketplace install lacked them and some scripts failed).
-`main` is ahead of the tag by the eval framework and the gate hardening it drove (not yet
-released): the HITL gate now classifies commands like a shell instead of matching a substring,
-which closed 12 bypass shapes and 5 false positives, plus `new-requirement.sh` could not create
-REQ-009 (octal arithmetic) and mangled backslashes in goals.
-Also on `main`, for the next release (1.2.0): **`/harness-conventions`** and the convention docs the agents
-and the PR gate use; a **`/harness-goal` preflight** that checks conventions and memory readiness (code index,
-domain wiki) before the grill; **scope triage** that sizes a goal and, for large changes, analyzes in Plan
-mode and splits into phases implemented one at a time; optional **`org.guardrails`** (pick from a preset list
-or write your own) rendered into AGENTS.md; and `/harness-sync` checking convention docs and guardrails.
+**[v1.2.0](https://github.com/rbhattarai/se-harness/releases/tag/v1.2.0)** is the current
+release: eleven commands, a 12-agent roster, a 381-test suite in CI, and a separate local eval suite
+(below). Since v1.1.0 it added **`/harness-conventions`** and the convention docs the agents and the PR
+gate use; a **`/harness-goal` preflight** that checks conventions and memory readiness (code index, domain
+wiki) before the grill; **scope triage** that sizes a goal and, for large changes, analyzes in Plan mode and
+splits into phases implemented one at a time; optional **`org.guardrails`** (pick from a preset list or write
+your own) rendered into AGENTS.md; `/harness-sync` checking convention docs and guardrails; revisitable
+observability; the eval framework; and the gate hardening it drove (the HITL gate now classifies commands like
+a shell instead of matching a substring, closing 12 bypass shapes and 5 false positives). Since v1.0.0 (six
+commands, 199 tests), v1.1.0 had added `/harness-mem-graphify`, `/harness-methodology-openspec`,
+`/harness-mem-wiki`, the workspace-wide loop shared by `/harness-init`/`-bootstrap`/`-sync`/`-export`, and
+`/harness-update` with schema migrations and hand-edit-safe generated blocks, and made the plugin
+**self-contained** (`templates/` and `registry/` ship inside `plugins/se-harness/`).
+
 **Workspace-level orchestration** — single repo → mono-repo → modulith → multi-repo → hybrid,
 one goal loop that coordinates across repos, with the orchestration overhead scaling to zero
 for the common single/few-component case — is **complete**: see

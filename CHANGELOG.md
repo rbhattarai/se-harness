@@ -2,10 +2,15 @@
 
 All notable changes to se-harness. Format follows [Keep a Changelog](https://keepachangelog.com/);
 versions follow [SemVer](https://semver.org/). Full release notes for tagged versions are on the
-[Releases page](https://github.com/rbhattarai/se-harness/releases); the draft for the next one is
-[docs/release-notes-next.md](./docs/release-notes-next.md).
+[Releases page](https://github.com/rbhattarai/se-harness/releases); release notes for each version are also kept in
+[docs/release-notes-v1.2.0.md](./docs/release-notes-v1.2.0.md).
 
 ## [Unreleased]
+
+## [1.2.0] — 2026-10-14
+
+Conventions the agents follow, a `/harness-goal` preflight and scope triage, optional guardrails, revisitable
+observability, and the local eval suite. [Release notes](./docs/release-notes-v1.2.0.md).
 
 ### Added
 - **`org.guardrails`** — optional org policy rendered as a "Guardrails" section in AGENTS.md (omitted when empty).
