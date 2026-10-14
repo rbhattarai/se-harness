@@ -160,6 +160,27 @@ the plan, never overwrites), then offers to bootstrap every repo in the same pas
 methodology/structural-memory/org choices get asked once, not once per repo, and it loops the
 rest itself rather than telling you to re-invoke it in each one.
 
+### Which command, when
+
+Run these in order the first time; after that you mostly just run `/harness-goal`.
+
+| # | When | Command | Why |
+|---|---|---|---|
+| 1 | Once per project (or per workspace) | `/harness-init` | Intake: stack, methodology, org libraries, optional guardrails. Generates `.harness/`, `AGENTS.md`, `CLAUDE.md`. Existing repos get scanned first. |
+| 2 | Existing code, after init (and after big refactors) | `/harness-scan` | Detects stack, devops, cloud, internal libraries and conventions from the code; you confirm before anything is merged into the profile. |
+| 3 | Once, then whenever the stack or libraries change | `/harness-conventions` | Writes per-area convention docs (rules + internal-library catalog) the agents follow and the PR gate checks. Run **library repos first** in a multi-repo product. `--refresh` re-checks stale docs. |
+| 4 | After init | `/harness-bootstrap` | Opt-in companion tooling (plugins, MCP servers, Playwright, observability). Can run the conventions step inline, and ends with a "Next commands" list. |
+| 5 | If you chose **Graphify** as structural memory | `/harness-mem-graphify` | Builds the code index (per repo, plus one merged workspace graph). Re-run after large refactors. Not needed for other memory drivers. |
+| 6 | If you configured **Jira / Confluence / SharePoint / NAS** sources | `/harness-mem-wiki [source]` | Synthesizes those non-code sources into the domain wiki `/harness-goal` queries. Needs credentials in the workspace `.env.harness`; asks before ingesting. |
+| 7 | If you chose **OpenSpec** as methodology | `/harness-methodology-openspec` | Installs and initializes OpenSpec so `/harness-goal` can drive its propose/archive lifecycle. |
+| 8 | **Every change** | `/harness-goal "<what you want>"` | The delivery loop. Starts with a preflight (conventions + memory ready?), sizes the change, then grill → requirement → story → implement → tests → PR → deploy, with 3 human approval gates. |
+| 9 | Periodically (weekly, after upgrades) | `/harness-sync` | Detects drift: stack changes, new recommendations, stale convention docs, template updates, memory health; refreshes only generated content. |
+| 10 | To use another tool | `/harness-export` | Compiles agents and hooks for Copilot / Cursor (Codex reads `AGENTS.md` natively). |
+| 11 | When a new plugin version is out | `/harness-update` | Updates the plugin, then migrates `.harness/` data safely (backup, rollback, hand-edits preserved). |
+
+You never need to remember steps 5-7: `/harness-goal`'s preflight tells you when the code index, the
+domain wiki or the convention docs are missing or stale, and offers to run the right command.
+
 **Want to try it without risking your own repo?** See the worked example below, using the
 companion demo repo [**demo-loan-app**](https://github.com/rbhattarai/demo-loan-app).
 
@@ -222,9 +243,19 @@ Commands, in order, and what actually happens at each one:
    question — every unit, specific ones, or let it suggest. Installs each unit's recommended
    companion tooling per its own stack (e.g. Playwright for e2e) and records it in each unit's
    lockfile.
+   *Optional follow-ups, depending on what you chose above:* **`/harness-mem-graphify`** if you
+   picked Graphify (builds the code index for both apps and a merged graph); **`/harness-scan`** then
+   **`/harness-conventions`** to turn what the code already does (Express route layering, EJS
+   conventions, the test style) into convention docs the agents follow — worth doing before a
+   real goal, skippable for a first demo; **`/harness-mem-wiki`** only if you've configured Jira,
+   Confluence or other non-code sources (this demo has none).
 5. **`cd lending-webapp`**, then
    `/harness-goal "When a lender rejects a loan, they must give a rejection reason, and the
    borrower must see it on the loan-webapp dashboard"` — this is the flagship cross-unit case:
+   - **Preflight**: checks the convention docs and memory (code index fresh? wiki built?) and offers
+     the fixing command if something is missing — skip it to continue. Then sizes the change: this
+     one is small/medium (two units, one contract field), so it goes straight into the loop;
+     a large goal would be analyzed in Plan mode and split into phases first.
    - **Grill + impact map**: interrogates the ambiguity (free text or picklist? required on
      reject only?); the deep-dive step builds an impact map from `workspace.yaml` — this touches
      both units, so the count is 2.
