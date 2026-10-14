@@ -15,7 +15,7 @@ hooks make sure they can't ship without you.**
 [![agents](https://img.shields.io/badge/SDLC_agents-12-6f42c1)](./plugins/se-harness/agents)
 [![HITL gates](https://img.shields.io/badge/HITL_gates-3_hook--enforced-blue)](./plugins/se-harness/hooks)
 [![platforms](https://img.shields.io/badge/macOS_%7C_Linux_%7C_Windows-supported-555)](./docs)
-[![privacy](https://img.shields.io/badge/telemetry-none-success)](./PRIVACY.md)
+[![privacy](https://img.shields.io/badge/telemetry-opt--in-yellow)](./PRIVACY.md)
 
 AI coding agents are good at writing code and bad at process discipline. se-harness wraps
 a full software-engineering lifecycle around them: it learns your project (scan +
