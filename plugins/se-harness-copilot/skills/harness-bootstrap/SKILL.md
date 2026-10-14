@@ -72,7 +72,7 @@ Shared by Step 2 and Reconfigure mode; `<p>` = the chosen entry in the registry'
 
 1. **Host** (non-secret). Offer `<p>.host_default` first, then the `host_note` alternatives, then
    "other URL". Self-hosted Langfuse is plain `http://localhost:3000` unless TLS sits in front of it —
-   don't "upgrade" it to https. Dash0/other: ask for the endpoint if the plugin needs one.
+   don't "upgrade" it to https. Dash0 has no default (hosted): ask for its OTLP URL. Other: ask if needed.
 2. **Record the decision** in `.harness/profile.yaml` (and `shared.observability` if the user
    agreed): `observability: {status: configured, provider: <p>, host: <host>, decided: <today>}`.
 3. **Set it up for this surface** — never ask for a key in chat, never put one in a committed file:
@@ -98,8 +98,23 @@ Shared by Step 2 and Reconfigure mode; `<p>` = the chosen entry in the registry'
      `--capture-content` separately and explain it is opt-in: it stores prompts, responses and tool
      arguments in Langfuse. Record a component of kind `config` (status `installed` once they confirm
      the variables are exported, else `pending-manual`).
-   - **Dash0** (unverified plugin name): Step 3's plugin mechanics, `pending-manual` on any failure;
-     point at `/plugin`, never improvise a marketplace. **Other**: install nothing.
+   - **Claude Code, Dash0** (`surfaces.claude`): Dash0 is hosted — there is no local default; ask for
+     the OTLP URL (Dash0 Endpoints settings page, `https://ingress.<region>.aws.dash0.com`) as the
+     host. After confirming with the user (third-party code that also downloads a binary from
+     github.com), run `claude plugin install dash0@claude-plugins-official --scope user` (the official
+     marketplace is built in; add `--scope project` only if the user insists, and warn that it breaks in
+     a second worktree/clone and that project-level `pluginConfigs` is silently ignored). Enable only
+     one identity — if `dash0-agent-plugin@dash0` is already installed, don't add the other. The
+     user enters the OTLP URL, the **ingest-only** auth token, and dataset with `/plugin` → dash0 →
+     Configure (or `/dash0-configure`); the token lands in the OS keychain, **`.env.harness` is not
+     used**, and there is no env-var fallback for it. If they prefer the config file
+     `.claude/dash0-agent-plugin.local.md`, make sure it is gitignored first (it can hold the token).
+     Then `/reload-plugins`/restart; success shows `dash0: connected` at session start. Record the
+     component `dash0@claude-plugins-official`; CLI unavailable → print the command, `pending-manual`.
+     Org-wide rollout is a claude.ai admin task — mention it, don't attempt it.
+   - **Copilot CLI, Dash0**: no plugin exists and the OTLP wiring is unverified — record provider +
+     host, install nothing, `pending-manual`, and point at Dash0's docs.
+   - **Other**: install nothing.
 4. **Optional reachability check** (non-fatal): if `<p>.health_path` exists and the host is local
    (`localhost`/`127.0.0.1`), offer `curl -s -o /dev/null -w "%{http_code}" <host><health_path>` —
    200 means the server is up. Skip remote hosts unless the user opts in (it's a network call).
