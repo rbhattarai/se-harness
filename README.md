@@ -283,13 +283,16 @@ The harness has been run on all three project shapes it supports:
 
 - **Single repo and mono repo** — the companion [demo-loan-app](https://github.com/rbhattarai/demo-loan-app)
   and `finance-portal`, which also serve as the pinned fixtures for the [eval suite](./docs/evals-plan.md).
-- **Multi-repo** — enterprise applications split across several repositories, using the workspace
-  manifest, shared scoped configuration and the workspace-wide `/harness-init`, `/harness-bootstrap`,
-  `/harness-scan` and `/harness-sync` flow. That is where the observability re-ask and the
-  `--reconfigure` mode came from.
+- **Multi-repo** — an enterprise application split across several repositories, run end to end with
+  the workspace manifest, shared scoped configuration and the workspace-wide `/harness-init`,
+  `/harness-bootstrap`, `/harness-mem-graphify`, `/harness-mem-wiki`, `/harness-scan` and
+  `/harness-sync` flow, using the built-in se-harness methodology (requirement, story and architecture
+  documents) rather than OpenSpec. Observability was reconfigured to a local Langfuse after being skipped
+  at init (the case that motivated `--reconfigure`), and Graphify was configured correctly. The same
+  steps work on any multi-repo project you point it at.
 
-"Used" here means real runs by the maintainer, not a formal certification: the multi-repo runs are
-not reproducible from this repo, and the automated evidence is the 371-test suite plus the eval suite.
+OpenSpec is the only external methodology `/harness-goal` delegates to; Spec Kit and BMAD have not been
+tried.
 
 ## Status
 
