@@ -99,7 +99,7 @@ plugin marketplace.
   observability is recorded as a decision — `unset`, `deferred` ("not yet", asked again at the next
   sync), `declined` (never re-asked) or `configured` (e.g. Langfuse @ `http://localhost:3000`) — and
   `/harness-bootstrap --reconfigure <observability|memory|methodology>` shows what's in force
-  and lets you change it later. Secrets stay in `.env.harness`, never in the profile.
+  and lets you change it later. Langfuse is set up per surface — the real `langfuse-observability` plugin on Claude Code (keys kept in the OS keychain), native OpenTelemetry export on Copilot CLI (which has no Langfuse plugin; `langfuse-otel-env.sh` builds the variables from `.env.harness`). Secrets never go in the profile.
 - **Exportable** — `/harness-export` compiles the agents and hooks for Copilot and Cursor
   (Codex reads `AGENTS.md` natively).
 - **Upgrade-safe** — `/harness-update` pulls the new plugin version (marketplace first, GitHub
@@ -280,7 +280,7 @@ single-unit goals to try first: [`docs/demo/README.md`](./docs/demo/README.md#pa
 ## Status
 
 **[v1.1.0](https://github.com/rbhattarai/se-harness/releases/tag/v1.1.0)** is the current
-release: ten commands, a 12-agent roster, a 355-test suite in CI, and a separate local eval suite
+release: ten commands, a 12-agent roster, a 368-test suite in CI, and a separate local eval suite
 (below). Since v1.0.0 (six commands, 199 tests) it added `/harness-mem-graphify`,
 `/harness-methodology-openspec`, `/harness-mem-wiki` (now any-format NAS documents via
 MarkItDown), the workspace-wide loop shared by `/harness-init`/`-bootstrap`/`-sync`/`-export`,
@@ -340,7 +340,7 @@ plugins/se-harness/templates/             # profile/env/requirement/AGENTS/CLAUD
                                       # workspace-plan + memory seeds
 docs/                                # setup guides, interop matrix, platform schema notes, demo guide,
                                       # eval plan/status, development history
-tests/                               # 355-test suite run in CI
+tests/                               # 368-test suite run in CI
 evals/                               # local, manual regression evals for prompts + hooks (see evals/README.md)
 ```
 

@@ -303,6 +303,21 @@ internal modules, sibling repos, or a mix of both.
 
 ---
 
+## Observability (Langfuse) — Claude Code
+`/harness-bootstrap --reconfigure observability` (or the question inside a normal bootstrap, or the re-ask in
+`/harness-sync`) records the choice in `.harness/profile.yaml` and runs this for you, after confirming:
+
+```
+claude plugin marketplace add langfuse/Claude-Observability-Plugin
+claude plugin install langfuse-observability@langfuse-observability --config LANGFUSE_BASE_URL=http://localhost:3000
+```
+
+Then enter the keys yourself with `/plugin configure langfuse-observability@langfuse-observability` (the plugin keeps the
+secret key in your OS keychain) and restart Claude Code. Needs `uv` on PATH, or Python 3.10+. The URL variable is
+`LANGFUSE_BASE_URL` (default: Langfuse Cloud EU); a self-hosted instance is plain `http://localhost:3000` unless you put
+TLS in front of it. Avoid `--config LANGFUSE_SECRET_KEY=…` — it lands in shell history. The keys are **not** read from
+`.env.harness` on this surface.
+
 ## Part 5 — Updating or extending the plugin
 
 ### 5.1 Consuming an update

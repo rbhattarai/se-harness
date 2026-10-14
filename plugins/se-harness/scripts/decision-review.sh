@@ -79,10 +79,14 @@ detail=""
 if [ "$st" = configured ]; then
   case "$prov" in
     langfuse)
+      # Keys are surface-specific: the Claude Code plugin keeps its own copy in the OS keychain, so a
+      # project that only uses Claude Code legitimately has none in .env.harness. Copilot CLI reads them
+      # from .env.harness via scripts/langfuse-otel-env.sh. Names only, never values.
       miss=""
       for v in LANGFUSE_PUBLIC_KEY LANGFUSE_SECRET_KEY; do env_has "$v" || miss="$miss $v"; done
-      [ -z "$host" ] && miss="$miss host(profile.observability.host)"
-      detail=$([ -z "$miss" ] && echo "env: ok" || echo "missing:${miss}") ;;
+      if [ -z "$host" ]; then detail="host: not recorded (observability.host)"
+      elif [ -z "$miss" ]; then detail=".env.harness: ok"
+      else detail=".env.harness: missing${miss} (only the Copilot CLI path needs them there; the Claude Code plugin keeps its own in the OS keychain)"; fi ;;
     dash0|other) detail="check the plugin's own README for required variables" ;;
     "") st="invalid(configured-without-provider)" ;;
   esac

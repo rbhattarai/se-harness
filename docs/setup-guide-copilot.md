@@ -443,6 +443,20 @@ content outside the markers is never touched.
 
 ---
 
+## Observability (Langfuse) — Copilot CLI
+There is **no Langfuse plugin for Copilot**. Copilot exports OpenTelemetry natively and Langfuse accepts it at
+`<your Langfuse URL>/api/public/otel` (HTTP; no gRPC). Put `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` in the gitignored
+`.env.harness` (create them in Langfuse: project settings → API keys), record the host with
+`/harness-bootstrap --reconfigure observability`, then start Copilot from a shell that ran:
+
+```bash
+eval "$(bash tools/harness/langfuse-otel-env.sh)"          # --capture-content also stores prompts/responses; --host URL overrides the recorded host
+```
+
+That exports `COPILOT_OTEL_ENABLED=true`, `OTEL_EXPORTER_OTLP_ENDPOINT` and an `OTEL_EXPORTER_OTLP_HEADERS` Basic-auth header
+(base64 of the two keys — treat it as a secret). Content capture is off by default because it stores prompts, responses and
+tool arguments in Langfuse. Details: [Langfuse's Copilot guide](https://langfuse.com/integrations/developer-tools/github-copilot).
+
 ## Part 9 — Example: single-repo project (the short path)
 
 If your project is one repository (say `task-tracker`, an Express + React + Postgres app),

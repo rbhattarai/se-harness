@@ -156,8 +156,15 @@ profile then workspace default; reports missing secret *names*, never values);
 setup" sequence; `/harness-sync` re-asks `unset`/`deferred` observability once per sync and shows
 every other decision in one line with how to change it. Projects created before the field existed
 read as `unset`, so they are asked on their next sync. Registry: per-provider entries
-(host default, secret variable names, health path) with the plugin names flagged `verified: false`.
-`/harness-init` was deliberately left alone: it does not ask about observability.
+with a per-surface setup. **Langfuse, verified against the plugin's README and Langfuse's Copilot page
+(2026-10-13):** Claude Code uses the real plugin (`claude plugin marketplace add langfuse/Claude-Observability-Plugin`,
+`claude plugin install langfuse-observability@langfuse-observability`; keys entered with `/plugin configure` and kept
+by the plugin in the OS keychain, base URL variable `LANGFUSE_BASE_URL`, not `LANGFUSE_HOST`); Copilot has **no**
+Langfuse plugin — it exports OpenTelemetry natively, so `scripts/langfuse-otel-env.sh` turns the keys in `.env.harness`
+into `COPILOT_OTEL_ENABLED` / `OTEL_EXPORTER_OTLP_ENDPOINT=<host>/api/public/otel` / a Basic-auth header, with prompt
+content capture opt-in. (A first draft assumed one plugin and `.env.harness` keys for both surfaces; a Copilot
+"plugin settings" recipe pasted from a chat answer turned out not to exist.) Dash0's plugin name stays
+`verified: false`. `/harness-init` was deliberately left alone: it does not ask about observability.
 
 ## Evals (2026-10)
 

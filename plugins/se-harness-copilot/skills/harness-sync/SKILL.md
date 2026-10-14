@@ -70,8 +70,10 @@ as `unset`, which is how an older project gets asked about something it was neve
   (records `deferred` + today's date) / *no thanks* (records `declined`). `--dry-run` reports only.
 - `configured` or `declined` → never a question. One report line that says what is in force and how
   to change it: "observability: Langfuse @ http://localhost:3000 (configured 2026-10-13) —
-  change with `/harness-bootstrap --reconfigure observability`". A detail starting `missing:` is
-  drift worth surfacing (variable **names** only — never read a secret value).
+  change with `/harness-bootstrap --reconfigure observability`". A `.env.harness: missing …`
+  detail is only a problem on the Copilot CLI surface (the Claude Code plugin keeps its keys in the
+  OS keychain) — report it as information with that qualifier (variable **names** only — never read
+  a secret value).
 - `memory` and `methodology` are shown the same one-line way and **never re-asked**: a `null`
   structural driver stays "valid, not nagged", as before. Only observability is re-asked today.
 - `invalid(...)` → drift: show the raw value and propose the nearest valid one.

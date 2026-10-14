@@ -765,13 +765,13 @@ check "decision-review: configured Langfuse is reported as provider @ host" \
   test "$(dr_get "$DR_FIX/lf" observability 3)" = "langfuse @ http://localhost:3000"
 check "decision-review: configured decision carries its date" \
   test "$(dr_get "$DR_FIX/lf" observability 4)" = "2026-10-13"
-check "decision-review: reports a missing secret by NAME" \
-  test "$(dr_get "$DR_FIX/lf" observability 5)" = "missing: LANGFUSE_SECRET_KEY"
+check "decision-review: reports a missing secret by NAME, with the per-surface caveat" \
+  bash -c "case \"\$(bash '$DR_SCRIPT' '$DR_FIX/lf' | awk -F'\t' '\$1==\"observability\"{print \$5}')\" in *'.env.harness: missing LANGFUSE_SECRET_KEY'*'Copilot'*'keychain'*) exit 0;; *) exit 1;; esac"
 check "decision-review: never prints a secret value" \
   bash -c "! bash '$DR_SCRIPT' '$DR_FIX/lf' | grep -q 'pk-lf-secret-value'"
 printf 'LANGFUSE_PUBLIC_KEY=a\nLANGFUSE_SECRET_KEY=b\n' > "$DR_FIX/lf/.env.harness"
 check "decision-review: both keys present -> env ok" \
-  test "$(dr_get "$DR_FIX/lf" observability 5)" = "env: ok"
+  test "$(dr_get "$DR_FIX/lf" observability 5)" = ".env.harness: ok"
 
 mkdir -p "$DR_FIX/ws/unit/.harness"
 cat > "$DR_FIX/ws/workspace.yaml" <<'EOF'
@@ -816,24 +816,71 @@ check "workspace template carries shared.observability" \
   bash -c "grep -q '^    observability:' plugins/se-harness/templates/workspace.yaml"
 check "workspace env template names the Langfuse keys (values empty)" \
   bash -c "grep -qx 'LANGFUSE_PUBLIC_KEY=' plugins/se-harness/templates/env.harness.workspace.example && grep -qx 'LANGFUSE_SECRET_KEY=' plugins/se-harness/templates/env.harness.workspace.example"
-check "registry: every observability provider has a kind and a secrets list" \
+check "registry: every observability provider declares a kind; per-surface ones have claude and copilot" \
   "$PY" -c "
 import json
 o = json.load(open('plugins/se-harness/registry/recommendations.json', encoding='utf-8'))['observability']
 for n, p in o['providers'].items():
-    assert p['kind'] in ('plugin', 'manual') and isinstance(p['env_secret'], list), n
+    assert p['kind'] in ('plugin', 'manual', 'per-surface'), n
+    if p['kind'] == 'per-surface':
+        assert {'claude', 'copilot'} <= set(p['surfaces']), n
 assert {'langfuse', 'dash0', 'other'} <= set(o['providers'])"
-check "registry: langfuse provider records a default host, health path and its unverified status" \
+check "registry: Langfuse for Claude Code = the real marketplace + plugin, keys kept out of .env.harness" \
   "$PY" -c "
 import json
 p = json.load(open('plugins/se-harness/registry/recommendations.json', encoding='utf-8'))['observability']['providers']['langfuse']
-assert p['host_default'] == 'http://localhost:3000' and p['health_path'] and p['verified'] is False"
+c = p['surfaces']['claude']
+assert p['verified'] is True and p['host_default'] == 'http://localhost:3000' and p['health_path']
+assert c['marketplace'] == 'langfuse/Claude-Observability-Plugin'
+assert c['plugin'] == 'langfuse-observability@langfuse-observability'
+assert 'LANGFUSE_BASE_URL' in c['config_keys'] and 'LANGFUSE_HOST' not in c['config_keys']
+assert c['keys_in_env_harness'] is False"
+check "registry: Langfuse for Copilot is OTLP env config (no plugin), keys come from .env.harness" \
+  "$PY" -c "
+import json
+c = json.load(open('plugins/se-harness/registry/recommendations.json', encoding='utf-8'))['observability']['providers']['langfuse']['surfaces']['copilot']
+assert c['kind'] == 'otel-env' and 'plugin' not in c and c['otlp_path'] == '/api/public/otel'
+assert c['env']['COPILOT_OTEL_ENABLED'] == 'true' and c['keys_in_env_harness'] is True
+assert 'OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT' in c['optional'] and 'OPT-IN' in c['optional']['OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT']"
 check "bootstrap documents --reconfigure for observability, memory and methodology" \
   bash -c "f=plugins/se-harness/commands/harness-bootstrap.md; grep -q -- '--reconfigure' \$f && grep -q 'Reconfigure mode' \$f && grep -q 'Observability setup' \$f && grep -q 'deferred' \$f"
 check "sync re-asks deferred decisions and points at --reconfigure" \
   bash -c "f=plugins/se-harness/commands/harness-sync.md; grep -q 'decision-review.sh' \$f && grep -q -- '--reconfigure observability' \$f"
 check "copilot variant carries decision-review.sh and the reconfigure docs" \
   bash -c "test -f plugins/se-harness-copilot/scripts/decision-review.sh && grep -q -- '--reconfigure' plugins/se-harness-copilot/commands/harness-bootstrap.md"
+
+# --- langfuse-otel-env.sh: Copilot CLI -> Langfuse via native OpenTelemetry (no plugin exists) ---
+OT_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/plugins/se-harness/scripts/langfuse-otel-env.sh"
+OT_FIX=$(mktemp -d 2>/dev/null || mktemp -d -t seharness)
+mkdir -p "$OT_FIX/.harness"
+printf 'observability:\n  status: configured\n  provider: langfuse\n  host: "http://localhost:3000/"\n' > "$OT_FIX/.harness/profile.yaml"
+printf "LANGFUSE_PUBLIC_KEY=pk-lf-aaa\nLANGFUSE_SECRET_KEY='sk-lf-bbb'\n" > "$OT_FIX/.env.harness"
+OT_AUTH=$(printf '%s' 'pk-lf-aaa:sk-lf-bbb' | base64 | tr -d '\n')
+ot_out() { (cd "$OT_FIX" && bash "$OT_SCRIPT" "$@" 2>/dev/null); }
+check "otel-env: endpoint is the recorded host + /api/public/otel (trailing slash tolerated)" \
+  bash -c "cd '$OT_FIX' && bash '$OT_SCRIPT' 2>/dev/null | grep -qx \"export OTEL_EXPORTER_OTLP_ENDPOINT='http://localhost:3000/api/public/otel'\""
+check "otel-env: header is Basic base64(public:secret) plus the ingestion-version flag" \
+  bash -c "cd '$OT_FIX' && bash '$OT_SCRIPT' 2>/dev/null | grep -qx \"export OTEL_EXPORTER_OTLP_HEADERS='Authorization=Basic $OT_AUTH,x-langfuse-ingestion-version=4'\""
+check "otel-env: enables Copilot's exporter" \
+  bash -c "cd '$OT_FIX' && bash '$OT_SCRIPT' 2>/dev/null | grep -qx 'export COPILOT_OTEL_ENABLED=true'"
+check "otel-env: content capture is OFF unless asked for" \
+  bash -c "cd '$OT_FIX' && ! bash '$OT_SCRIPT' 2>/dev/null | grep -q CAPTURE_MESSAGE_CONTENT"
+check "otel-env: --capture-content opts in" \
+  bash -c "cd '$OT_FIX' && bash '$OT_SCRIPT' --capture-content 2>/dev/null | grep -qx 'export OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true'"
+check "otel-env: --host overrides the recorded host" \
+  bash -c "cd '$OT_FIX' && bash '$OT_SCRIPT' --host https://langfuse.internal 2>/dev/null | grep -q \"ENDPOINT='https://langfuse.internal/api/public/otel'\""
+check "otel-env: the secret never appears in clear text on stdout or stderr" \
+  bash -c "cd '$OT_FIX' && ! bash '$OT_SCRIPT' --capture-content 2>&1 | grep -q 'sk-lf-bbb'"
+check "otel-env: the output is eval-safe (sets exactly the documented variables)" \
+  bash -c "cd '$OT_FIX' && eval \"\$(bash '$OT_SCRIPT' 2>/dev/null)\" && test \"\$COPILOT_OTEL_ENABLED\" = true && test \"\$OTEL_EXPORTER_OTLP_ENDPOINT\" = http://localhost:3000/api/public/otel"
+rm -f "$OT_FIX/.env.harness"
+check "otel-env: missing keys -> exit 1 and NOTHING on stdout (a failed eval is a no-op)" \
+  bash -c "cd '$OT_FIX' && out=\$(bash '$OT_SCRIPT' 2>/dev/null); rc=\$?; test \$rc -eq 1 && test -z \"\$out\""
+check "otel-env: keys already in the environment are honored" \
+  bash -c "cd '$OT_FIX' && LANGFUSE_PUBLIC_KEY=pk-lf-aaa LANGFUSE_SECRET_KEY=sk-lf-bbb bash '$OT_SCRIPT' 2>/dev/null | grep -q 'Basic $OT_AUTH'"
+rm -rf "$OT_FIX"
+check "bootstrap tells Claude Code users to configure keys via /plugin configure, not .env.harness" \
+  bash -c "f=plugins/se-harness/commands/harness-bootstrap.md; grep -q '/plugin configure langfuse-observability@langfuse-observability' \$f && grep -q 'langfuse/Claude-Observability-Plugin' \$f && grep -q 'no plugin' \$f && grep -q 'langfuse-otel-env.sh' \$f"
 
 # --- privacy invariant: plugins make no network calls (see PRIVACY.md) ---
 check "no network calls in plugin scripts" \

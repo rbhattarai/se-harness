@@ -41,8 +41,10 @@ stop. Only that topic's profile fields and components are touched — never the 
 
 1. Run `bash ${CLAUDE_PLUGIN_ROOT}/scripts/decision-review.sh` and show the topic's row in words:
    "**Currently:** Langfuse @ http://localhost:3000 — configured 2026-10-13" (or `declined`,
-   `deferred`, `unset`). If it reports `missing: …`, name the missing variables (names only; never
-   read or print a secret value) — that is often the whole reason for reconfiguring.
+   `deferred`, `unset`). If its detail says `.env.harness: missing …`, say what that means for the
+   surface in use (names only; never read or print a secret value): Copilot CLI needs those two
+   variables there; the Claude Code plugin keeps its own in the OS keychain, so for it that is
+   expected and the fix, if any, is `/plugin configure …`.
 2. Ask (AskUserQuestion): **Keep it** / **Change it** (list the registry's alternatives, current one
    marked) / **Turn it off** (`declined`) / **Decide later** (`deferred`). Keep → say so and stop.
 3. Change, by topic:
@@ -64,24 +66,44 @@ stop. Only that topic's profile fields and components are touched — never the 
 
 ## Observability setup
 Shared by Step 2 and Reconfigure mode; `<p>` = the chosen entry in the registry's
-`observability.providers`.
-1. **Host** (non-secret). Offer `<p>.host_default` first (for Langfuse: the self-hosted default),
-   then the `host_note` alternatives, then "other URL". Dash0/other: ask for the endpoint if
-   the plugin needs one.
+`observability.providers`. Which surface you are running on matters — pick the matching branch of
+`<p>.surfaces` (a provider with `kind: plugin` or `manual` has no surfaces: use its own fields).
+
+1. **Host** (non-secret). Offer `<p>.host_default` first, then the `host_note` alternatives, then
+   "other URL". Self-hosted Langfuse is plain `http://localhost:3000` unless TLS sits in front of it —
+   don't "upgrade" it to https. Dash0/other: ask for the endpoint if the plugin needs one.
 2. **Record the decision** in `.harness/profile.yaml` (and `shared.observability` if the user
    agreed): `observability: {status: configured, provider: <p>, host: <host>, decided: <today>}`.
-3. **Secrets stay out of chat and out of git.** For each name in `<p>.env_secret`, make sure
-   `.env.harness` (the workspace root's when the choice is shared, else this repo's — create it from
-   the matching template if missing) has an empty `NAME=` line — append only, never touch existing
-   values. Tell the user where to create the keys (Langfuse: project settings → API keys) and to fill
-   them in themselves. Never ask them to paste a key here.
-4. **Install** per `<p>.kind`: `plugin` → Step 3's plugin mechanics. The registry marks these names
-   `verified: false`: say so, and if `claude plugin install` fails, record `pending-manual` and
-   point at `/plugin` rather than guessing a marketplace. `manual` → nothing to install.
-5. **Optional reachability check** (non-fatal): if `<p>.health_path` exists and the host is local
+3. **Set it up for this surface** — never ask for a key in chat, never put one in a committed file:
+   - **Claude Code, Langfuse** (`surfaces.claude`): confirm the prerequisite (`uv` on PATH, or
+     python3 ≥ 3.10), then, after confirming with the user (third-party code), run the
+     `install` commands: `claude plugin marketplace add langfuse/Claude-Observability-Plugin` and
+     `claude plugin install langfuse-observability@langfuse-observability --config LANGFUSE_BASE_URL=<host>`
+     (only the non-secret URL goes in `--config`). The keys are entered by the user with
+     `/plugin configure langfuse-observability@langfuse-observability` — the plugin stores the secret
+     in the OS keychain, so **`.env.harness` is not used on this surface**. Say plainly that
+     `--config LANGFUSE_SECRET_KEY=…` would leak the secret to shell history and the process list.
+     Then: restart Claude Code (the hook loads at startup). Record the component
+     `langfuse-observability@langfuse-observability` in the lockfile; if the `claude` CLI is
+     unavailable, print the commands and record `pending-manual`.
+   - **Copilot CLI, Langfuse** (`surfaces.copilot`): there is **no plugin** — Copilot exports
+     OpenTelemetry natively and Langfuse is an OTLP backend. Make sure `.env.harness` (the workspace
+     root's when the choice is shared, else this repo's; create it from the matching template if
+     missing) has empty `LANGFUSE_PUBLIC_KEY=` / `LANGFUSE_SECRET_KEY=` lines (append only, never
+     touch existing values) and tell the user to create the keys in Langfuse (project settings → API
+     keys) and fill them in themselves. Then tell them to start Copilot from a shell that ran
+     `eval "$(bash ${CLAUDE_PLUGIN_ROOT}/scripts/langfuse-otel-env.sh)"` (or put the printed lines in
+     their shell profile — warn that the header is the secret in base64). Offer
+     `--capture-content` separately and explain it is opt-in: it stores prompts, responses and tool
+     arguments in Langfuse. Record a component of kind `config` (status `installed` once they confirm
+     the variables are exported, else `pending-manual`).
+   - **Dash0** (unverified plugin name): Step 3's plugin mechanics, `pending-manual` on any failure;
+     point at `/plugin`, never improvise a marketplace. **Other**: install nothing.
+4. **Optional reachability check** (non-fatal): if `<p>.health_path` exists and the host is local
    (`localhost`/`127.0.0.1`), offer `curl -s -o /dev/null -w "%{http_code}" <host><health_path>` —
    200 means the server is up. Skip remote hosts unless the user opts in (it's a network call).
-6. Lockfile: component `<p>.plugin` with its status.
+5. **Both surfaces?** A project used from Claude Code and Copilot CLI needs each branch once, on its
+   own machine/session; the profile decision (provider + host) is shared.
 
 ## Step 1 — Build the recommendation manifest
 Read `.harness/profile.yaml` (guard: must exist — run `/harness-init` first) and
