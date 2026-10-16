@@ -183,7 +183,7 @@ summary, deep-dive impact map, `openspec_change_id: <change-id>` in frontmatter,
 that keeps a single-repo goal exactly as simple as today:
 - **Impact map names 0-1 components**: continue below unchanged. No workspace plan file, no
   extra ceremony, ever.
-- **Impact map names 2+ components**: also render `../se-harness/plugins/se-harness/templates/workspace-plan.md` into
+- **Impact map names 2+ components**: also render `tools/harness/templates/workspace-plan.md` into
   `REQ-NNN/workspace-plan.md` — one row per impacted component (owner, outcome, `depends_on`,
   evidence), every row starting at `status: pending`. Present it **alongside** the REQ for the
   same approval below, not as a second gate.

@@ -94,7 +94,7 @@ Propose areas from the stack and structure; the user confirms the list. Typical:
 than grow. Skip areas with no code.
 
 ## Step 3 — Draft each doc, then confirm rule by rule
-Render `../se-harness/plugins/se-harness/templates/conventions.md` per area. Every rule needs:
+Render `tools/harness/templates/conventions.md` per area. Every rule needs:
 a level (**MUST** = enforced / **SHOULD** = default), evidence (file, config, or
 `source: org-guideline`), and confidence.
 

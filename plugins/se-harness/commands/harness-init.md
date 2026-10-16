@@ -14,35 +14,57 @@ If `.harness/profile.yaml` already exists and `$ARGUMENTS` does not contain `--u
 show the existing profile summary and ask whether to update it or abort. Never silently
 re-initialize.
 
-## Step 0a — Make sure the harness scripts are reachable
-Every step below runs a script at `${CLAUDE_PLUGIN_ROOT}/scripts/<script>.sh`. On Copilot that
-path is a repo-vendored convention (`docs/setup-guide-copilot.md` Part 1.3/4.7): it only
-resolves once the scripts have actually been copied into this directory, which nothing does
-automatically. Check once, up front, instead of letting an arbitrary later step fail:
+## Step 0a — Make sure the harness assets are reachable
+Every step below uses three things the plugin ships: **scripts**
+(`${CLAUDE_PLUGIN_ROOT}/scripts/`), **templates** (`${CLAUDE_PLUGIN_ROOT}/templates/`) and the
+**registry** (`${CLAUDE_PLUGIN_ROOT}/registry/`). All three are inside the installed plugin — **never
+ask the user to clone the framework repo to get them.** On Claude Code that path is the
+real installed plugin directory. On Copilot those paths are a repo-vendored convention
+(`docs/setup-guide-copilot.md` Part 1.3/4.7): they only resolve once the assets have been copied into
+this repo, which nothing does automatically. Check once, up front, instead of letting an arbitrary
+later step fail:
 
-1. Check whether `${CLAUDE_PLUGIN_ROOT}/scripts/workspace-clone.sh` exists as a real file.
-   - **Exists** → nothing else in this step applies; continue to Step 1.
-   - **Missing** → locate where the plugin itself is actually installed and vendor from there,
-     trying each of these in order, stopping at the first that finds something:
-     a. The Copilot/VS Code plugin cache. Run:
-        `find ~/.vscode/agent-plugins -type d -path '*/plugins/se-harness-copilot/scripts' 2>/dev/null`
-        (this is `<host>/<org>/<repo>/plugins/se-harness-copilot/scripts/` under
-        `~/.vscode/agent-plugins/` — confirmed present there after a normal
-        `copilot plugin install`).
-        - **One match** → vendor: `mkdir -p tools/harness && cp <that match>/*.sh tools/harness/`.
-          Tell the user you did this, then continue to Step 1.
-        - **Multiple matches** (e.g. both a public and an internal-mirror install) → list them
-          and ask the user which one via AskUserQuestion — never guess.
-        - **None** → try (b).
-     b. A sibling framework checkout at `../se-harness/` (the side-by-side clone the setup
-        guides document) → if found, vendor
-        `../se-harness/plugins/se-harness-copilot/scripts/*.sh` the same way; else try (c).
-     c. Neither found → stop. Tell the user plainly: the scripts this command needs aren't
-        vendored here and couldn't be found automatically. Give both options, let them pick:
-        (a) check their own `~/.vscode/agent-plugins/` for the install themselves (path layout
-        above) and point you at it, or (b) `git clone <se-harness repo url> se-harness` right
-        here as a sibling, then re-run this command — this also covers the
-        `templates/` and `registry/` references used later (they live under `plugins/se-harness/` in that clone). Never guess at an install path.
+1. Check that all three exist as real files: `${CLAUDE_PLUGIN_ROOT}/scripts/workspace-clone.sh`,
+   `${CLAUDE_PLUGIN_ROOT}/templates/profile.yaml`, `${CLAUDE_PLUGIN_ROOT}/registry/recommendations.json`.
+   - **All present** → nothing else in this step applies; continue to Step 1.
+   - **Any missing** → go to point 2.
+2. **Claude Code** (a real plugin root exists but a file is missing): the installed plugin is an old
+   release that did not bundle templates/registry. Tell the user to update it —
+   `/plugin marketplace update se-harness`, then `/plugin update se-harness`, then restart — and stop.
+   Do not vendor, clone or generate anything.
+3. **Copilot** (assets not vendored here yet): locate where the plugin itself is installed and vendor
+   from there, trying each of these in order and stopping at the first that finds something:
+   a. The installed plugin cache. Run:
+      `find ~/.vscode/agent-plugins ~/.copilot -type d -path '*se-harness-copilot*/scripts' 2>/dev/null`
+      (VS Code: `<host>/<org>/<repo>/plugins/se-harness-copilot/scripts/` under
+      `~/.vscode/agent-plugins/`; Copilot CLI installs elsewhere, so both roots are searched). The
+      parent of a match is `PLUGIN_DIR`.
+      - **One match, and `PLUGIN_DIR/templates/profile.yaml` + `PLUGIN_DIR/registry/recommendations.json`
+        exist** → vendor, then tell the user what you did and continue to Step 1:
+        `mkdir -p tools/harness && cp -R PLUGIN_DIR/scripts/. tools/harness/ && cp -R PLUGIN_DIR/templates PLUGIN_DIR/registry PLUGIN_DIR/agents PLUGIN_DIR/plugin.json tools/harness/`
+      - **One match, but `templates/` or `registry/` is missing** → the installed plugin is an old
+        release without them. Tell the user to update it (`copilot plugin update se-harness-copilot`;
+        in VS Code: Agent Customization → Plugins → update or reinstall from source), then re-run.
+        Stop — do not ask for a clone.
+      - **Multiple matches** (e.g. both a public and an internal-mirror install) → list them and ask
+        which one via AskUserQuestion — never guess.
+      - **None** → try (b).
+   b. A sibling framework checkout at `../se-harness/` (the optional side-by-side clone some setup
+      guides document) → if found, vendor from `../se-harness/plugins/se-harness-copilot/` the same
+      way (scripts, templates, registry); else try (c).
+   c. Neither found → stop. Say plainly that the plugin's files could not be found automatically.
+      Offer: (1) reinstall/update the plugin and re-run, (2) give you the path of the plugin folder
+      (the one containing `scripts/`, `templates/`, `registry/`) so you can vendor from it, or (3) as
+      a last resort `git clone <se-harness repo url>` anywhere and point you at that checkout. Never
+      guess at an install path.
+4. **Loops into units** (Step 1b / mono-repo): vendored paths are relative to the directory the steps
+   run in, so when you `cd` into a unit, repeat check 1 there. If it fails, copy `tools/harness/` from
+   the location you already vendored into this unit (no new search), and mention it once in the report.
+5. `tools/harness/plugin.json` is the vendored copy of the plugin manifest: on Copilot it is the source of
+   the version stamped into `agentstack.lock` (`se_harness`), since there is no other plugin.json to read.
+   `tools/harness/agents/` lets `/harness-export` run from the vendored scripts.
+6. The vendored `tools/harness/` is plain files that the repo-level hooks and scripts reference — it is
+   normal to commit it with the repo.
 
 ## Step 1 — Detect the setup target (workspace-orchestration plan §4.1)
 Run `git rev-parse --is-inside-work-tree`.
@@ -344,7 +366,7 @@ Order matters; use the exact mechanics below.
    the new version): show a diff, ask keep-mine / take-new, and only on take-new re-run with
    `--force` (edited block saved to `<target>.seaa.bak`). Never pass `--force` unasked.
 7. **`.harness/agentstack.lock`** — JSON: `schema_version: 1` (layout of `.harness/` data;
-   bumped only when a release needs a migration), `se_harness` version (from plugin.json —
+   bumped only when a release needs a migration), `se_harness` version (from plugin.json — on Copilot `tools/harness/plugin.json` —
    the version that last wrote this project's generated content),
    `initialized`/`updated` ISO dates, `profile` echo of key choices (methodology, stack,
    cloud, topology, `memory.structural_driver`), `components: {}` (Phase 3 fills this).

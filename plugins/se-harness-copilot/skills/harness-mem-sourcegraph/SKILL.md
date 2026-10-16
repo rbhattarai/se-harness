@@ -60,7 +60,7 @@ what is empty, with AskUserQuestion:
 
 Write the answers under `memory.sourcegraph` / `shared.memory.sourcegraph` (`url`, `endpoint`, `auth`,
 `token_env`, `repo_scope`, `deployment`); for `.mcp.json`, merge a `sourcegraph` entry from
-`../se-harness/plugins/se-harness/templates/mcp.json.tmpl` without touching other servers. If token auth, make
+`tools/harness/templates/mcp.json.tmpl` without touching other servers. If token auth, make
 sure `.env.harness` has the *name* `SOURCEGRAPH_ACCESS_TOKEN=` (empty is fine; the user fills it).
 
 **Copilot CLI / VS Code**: never write a token to a file. Print `copilot mcp add --transport http

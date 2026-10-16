@@ -12,8 +12,11 @@ set -eu
 CLIENT="${1:?usage: export-agents.sh <copilot|cursor> [target-root]}"
 ROOT="${2:-.}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AGENTS_DIR="$SCRIPT_DIR/../agents"
-[ -d "$AGENTS_DIR" ] || { echo "agents dir not found: $AGENTS_DIR" >&2; exit 1; }
+# Claude plugin: agents/ is a sibling of scripts/. Copilot repo-vendored layout (tools/harness/): agents/ sits beside
+# the scripts (/harness-init Step 0a copies it there) and the files are NAME.agent.md.
+AGENTS_DIR=""
+for cand in "$SCRIPT_DIR/../agents" "$SCRIPT_DIR/agents"; do [ -d "$cand" ] && { AGENTS_DIR="$cand"; break; }; done
+[ -n "$AGENTS_DIR" ] || { echo "agents dir not found next to the scripts (looked in ../agents and ./agents)" >&2; exit 1; }
 
 get_field() { awk -v f="$1" '/^---$/{n++; next} n==1 && $0 ~ "^"f": " {sub("^"f": ",""); print; exit}' "$2"; }
 get_body()  { awk 'BEGIN{n=0} /^---$/{n++; next} n>=2{print}' "$1"; }
@@ -26,7 +29,7 @@ esac
 
 mkdir -p "$OUT"
 # Clean only files we own (se-harness roster names), so renamed agents leave no orphans.
-for f in "$AGENTS_DIR"/*.md; do rm -f "$OUT/$(basename "${f%.md}").$EXT"; done
+for f in "$AGENTS_DIR"/*.md; do b=$(basename "${f%.md}"); rm -f "$OUT/${b%.agent}.$EXT"; done
 
 COUNT=0
 for f in "$AGENTS_DIR"/*.md; do

@@ -1,0 +1,113 @@
+# workspace.yaml — multi-unit product manifest (A6 topology model).
+# Mono-repo: lives at the repo root; units use `path:`.
+# Multi-repo: lives in a small dedicated meta-repo; units use `repo:`; each member repo's
+#   .harness/profile.yaml points here and /harness-sync pulls the shared: block.
+#
+# NOTE: the `contracts:` section is machine-read by scripts/contract-check.sh — keep its
+# exact shape (name / file / provider / consumers on their own lines).
+#
+# OPTIONAL finer-grained model (workspace-orchestration plan, phase 1 — additive only):
+# everything above this comment is the complete v1 shape and needs nothing below it. A
+# workspace happy with "one unit = one repo/dir" should stop here. The `schemaVersion` /
+# `components:` / `relationships:` keys below exist only for monorepos/moduliths that need
+# component granularity finer than one unit — see scripts/workspace-validate.sh and
+# docs/workspace-orchestration-plan.md §3 for the full model. Omitting all three
+# keys (the default) is exactly this file's v1 shape; nothing reads them until a later phase
+# wires them into /harness-init and /harness-goal.
+#
+# schemaVersion: 2
+#
+# components:                   # one entry per component finer than a whole unit
+#   - id: cart-domain            # unique; referenced by relationships[].from/to
+#     kind: module               # application | service | module | library
+#     boundary:
+#       type: module              # repo | monorepo-package | module
+#       path: backend/packages/cart-domain   # must resolve inside a declared unit's path/repo
+#     role: business-logic
+#
+# relationships:                # one entry per KNOWN cross-component relationship
+#   - from: cart-domain
+#     to: cart-api
+#     type: calls                # calls | publishes-to | consumes-from | depends-on |
+#                                 # owns-data-for | deployed-with | tested-by
+#     evidence: contracts/cart-api.yaml   # REQUIRED — a path/URL backing the claim (API spec,
+#                                          # manifest dependency, docker-compose depends_on, or
+#                                          # "user-confirmed: <date>"). No evidence, no entry —
+#                                          # workspace-validate.sh rejects a relationship without one.
+
+workspace:
+  name: ""
+  topology: mono-repo        # mono-repo | modulith | multi-repo | hybrid
+                              # modulith: one deployable repo, internal module boundaries —
+                              #   units: has one entry (path: .); model modules via components:
+                              # hybrid: this repo has mono-repo/modulith structure of its own
+                              #   AND is also part of a multi-repo product — both halves apply
+  layout: domain             # layered | domain
+
+  shared:                    # inherited by every unit's generated AGENTS.md/CLAUDE.md
+    # Scoped-configuration defaults (workspace-orchestration plan §3.2, phase 3): methodology,
+    # org context, and non-code sources default to this workspace scope — /harness-init reads
+    # these first and only asks when a value here is still empty, then offers to write its
+    # answer back here so every other unit inherits it too. A unit MAY deviate (e.g. a
+    # different methodology) — that's a documented exception, recorded as a comment next to
+    # the field in that unit's own .harness/profile.yaml, not a silent divergence.
+    methodology: ""          # se-harness | openspec | spec-kit | bmad — workspace-wide
+                              # default. "se-harness" displays as "se-harness (built-in)" —
+                              # only it and openspec are actually delegated to by /harness-goal
+                              # today (see profile.yaml's comment).
+    org: {}                  # same shape as profile.yaml org: — conventions, internal libs, guardrails.
+                             # convention_docs: written by /harness-conventions for docs that span units
+                             # (an internal library's catalog, org-wide rules). path is relative to THIS
+                             # file's directory; each unit's profile gets the same entry with scope:
+                             # workspace and a path rewritten relative to that unit.
+    # package_index:            OPTIONAL, additive to org: — set only if this org requires
+    #   url: ""                 installs (uv/pip) to come from a private index rather than
+    #   allow_insecure_host: "" public PyPI. Read by /harness-mem-graphify when installing
+    #                           Graphify; never a secret itself, but never put credentials in
+    #                           the URL — use a netrc/env-based auth mechanism instead.
+    mcp: []                  # MCP servers every unit should configure (e.g. [github, atlassian])
+    jira_project: ""
+    confluence_spaces: []    # e.g. ["ACME", "PLATFORM"]
+    sharepoint_sites: []     # e.g. ["https://acme.sharepoint.com/sites/engineering"]
+    nas_doc_paths: []        # any document format (pdf/docx/pptx/xlsx/md/txt/…); /harness-mem-wiki walks these recursively
+    nas_video_paths: []      # transcribed via Graphify's video extra, then wiki-ingested
+    memory:
+      structural_driver: null  # phase 4, tier 1 ONLY — one of registry/recommendations.json's
+                                # memory.structural.choose_one entries, or null (deferred, valid).
+                                # Tiers 2/3 (session log, domain wiki) are always plain markdown
+                                # regardless of this value — see docs/workspace-orchestration-plan.md §4.5/§8.
+                                # Set by /harness-init Step 6; actually installed by /harness-bootstrap.
+      codegraph:               # same shape as profile.yaml memory.codegraph (variant, telemetry) - choose once
+        variant: null
+        telemetry: null
+      codebase_memory:         # same shape as profile.yaml memory.codebase_memory
+        index_mode: full
+      sourcegraph:             # same shape as profile.yaml memory.sourcegraph - the instance is org-wide, set once
+        deployment: null       # cloud | self-hosted
+        url: ""
+        endpoint: "/.api/mcp"
+        auth: oauth            # oauth | token
+        token_env: SOURCEGRAPH_ACCESS_TOKEN
+        repo_scope: ""
+    observability:           # same shape as profile.yaml observability: - set once here, every unit inherits
+      status: unset          # unset | deferred | declined | configured (see profile.yaml)
+      provider: null         # langfuse | dash0 | other
+      host: ""               # non-secret endpoint, e.g. http://localhost:3000; keys live in the workspace-root .env.harness
+      decided: ""            # YYYY-MM-DD
+
+  units:
+    - name: example-service
+      path: services/example        # mono-repo form (relative dir)
+      # repo: git@github.com:acme/example-service.git   # multi-repo form (instead of path)
+      stack: []
+
+  run:
+    compose: ""              # workspace-level docker-compose for local verify (goal-loop step 8)
+
+# Contract registry (multi-repo tier 2 — deterministic cross-unit impact, no service graph).
+# provider changes contract file → contract-check.sh flags every consumer.
+contracts:
+  - name: example-api
+    file: contracts/example-api.yaml
+    provider: example-service
+    consumers: []            # unit names that consume this contract

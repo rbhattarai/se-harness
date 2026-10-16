@@ -11,6 +11,10 @@ the recommendation manifest and stop before installing anything. `--reconfigure 
 `$ARGUMENTS` → skip the manifest entirely and go to **Reconfigure mode** (after Step 0).
 
 ## Step 0 — Guard & workspace scope
+First confirm the plugin assets resolve — `${CLAUDE_PLUGIN_ROOT}/templates/profile.yaml` and
+`${CLAUDE_PLUGIN_ROOT}/registry/recommendations.json` must exist. If not, apply `/harness-init` Step 0a
+(update the plugin on Claude Code; vendor or update on Copilot) rather than asking for a framework clone.
+
 `.harness/profile.yaml` in the current directory → normal per-repo run, continue at Step 1,
 nothing below applies. Missing, but `workspace.yaml` or `repos.txt` is present instead → this
 is a **workspace root**, not a repo to bootstrap directly:

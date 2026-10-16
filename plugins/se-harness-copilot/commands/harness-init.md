@@ -14,35 +14,57 @@ If `.harness/profile.yaml` already exists and `$ARGUMENTS` does not contain `--u
 show the existing profile summary and ask whether to update it or abort. Never silently
 re-initialize.
 
-## Step 0a — Make sure the harness scripts are reachable
-Every step below runs a script at `tools/harness/<script>.sh`. On Copilot that
-path is a repo-vendored convention (`docs/setup-guide-copilot.md` Part 1.3/4.7): it only
-resolves once the scripts have actually been copied into this directory, which nothing does
-automatically. Check once, up front, instead of letting an arbitrary later step fail:
+## Step 0a — Make sure the harness assets are reachable
+Every step below uses three things the plugin ships: **scripts**
+(`tools/harness/`), **templates** (`tools/harness/templates/`) and the
+**registry** (`tools/harness/registry/`). All three are inside the installed plugin — **never
+ask the user to clone the framework repo to get them.** On Claude Code that path is the
+real installed plugin directory. On Copilot those paths are a repo-vendored convention
+(`docs/setup-guide-copilot.md` Part 1.3/4.7): they only resolve once the assets have been copied into
+this repo, which nothing does automatically. Check once, up front, instead of letting an arbitrary
+later step fail:
 
-1. Check whether `tools/harness/workspace-clone.sh` exists as a real file.
-   - **Exists** → nothing else in this step applies; continue to Step 1.
-   - **Missing** → locate where the plugin itself is actually installed and vendor from there,
-     trying each of these in order, stopping at the first that finds something:
-     a. The Copilot/VS Code plugin cache. Run:
-        `find ~/.vscode/agent-plugins -type d -path '*/plugins/se-harness-copilot/scripts' 2>/dev/null`
-        (this is `<host>/<org>/<repo>/plugins/se-harness-copilot/scripts/` under
-        `~/.vscode/agent-plugins/` — confirmed present there after a normal
-        `copilot plugin install`).
-        - **One match** → vendor: `mkdir -p tools/harness && cp <that match>/*.sh tools/harness/`.
-          Tell the user you did this, then continue to Step 1.
-        - **Multiple matches** (e.g. both a public and an internal-mirror install) → list them
-          and ask the user which one via AskUserQuestion — never guess.
-        - **None** → try (b).
-     b. A sibling framework checkout at `../se-harness/` (the side-by-side clone the setup
-        guides document) → if found, vendor
-        `../se-harness/plugins/se-harness-copilot/scripts/*.sh` the same way; else try (c).
-     c. Neither found → stop. Tell the user plainly: the scripts this command needs aren't
-        vendored here and couldn't be found automatically. Give both options, let them pick:
-        (a) check their own `~/.vscode/agent-plugins/` for the install themselves (path layout
-        above) and point you at it, or (b) `git clone <se-harness repo url> se-harness` right
-        here as a sibling, then re-run this command — this also covers the
-        `templates/` and `registry/` references used later (they live under `plugins/se-harness/` in that clone). Never guess at an install path.
+1. Check that all three exist as real files: `tools/harness/workspace-clone.sh`,
+   `tools/harness/templates/profile.yaml`, `tools/harness/registry/recommendations.json`.
+   - **All present** → nothing else in this step applies; continue to Step 1.
+   - **Any missing** → go to point 2.
+2. **Claude Code** (a real plugin root exists but a file is missing): the installed plugin is an old
+   release that did not bundle templates/registry. Tell the user to update it —
+   `/plugin marketplace update se-harness`, then `/plugin update se-harness`, then restart — and stop.
+   Do not vendor, clone or generate anything.
+3. **Copilot** (assets not vendored here yet): locate where the plugin itself is installed and vendor
+   from there, trying each of these in order and stopping at the first that finds something:
+   a. The installed plugin cache. Run:
+      `find ~/.vscode/agent-plugins ~/.copilot -type d -path '*se-harness-copilot*/scripts' 2>/dev/null`
+      (VS Code: `<host>/<org>/<repo>/plugins/se-harness-copilot/scripts/` under
+      `~/.vscode/agent-plugins/`; Copilot CLI installs elsewhere, so both roots are searched). The
+      parent of a match is `PLUGIN_DIR`.
+      - **One match, and `PLUGIN_DIR/templates/profile.yaml` + `PLUGIN_DIR/registry/recommendations.json`
+        exist** → vendor, then tell the user what you did and continue to Step 1:
+        `mkdir -p tools/harness && cp -R PLUGIN_DIR/scripts/. tools/harness/ && cp -R PLUGIN_DIR/templates PLUGIN_DIR/registry PLUGIN_DIR/agents PLUGIN_DIR/plugin.json tools/harness/`
+      - **One match, but `templates/` or `registry/` is missing** → the installed plugin is an old
+        release without them. Tell the user to update it (`copilot plugin update se-harness-copilot`;
+        in VS Code: Agent Customization → Plugins → update or reinstall from source), then re-run.
+        Stop — do not ask for a clone.
+      - **Multiple matches** (e.g. both a public and an internal-mirror install) → list them and ask
+        which one via AskUserQuestion — never guess.
+      - **None** → try (b).
+   b. A sibling framework checkout at `../se-harness/` (the optional side-by-side clone some setup
+      guides document) → if found, vendor from `../se-harness/plugins/se-harness-copilot/` the same
+      way (scripts, templates, registry); else try (c).
+   c. Neither found → stop. Say plainly that the plugin's files could not be found automatically.
+      Offer: (1) reinstall/update the plugin and re-run, (2) give you the path of the plugin folder
+      (the one containing `scripts/`, `templates/`, `registry/`) so you can vendor from it, or (3) as
+      a last resort `git clone <se-harness repo url>` anywhere and point you at that checkout. Never
+      guess at an install path.
+4. **Loops into units** (Step 1b / mono-repo): vendored paths are relative to the directory the steps
+   run in, so when you `cd` into a unit, repeat check 1 there. If it fails, copy `tools/harness/` from
+   the location you already vendored into this unit (no new search), and mention it once in the report.
+5. `tools/harness/plugin.json` is the vendored copy of the plugin manifest: on Copilot it is the source of
+   the version stamped into `agentstack.lock` (`se_harness`), since there is no other plugin.json to read.
+   `tools/harness/agents/` lets `/harness-export` run from the vendored scripts.
+6. The vendored `tools/harness/` is plain files that the repo-level hooks and scripts reference — it is
+   normal to commit it with the repo.
 
 ## Step 1 — Detect the setup target (workspace-orchestration plan §4.1)
 Run `git rev-parse --is-inside-work-tree`.
@@ -140,12 +162,12 @@ the evidence you present.
 
 - **Either signal found** → propose **mono-repo**, list detected units (name each sibling
   directory and the manifest/marker that identified it), confirm. Create
-  `workspace.yaml` at the repo root from `../se-harness/plugins/se-harness/templates/workspace.yaml` (units with `path:`, one
+  `workspace.yaml` at the repo root from `tools/harness/templates/workspace.yaml` (units with `path:`, one
   per detected unit).
   - Then look for cross-unit relationships with real evidence — a unit's manifest depending on
     another unit's package name, an import crossing unit directories, a `depends_on` in a
     workspace-level compose file. Propose each as a `components:`/`relationships:` entry
-    (schemaVersion 2, additive — see `../se-harness/plugins/se-harness/templates/workspace.yaml`'s commented example) **only
+    (schemaVersion 2, additive — see `tools/harness/templates/workspace.yaml`'s commented example) **only
     with the evidence attached**; a relationship you can't cite stays an open question you
     mention in the report, never a written entry (§3.1 — no evidence, no relationship). Confirm
     the whole proposed list with the user before writing it; validate with
@@ -246,7 +268,7 @@ the user knows now (Phase 2 `/harness-scan` will verify/extend it):
 None of these are required — record empty lists if the org has none; don't nag.
 
 4. **Guardrails** (optional, off by default) — policy on what the agent should and shouldn't help
-   with. Read `../se-harness/plugins/se-harness/templates/guardrails.preset.txt` (`id | label | rule` per line)
+   with. Read `tools/harness/templates/guardrails.preset.txt` (`id | label | rule` per line)
    and ask in two steps: (a) AskUserQuestion, multiSelect, one option per preset line using its label
    (the ones marked "(recommended)" first) plus **None — no guardrails**; (b) then ask whether to
    **add rules of their own** (free text, one per line) or **reword** any selected rule. Write the final
@@ -277,7 +299,7 @@ that; Step 7's memory scaffold below is unconditional and identical regardless o
 it silently, tell the user what was inherited, and skip the question below.
 
 Otherwise, ask once: offer the `memory.structural.choose_one` list from
-`../se-harness/plugins/se-harness/registry/recommendations.json` (currently CodeGraph — two unrelated repos, disambiguate by
+`tools/harness/registry/recommendations.json` (currently CodeGraph — two unrelated repos, disambiguate by
 URL, not name — codebase-memory-mcp, Graphify, or **Sourcegraph**; each has its own
 `/harness-mem-*` command that bootstrap hands off to, so init only records the choice — and for CodeGraph, which
 project, as `memory.codegraph.variant`), summarizing each option's tradeoff from the
@@ -307,30 +329,30 @@ the user isn't left wondering why nothing got indexed yet.
 ## Step 7 — Generate artifacts
 Order matters; use the exact mechanics below.
 
-1. **`.harness/profile.yaml`** — render from `../se-harness/plugins/se-harness/templates/profile.yaml`
+1. **`.harness/profile.yaml`** — render from `tools/harness/templates/profile.yaml`
    with all interview answers. Never put secrets here.
-2. **`.env.harness`** — copy `../se-harness/plugins/se-harness/templates/env.harness.example` **only if `.env.harness` doesn't
+2. **`.env.harness`** — copy `tools/harness/templates/env.harness.example` **only if `.env.harness` doesn't
    already exist**; leave existing files untouched. This repo-level file is for this repo's own
    secrets only (cloud-provider creds matching its `cloud:` field, anything else repo-specific)
    — it no longer carries Jira/Confluence/SharePoint/GitHub placeholders; those are org-wide,
    not per-repo, and live in a **workspace-root** `.env.harness` instead
-   (`../se-harness/plugins/se-harness/templates/env.harness.workspace.example`), which `/harness-mem-wiki` creates and reads, not
+   (`tools/harness/templates/env.harness.workspace.example`), which `/harness-mem-wiki` creates and reads, not
    this command. Tell the user which repo-level vars to fill for what this repo actually needs.
-3. **`.gitignore`** — append each line of `../se-harness/plugins/se-harness/templates/gitignore.harness` that isn't already
+3. **`.gitignore`** — append each line of `tools/harness/templates/gitignore.harness` that isn't already
    present (grep before append; create `.gitignore` if missing).
 4. **Memory scaffold** (skip any file that already exists):
    ```
-   .harness/memory/MEMORY.md        (from ../se-harness/plugins/se-harness/templates/memory/MEMORY.md)
-   .harness/memory/SCRATCHPAD.md    (from ../se-harness/plugins/se-harness/templates/memory/SCRATCHPAD.md)
+   .harness/memory/MEMORY.md        (from tools/harness/templates/memory/MEMORY.md)
+   .harness/memory/SCRATCHPAD.md    (from tools/harness/templates/memory/SCRATCHPAD.md)
    .harness/memory/daily/           (empty dir, .gitkeep)
-   .harness/memory/wiki/index.md    (from ../se-harness/plugins/se-harness/templates/memory/wiki-index.md)
-   .harness/memory/wiki/log.md      (from ../se-harness/plugins/se-harness/templates/memory/wiki-log.md)
+   .harness/memory/wiki/index.md    (from tools/harness/templates/memory/wiki-index.md)
+   .harness/memory/wiki/log.md      (from tools/harness/templates/memory/wiki-log.md)
    .harness/requirements/           (empty dir, .gitkeep)
    ```
 5. **`.harness/org-rules.txt`** — one line per banned pair from the org answers:
    `banned:<never>:use <use> (<reason>)`. Empty file if none (the org-validate hook no-ops).
 6. **AGENTS.md and CLAUDE.md** — render the *inner* content of
-   `../se-harness/plugins/se-harness/templates/AGENTS.md.tmpl` / `../se-harness/plugins/se-harness/templates/CLAUDE.md.tmpl` (fill every `{{placeholder}}` from
+   `tools/harness/templates/AGENTS.md.tmpl` / `tools/harness/templates/CLAUDE.md.tmpl` (fill every `{{placeholder}}` from
    the profile; drop sections whose data is empty; **do not include the marker lines** — the
    splice script owns them). Write each rendered block to a temp file, then:
    ```
@@ -344,7 +366,7 @@ Order matters; use the exact mechanics below.
    the new version): show a diff, ask keep-mine / take-new, and only on take-new re-run with
    `--force` (edited block saved to `<target>.seaa.bak`). Never pass `--force` unasked.
 7. **`.harness/agentstack.lock`** — JSON: `schema_version: 1` (layout of `.harness/` data;
-   bumped only when a release needs a migration), `se_harness` version (from plugin.json —
+   bumped only when a release needs a migration), `se_harness` version (from plugin.json — on Copilot `tools/harness/plugin.json` —
    the version that last wrote this project's generated content),
    `initialized`/`updated` ISO dates, `profile` echo of key choices (methodology, stack,
    cloud, topology, `memory.structural_driver`), `components: {}` (Phase 3 fills this).

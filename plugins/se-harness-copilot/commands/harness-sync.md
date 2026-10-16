@@ -29,6 +29,11 @@ user to run `/harness-init` and stop.
    applied | skipped — in addition to each unit's own Step 5 report.
 
 ### Step 0b — Version stamp check
+First confirm the plugin assets resolve (`tools/harness/templates/profile.yaml`,
+`tools/harness/registry/recommendations.json`). If not, apply `/harness-init` Step 0a — a repo vendored
+before templates were bundled needs `tools/harness/` re-vendored, and template-drift detection (axis C) cannot
+run without them.
+
 Read `schema_version` and `se_harness` from `.harness/agentstack.lock` and `version` from
 the installed plugin's own `plugin.json` (the plugin manifest that ships this command).
 - No `schema_version` (project bootstrapped before stamps existed) → it is a schema-1 project;
@@ -40,6 +45,12 @@ the installed plugin's own `plugin.json` (the plugin manifest that ships this co
   confirmation run `migrate.sh` (it backs up, rolls back on failure, and exits 3 on a hand-edited
   generated block — then follow the keep-mine / take-new flow below and re-run with
   `--force-blocks` only if they choose take-new). Then continue with Step 1.
+- **Copilot, vendored files**: the plugin version is `tools/harness/plugin.json`'s. Compare it with the
+  installed plugin's `plugin.json` (find it as in `/harness-init` Step 0a point 3a). If the installed
+  one is newer, `tools/harness/` is stale — templates, scripts and registry would be the old ones, so
+  offer to re-vendor (the same `cp -R` commands; it overwrites only harness-owned files) **before**
+  collecting drift, and say what changed. Declined → continue, but axis C (template drift) is unreliable
+  and you must say so.
 - `se_harness` older than the plugin version → note it in the report; Step 4 sets it to the
   plugin version after a successful sync.
 
@@ -52,7 +63,7 @@ workspace/topology markers; new private-registry scopes or internal imports (org
 lint-config changes. Only *differences* matter here — don't re-litigate settled values.
 
 **B. Recommendation drift (registry or profile changed).** Re-run the Step-1 mapping from
-`/harness-bootstrap` (profile × `../se-harness/plugins/se-harness/registry/recommendations.json`) and diff against the lockfile:
+`/harness-bootstrap` (profile × `tools/harness/registry/recommendations.json`) and diff against the lockfile:
 - newly applicable components (stack additions, registry updates) → propose
 - installed components no longer applicable (stack removals) → propose removal, never auto-remove
 - `declined` items: **stay declined** — list them in one line at the end, don't re-nag

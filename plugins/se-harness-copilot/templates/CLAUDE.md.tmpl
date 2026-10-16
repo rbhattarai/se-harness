@@ -1,0 +1,14 @@
+<!-- SEAA:GENERATED:START — managed by se-harness; /harness-sync rewrites ONLY this block. -->
+
+See @AGENTS.md for the project brief, org conventions (compose-first), memory rules, and workflow.
+This file carries only Claude-specific additions (AGENTS.md is the cross-tool source of truth).
+
+## Claude-specific
+- MCP servers: configured in `.mcp.json` (github, atlassian, code-graph{{#cloud}}, {{cloud}}{{/cloud}})
+- Subagents: `.claude/agents/` — phase agents with narrow tool access; use worktrees for parallel tasks
+- Hooks: se-harness gates are active (context injection, HITL gate-check on push/PR/deploy,
+  org-rules post-edit validation) — if a gate blocks you, satisfy it, don't work around it
+
+<!-- SEAA:GENERATED:END -->
+
+<!-- Claude-specific team notes below this line survive every sync. -->

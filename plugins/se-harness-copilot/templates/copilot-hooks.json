@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "bash tools/harness/copilot-hook-adapter.sh pre tools/harness/gate-check.sh",
+        "powershell": "bash tools/harness/copilot-hook-adapter.sh pre tools/harness/gate-check.sh",
+        "timeoutSec": 15
+      },
+      {
+        "type": "command",
+        "bash": "bash tools/harness/copilot-hook-adapter.sh pre tools/harness/contract-check.sh",
+        "powershell": "bash tools/harness/copilot-hook-adapter.sh pre tools/harness/contract-check.sh",
+        "timeoutSec": 15
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "bash tools/harness/copilot-hook-adapter.sh post tools/harness/org-validate.sh",
+        "powershell": "bash tools/harness/copilot-hook-adapter.sh post tools/harness/org-validate.sh",
+        "timeoutSec": 10
+      },
+      {
+        "type": "command",
+        "bash": "bash tools/harness/copilot-hook-adapter.sh post tools/harness/memory-log-commit.sh",
+        "powershell": "bash tools/harness/copilot-hook-adapter.sh post tools/harness/memory-log-commit.sh",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}

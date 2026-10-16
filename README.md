@@ -334,9 +334,9 @@ tried.
 
 ## Status
 
-**[v1.3.0](https://github.com/rbhattarai/se-harness/releases/tag/v1.3.0)** is the current
-release: fourteen commands, a 12-agent roster, a 402-test suite in CI, and a separate local eval suite
-(below). Since v1.2.0 it added lifecycle commands for the Sourcegraph (Cloud or self-hosted), codebase-memory-mcp
+**[v1.3.1](https://github.com/rbhattarai/se-harness/releases/tag/v1.3.1)** is the current
+release: fourteen commands, a 12-agent roster, a 406-test suite in CI, and a separate local eval suite
+(below). Since v1.2.0 it added a Copilot packaging fix (the plugin bundles its templates and registry; no sibling clone) and lifecycle commands for the Sourcegraph (Cloud or self-hosted), codebase-memory-mcp
 and CodeGraph structural-memory drivers. v1.2.0 had added **`/harness-conventions`** and the convention docs the agents and the PR
 gate use; a **`/harness-goal` preflight** that checks conventions and memory readiness (code index, domain
 wiki) before the grill; **scope triage** that sizes a goal and, for large changes, analyzes in Plan mode and

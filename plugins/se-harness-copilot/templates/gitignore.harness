@@ -1,0 +1,9 @@
+# Appended to the target project's .gitignore by /harness-init (A5 #3).
+# Secrets — never committed
+.env.harness
+# Rebuildable structural memory (tier 1) — regenerated, not versioned
+.harness/memory/structural/
+# Genuine scratch (refined requirements are NOT here — they live in .harness/requirements/, committed)
+.temp/
+# Per-task agent worktrees (worktree-task.sh)
+.worktrees/

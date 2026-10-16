@@ -12,7 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Locate templates: the plugin's own dir (marketplace install / repo checkout), an explicit
 # override, or the sibling framework clone Copilot setups use (tools/harness/ -> ../se-harness).
 TPL_DIR=""
-for cand in "${SE_HARNESS_TEMPLATES:-}" "$SCRIPT_DIR/../templates" "$SCRIPT_DIR/../../../se-harness/plugins/se-harness/templates"; do
+for cand in "${SE_HARNESS_TEMPLATES:-}" "$SCRIPT_DIR/../templates" "$SCRIPT_DIR/templates" "$SCRIPT_DIR/../../../se-harness/plugins/se-harness/templates"; do
   [ -n "$cand" ] && [ -d "$cand" ] && { TPL_DIR="$cand"; break; }
 done
 TEMPLATE="$TPL_DIR/requirement.md"

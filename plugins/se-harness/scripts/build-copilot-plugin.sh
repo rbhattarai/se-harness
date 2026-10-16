@@ -32,7 +32,7 @@ cat > "$OUT/plugin.json" <<'EOF'
 {
   "name": "se-harness-copilot",
   "description": "SE Harness for GitHub Copilot CLI: SDLC agent roster, harness skills, goal-loop commands, and bundled enforcement hooks. Generated from the Claude-first se-harness plugin - do not edit by hand; regenerate with build-copilot-plugin.sh. Repo-level hooks for the coding agent/VS Code - see docs/setup-guide-copilot.md.",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "author": { "name": "Rohan Bhattarai", "email": "rohan.bhattarai.dev@gmail.com" },
   "repository": "https://github.com/rbhattarai/se-harness",
   "license": "MIT",
@@ -105,15 +105,15 @@ done
 
 # --- commands: rewrite plugin-root paths for the Copilot context ---
 #   scripts   → tools/harness/           (repo-vendored per setup guide 4.7)
-#   templates → ../se-harness/plugins/se-harness/templates/ (framework repo cloned as sibling per guide Part 2)
-#   registry  → ../se-harness/plugins/se-harness/registry/
+#   templates → tools/harness/templates/   (shipped inside this plugin; vendored beside the scripts)
+#   registry  → tools/harness/registry/    (same)
 COUNT_C=0
 for f in "$SRC"/commands/*.md; do
   cname=$(basename "$f")
   sed -e 's|\${CLAUDE_PLUGIN_ROOT}/\.\./\.\./plugins/se-harness-copilot/scripts/|../se-harness/plugins/se-harness-copilot/scripts/|g' \
       -e 's|\${CLAUDE_PLUGIN_ROOT}/scripts/|tools/harness/|g' \
-      -e 's|\${CLAUDE_PLUGIN_ROOT}/templates/|../se-harness/plugins/se-harness/templates/|g' \
-      -e 's|\${CLAUDE_PLUGIN_ROOT}/registry/|../se-harness/plugins/se-harness/registry/|g' \
+      -e 's|\${CLAUDE_PLUGIN_ROOT}/templates/|tools/harness/templates/|g' \
+      -e 's|\${CLAUDE_PLUGIN_ROOT}/registry/|tools/harness/registry/|g' \
       "$f" > "$OUT/commands/$cname"
 
   # Also emit as a skill directory (Copilot commands are skill-shaped: SKILL.md registered
@@ -138,10 +138,17 @@ done
 cp "$SRC"/scripts/*.sh "$OUT/scripts/"
 rm -rf "$OUT/scripts/migrations" && cp -r "$SRC"/scripts/migrations "$OUT/scripts/"
 rm -rf "$OUT/scripts/doc-registry" && cp -r "$SRC"/scripts/doc-registry "$OUT/scripts/"
+# --- templates + registry: the commands read these; ship them so no framework checkout is needed ---
+rm -rf "$OUT/templates" "$OUT/registry"
+cp -R "$SRC/templates" "$OUT/templates"
+cp -R "$SRC/registry" "$OUT/registry"
 cat > "$OUT/scripts/README.md" <<'EOF'
-Vendor these into each repo the harness manages (commands reference `tools/harness/`):
+Vendor these into each repo the harness manages (commands reference `tools/harness/`). /harness-init does
+this for you (Step 0a); by hand it is:
 
-    mkdir -p tools/harness && cp <plugin-dir>/scripts/*.sh tools/harness/
+    mkdir -p tools/harness
+    cp -R <plugin-dir>/scripts/. tools/harness/
+    cp -R <plugin-dir>/templates <plugin-dir>/registry <plugin-dir>/agents <plugin-dir>/plugin.json tools/harness/
 
 Enforcement hooks install at repo level: copy `plugins/se-harness/templates/copilot-hooks.json` from the
 framework repo to `.github/hooks/se-harness.json` (see docs/setup-guide-copilot.md 4.7).

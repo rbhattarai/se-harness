@@ -1,0 +1,74 @@
+<!-- SEAA:GENERATED:START — managed by se-harness; /harness-sync rewrites ONLY this block. -->
+<!-- Hand-written content belongs OUTSIDE these markers and is never touched. -->
+
+# {{project.name}}
+
+{{project.description}}
+
+{{#org.guardrails}}
+## Guardrails
+<!-- Whole section omitted when org.guardrails is empty. Org policy; a soft instruction, not a security control. -->
+- {{.}}
+{{/org.guardrails}}
+
+## Stack
+- Languages: {{stack.languages}}
+- Frameworks: {{stack.frameworks}}
+- Data: {{stack.databases}} {{stack.messaging}}
+- CI/containers: {{devops.ci}}, {{devops.containers}} · Cloud: {{cloud}}
+- Methodology: {{methodology}} (artifacts in `.harness/requirements/`, stories in Jira {{sources.jira_project}})
+
+## Organization conventions & libraries (compose-first)
+**Rule: compose before you code.** Before writing any new component, utility, or service code,
+check the internal libraries below. Hand-roll ONLY when nothing fits — and say so in the PR
+description ("no internal component for X").
+
+Internal libraries (generation targets, not just context):
+{{#org.internal_libraries}}
+- `{{name}}` ({{registry}}) — {{purpose}}
+{{/org.internal_libraries}}
+
+Preferred / banned choices:
+{{#org.preferred_libraries}}
+- Use **{{use}}**, never `{{never}}` — {{reason}}
+{{/org.preferred_libraries}}
+
+Org guidelines: {{org.conventions_url}} (ingested into `.harness/memory/wiki/` — query it, don't guess)
+{{#org.conventions}}
+- {{.}}
+{{/org.conventions}}
+
+Convention docs (scoped rules + internal-library catalog — **read the matching doc before you write or review code**):
+{{#org.convention_docs}}
+- `{{area}}` ({{status}}) — `{{path}}` — applies to {{applies_to}}
+{{/org.convention_docs}}
+{{^org.convention_docs}}
+- None captured yet — run `/harness-conventions`. Until then, follow the nearest existing code and say so in the PR.
+{{/org.convention_docs}}
+
+These rules are machine-checked by a post-edit hook (`.harness/org-rules.txt`) — violations warn
+and must be resolved or justified before PR.
+
+## Memory (progressive disclosure — do not bulk-load)
+- Index: `.harness/memory/MEMORY.md` (one line per entry — read this, then open only what you need)
+- Structure: {{#memory.structural_driver}}query {{memory.structural_driver}}{{/memory.structural_driver}}{{^memory.structural_driver}}query the code-graph MCP if one is configured{{/memory.structural_driver}}, don't grep blindly
+- Domain: `.harness/memory/wiki/` (Karpathy-style; `index.md` first)
+- Per-turn hot set is injected automatically by the context-injector hook
+
+## Behavioral rules (Karpathy-inspired)
+<!-- Distilled from https://github.com/multica-ai/andrej-karpathy-skills/blob/main/CLAUDE.md -->
+- Think before coding: state assumptions, surface tradeoffs, ask when unclear — never silently pick an interpretation.
+- Simplicity first: minimum code that solves the problem; no speculative features, single-use abstractions, or impossible-scenario handling.
+- Surgical changes: touch only what the task requires; match existing style; mention unrelated dead code, don't delete it; clean up only orphans your changes created.
+- Goal-driven: turn tasks into verifiable goals (test first, then implement); loop until verified.
+- Wrong/right examples per principle: `coding-discipline` skill.
+
+## Workflow
+Goals go through `/harness-goal`: grill → deep-dive → refined REQ (⛔ human approves) → Jira
+story + XRay tests → implement in worktrees → e2e (planner/generator/healer) → ⛔ human PR gate
+→ docker-compose local verify → ⛔ human deploy gate. Requirement ID threads through branch,
+commits, and PR.
+
+<!-- SEAA:GENERATED:END -->
+
+<!-- Team notes below this line survive every sync. -->

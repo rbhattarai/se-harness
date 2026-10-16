@@ -11,6 +11,10 @@ the recommendation manifest and stop before installing anything. `--reconfigure 
 `$ARGUMENTS` → skip the manifest entirely and go to **Reconfigure mode** (after Step 0).
 
 ## Step 0 — Guard & workspace scope
+First confirm the plugin assets resolve — `tools/harness/templates/profile.yaml` and
+`tools/harness/registry/recommendations.json` must exist. If not, apply `/harness-init` Step 0a
+(update the plugin on Claude Code; vendor or update on Copilot) rather than asking for a framework clone.
+
 `.harness/profile.yaml` in the current directory → normal per-repo run, continue at Step 1,
 nothing below applies. Missing, but `workspace.yaml` or `repos.txt` is present instead → this
 is a **workspace root**, not a repo to bootstrap directly:
@@ -125,7 +129,7 @@ Shared by Step 2 and Reconfigure mode; `<p>` = the chosen entry in the registry'
 
 ## Step 1 — Build the recommendation manifest
 Read `.harness/profile.yaml` (guard: must exist — run `/harness-init` first) and
-`../se-harness/plugins/se-harness/registry/recommendations.json`. Map profile → components:
+`tools/harness/registry/recommendations.json`. Map profile → components:
 
 - `methodology` → its entry (plugin or CLI install) — `se-harness` ("se-harness (built-in)" to
   the user) has a `kind: native` registry entry, nothing to install; skip it silently, no
@@ -202,7 +206,7 @@ For each selected component, by `kind`:
   component.** Same reasoning — hand off to `/harness-methodology-openspec` instead of the bare
   `npm install -g` command; it owns the gated install-plus-`openspec init` sequence and the
   lockfile record, and it's what `/harness-goal` later expects to find already set up.
-- **mcp**: render the needed entries from `../se-harness/plugins/se-harness/templates/mcp.json.tmpl` into the project's
+- **mcp**: render the needed entries from `tools/harness/templates/mcp.json.tmpl` into the project's
   `.mcp.json` (merge — never clobber existing servers; secrets stay `${VAR}` references
   to `.env.harness`).
 

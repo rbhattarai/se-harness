@@ -68,7 +68,9 @@ With `--check`: skip this step and Step 4; report only.
    *new* plugin's `migrate.sh`, which is why this command stops here. Stop.
 
 (GitHub Copilot CLI variant: the same flow with that client's own plugin update command for
-`se-harness-copilot` — see `docs/setup-guide-copilot.md`; the lookups in Step 1 are the same.)
+`se-harness-copilot` — see `docs/setup-guide-copilot.md`; the lookups in Step 1 are the same. **After a
+Copilot plugin update the repo's vendored `tools/harness/` is stale** — re-vendor it per `/harness-init`
+Step 0a before migrating, or `/harness-sync` Step 0b will offer to.)
 
 ## Step 3 — Running plugin is current: does this project need migrating?
 (No lockfile → the project isn't bootstrapped; nothing to migrate. Say so and stop; suggest

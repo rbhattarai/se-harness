@@ -511,8 +511,10 @@ copilot plugin update se-harness-copilot      # refresh the cached plugin
 ```
 Then per managed repo, run the `harness-sync` command (or the `/harness-sync` prompt file) —
 it diffs profile/recommendations/templates and refreshes **only** the `SEAA:GENERATED`
-blocks; hand-written content is never touched. If you vendored scripts (4.7), re-copy them:
-`cp ../se-harness/plugins/se-harness/scripts/*.sh tools/harness/`.
+blocks; hand-written content is never touched. If you vendored the harness files (`tools/harness/`), re-copy
+them from the updated plugin — `/harness-init` Step 0a does it for you when files are missing, or by hand:
+`cp -R <plugin-dir>/scripts/. tools/harness/ && cp -R <plugin-dir>/templates <plugin-dir>/registry <plugin-dir>/agents <plugin-dir>/plugin.json tools/harness/`
+(`<plugin-dir>` is the installed plugin under `~/.vscode/agent-plugins/` or your Copilot CLI plugin directory).
 
 ### 10.2 Making your own changes
 The iron rule: **edit only `plugins/se-harness/` (the Claude-first source)** —

@@ -7,6 +7,19 @@ versions follow [SemVer](https://semver.org/). Full release notes for tagged ver
 
 ## [Unreleased]
 
+## [1.3.1] — 2026-10-15
+
+Copilot packaging fix: the plugin now bundles templates and registry; no sibling clone needed. [Release notes](./docs/release-notes-v1.3.1.md).
+
+### Fixed
+- **Copilot plugin shipped without `templates/` and `registry/`**, so `/harness-init` told users to clone the framework repo
+  side by side. The generated plugin now bundles both, commands read them from `tools/harness/templates|registry/`, and
+  `/harness-init` Step 0a vendors scripts + templates + registry from the installed plugin (VS Code `agent-plugins` or
+  Copilot CLI), re-checks inside each unit of a workspace loop, and — on an old install lacking them — says to update the
+  plugin instead of asking for a clone. On Claude Code a missing template now says to update the plugin. Also vendored: `agents/`
+  (so `/harness-export` works from `tools/harness/`; `export-agents.sh` accepts `NAME.agent.md`) and `plugin.json` (the version
+  stamp source on Copilot); `/harness-sync` and `/harness-update` re-vendor a stale `tools/harness/` after a plugin update.
+
 ## [1.3.0] — 2026-10-14
 
 Structural-memory drivers: Sourcegraph, codebase-memory-mcp and CodeGraph get lifecycle commands. [Release notes](./docs/release-notes-v1.3.0.md).

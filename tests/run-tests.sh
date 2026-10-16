@@ -750,8 +750,8 @@ check "installed-copy: SE_HARNESS_TEMPLATES override is honored" \
 check "installed-copy: a missing templates dir is a clear error, not a crash" \
   bash -c "cd '$INST_T/proj' && ! bash '$INST_T/installed/scripts/template-hash.sh' 2>&1 | grep -q 'AGENTS.md.tmpl'"
 rm -rf "$INST_T"
-check "copilot commands point templates at the sibling framework clone's plugin dir" \
-  bash -c "grep -rq '../se-harness/plugins/se-harness/templates/' plugins/se-harness-copilot/commands"
+check "copilot commands point templates at the vendored tools/harness/templates/" \
+  bash -c "grep -rq 'tools/harness/templates/' plugins/se-harness-copilot/commands"
 
 # --- observability as a recorded decision: decision-review.sh + the contract the commands rely on ---
 DR_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/plugins/se-harness/scripts/decision-review.sh"
@@ -843,6 +843,10 @@ check "templates carry memory.sourcegraph (profile + workspace) and only the tok
   bash -c "grep -q 'sourcegraph:' plugins/se-harness/templates/profile.yaml && grep -q 'sourcegraph:' plugins/se-harness/templates/workspace.yaml && grep -qx 'SOURCEGRAPH_ACCESS_TOKEN=' plugins/se-harness/templates/env.harness.example && grep -q 'Authorization.*token \${SOURCEGRAPH_ACCESS_TOKEN}' plugins/se-harness/templates/mcp.json.tmpl"
 check "mcp.json.tmpl is valid JSON and registers codebase-memory with no serve arg and codegraph with the impact tools enabled"   bash -c "python -c \"import json,sys; d=json.load(open('plugins/se-harness/templates/mcp.json.tmpl'))['mcpServers']; assert d['codebase-memory']['args']==[]; assert 'impact' in d['codegraph']['env']['CODEGRAPH_MCP_TOOLS']; assert d['sourcegraph']['type']=='http'\" 2>/dev/null || python3 -c \"import json; d=json.load(open('plugins/se-harness/templates/mcp.json.tmpl'))['mcpServers']; assert d['codebase-memory']['args']==[]; assert 'impact' in d['codegraph']['env']['CODEGRAPH_MCP_TOOLS']; assert d['sourcegraph']['type']=='http'\""
 check "every structural-memory driver has a lifecycle command that confirms before installing"   bash -c "for c in codebase-memory codegraph sourcegraph graphify; do test -f plugins/se-harness/commands/harness-mem-\$c.md || exit 1; done; grep -qi 'confirm\|ask' plugins/se-harness/commands/harness-mem-codebase-memory.md && grep -qi 'telemetry' plugins/se-harness/commands/harness-mem-codegraph.md"
+check "copilot plugin ships templates/ and registry/ (no framework clone needed)"   test -f plugins/se-harness-copilot/templates/profile.yaml -a -f plugins/se-harness-copilot/registry/recommendations.json
+check "copilot commands read templates/registry from tools/harness/, not a sibling clone (init's fallback mention aside)"   bash -c "! grep -l '\.\./se-harness/plugins/se-harness/\(templates\|registry\)' plugins/se-harness-copilot/commands/*.md"
+check "scripts run from a vendored tools/harness/ layout find templates beside them"   bash -c "T=\$(mktemp -d); mkdir -p \$T/.harness/requirements \$T/tools/harness; cp -R plugins/se-harness-copilot/scripts/. \$T/tools/harness/; cp -R plugins/se-harness-copilot/templates plugins/se-harness-copilot/registry \$T/tools/harness/; cd \$T && bash tools/harness/new-requirement.sh x >/dev/null && bash tools/harness/template-hash.sh >/dev/null"
+check "export-agents works from a vendored tools/harness/ layout (agents beside the scripts, NAME.agent.md)"   bash -c "T=\$(mktemp -d); mkdir -p \$T/tools/harness; cp -R plugins/se-harness-copilot/scripts/. \$T/tools/harness/; cp -R plugins/se-harness-copilot/agents \$T/tools/harness/agents; cd \$T && bash tools/harness/export-agents.sh cursor . >/dev/null && test -f .cursor/rules/architect.mdc"
 rm -rf "$DR_FIX"
 
 check "profile template carries the observability decision block" \
