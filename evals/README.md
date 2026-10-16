@@ -1,7 +1,7 @@
 # se-harness evals
 
 Regression protection for the parts of se-harness that `tests/run-tests.sh` can't see: the
-**prompts** (12 agents, 8 skills, `/harness-goal`) and the **hook scripts that gate them**.
+**prompts** (13 agents, 8 skills, `/harness-goal`) and the **hook scripts that gate them**.
 `tests/` proves the plumbing is well-formed; `evals/` proves the harness still *behaves* — gates hold,
 requirements come out falsifiable, stack detection doesn't hallucinate, tests actually catch bugs.
 

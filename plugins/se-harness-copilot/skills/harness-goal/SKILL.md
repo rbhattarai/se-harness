@@ -253,6 +253,14 @@ sibling repo from here, it says so and falls back to the step-5 handoff: tell th
    docs' MUST rules and library catalog (hand-rolled code where a catalog entry exists is a
    violation); list each finding with the rule number it cites. Red anything → back to the
    owning agent, not onward.
+6. **Design review** *(size M or L; skip for S)*: delegate to **reviewer** — read-only, scoped to
+   the REQ's merged diff. It checks scope/simplicity (every changed line traces to an acceptance
+   criterion), clean code, and SOLID/design-pattern *smells the diff introduced* (not ideals, not
+   pre-existing code), and follows the `design-principles` convention doc when one is confirmed.
+   Write its findings to `REQ-NNN/review.md`. `block` and `fix` findings go back to the owning
+   implementer, then re-run the tests and the reviewer once; a second round still red goes to the
+   user rather than looping. `note` findings are listed in the PR evidence, not fixed. The reviewer
+   never edits, and no refactor happens here beyond what a finding asks for.
 
 ## 6. E2E tests  *(planner → generator → healer)*
 **OpenSpec REQ**: `openspec/changes/<change-id>/specs/`'s scenarios are already written in a
@@ -267,7 +275,7 @@ workspace-orchestrator's integration check (step 5, item 4) exercises — don't 
 narrower e2e suite that only covers this repo's slice.
 
 ## 7. Pull request  ⛔ HITL GATE 2
-Present the evidence table: diff summary, unit/integration/e2e results, org-rule compliance, convention-doc compliance (rule numbers cited; areas with no confirmed doc),
+Present the evidence table: diff summary, unit/integration/e2e results, org-rule compliance, convention-doc compliance (rule numbers cited; areas with no confirmed doc), design-review result (`review.md`: findings fixed / open notes, or "skipped: size S"),
 anything hand-rolled because no internal component fit. If `workspace-plan.md` exists, include
 its current row statuses **and** `integration:` result in the evidence — `gate-check.sh` blocks
 the PR itself while any row isn't `done` or `integration:` isn't `passed` (phase 8, §5.4: rows

@@ -7,6 +7,21 @@ versions follow [SemVer](https://semver.org/). Full release notes for tagged ver
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-10-15
+
+Design review in the goal loop: a read-only `reviewer` agent. [Release notes](./docs/release-notes-v1.4.0.md).
+
+### Added
+- **`reviewer` agent** (13th in the roster): read-only review of the REQ's merged diff. Checks, in priority order,
+  Karpathy discipline (every changed line traces to an acceptance criterion; nothing speculative), clean code, and
+  SOLID / design-pattern *smells the diff introduced* — never ideals, never pre-existing code. Returns a severity-ranked
+  findings table (`block` / `fix` / `note`).
+- **`/harness-goal` step 5.6 — Design review** for size M and L (skipped for S). `block`/`fix` findings go back to the
+  owning implementer, then tests and the reviewer run once more; a second red round goes to the user. Findings land in
+  `REQ-NNN/review.md` and the Gate 2 evidence table.
+- **`design-principles` convention area** offered by `/harness-conventions`: the project's own stance on SOLID, patterns
+  and clean code, drafted from evidence and biased toward Simplicity First. A confirmed doc overrides the reviewer's defaults.
+
 ## [1.3.1] — 2026-10-15
 
 Copilot packaging fix: the plugin now bundles templates and registry; no sibling clone needed. [Release notes](./docs/release-notes-v1.3.1.md).

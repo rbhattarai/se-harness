@@ -48,9 +48,9 @@ app units can reuse their catalogs.
 ## Where these docs are used
 Writing them is only useful because the rest of the harness reads them. Everywhere they are consumed:
 - **AGENTS.md / CLAUDE.md** — the generated "Convention docs" index (area, path, `applies_to`, status).
-- **All nine implementer/tester/architect agents** — read the matching doc before writing or
+- **All ten implementer/tester/architect/reviewer agents** — read the matching doc before writing or
   reviewing code (`implementer-frontend`, `implementer-backend`, `db-engineer`, `unit-tester`,
-  `integration-tester`, `e2e-planner`, `e2e-generator`, `e2e-healer`, `architect`).
+  `integration-tester`, `e2e-planner`, `e2e-generator`, `e2e-healer`, `architect`, `reviewer`).
 - **`/harness-goal`** — step 0a preflight (loads confirmed docs, offers this command for missing or
   stale ones), step 5 delegation (names the matching docs for each task), the automated gate
   (convention review of the diff against MUST rules and the catalog), and the PR evidence table.
@@ -89,7 +89,13 @@ Writing them is only useful because the rest of the harness reads them. Everywhe
 ## Step 2 — Decide the areas
 Propose areas from the stack and structure; the user confirms the list. Typical:
 `angular`, `dotnet`, `python`, `e2e-playwright`, `db-mssql`, `devops-config`, plus one
-`lib-<name>` per internal library worth a catalog. Each area gets `applies_to` globs (e.g.
+`lib-<name>` per internal library worth a catalog.
+Optionally a `design-principles` area (`applies_to` the source globs) for the project's own stance
+on SOLID, design patterns and clean code, which `reviewer` applies in `/harness-goal` step 5.6.
+Draft it only from evidence (the abstractions the code actually uses, lint complexity limits, existing
+instruction files) and the user's own rules, and bias it toward Simplicity First, e.g. "no interface
+for a single implementation unless it is a test seam". Never fill it with textbook SOLID the codebase
+doesn't follow. Each area gets `applies_to` globs (e.g.
 `**/*.component.ts`, `e2e/**`, `**/*.sql`). One area = one doc = ~100 lines max; split rather
 than grow. Skip areas with no code.
 
